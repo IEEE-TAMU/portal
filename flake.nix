@@ -20,8 +20,40 @@
   } @ inputs: let
     forEachSystem = nixpkgs.lib.genAttrs (import systems);
   in {
-    packages = forEachSystem (system: {
+    packages = forEachSystem (system: let
+      pkgs = nixpkgs.legacyPackages.${system};
+      mixNixDeps = pkgs.callPackages ./deps.nix {};
+    in rec {
       devenv-up = self.devShells.${system}.default.config.procfileScript;
+      default = portal;
+      portal = with pkgs;
+        beamPackages.mixRelease {
+          inherit mixNixDeps;
+          pname = "portal";
+          src = ./.;
+          version = "0.0.0";
+
+          # dummy values to allow the build to proceed
+          DATABASE_URL = "";
+          SECRET_KEY_BASE = "";
+
+          postBuild = ''
+            tailwind_path="$(mix do \
+              app.config --no-deps-check --no-compile, \
+              eval 'Tailwind.bin_path() |> IO.puts()')"
+            esbuild_path="$(mix do \
+              app.config --no-deps-check --no-compile, \
+              eval 'Esbuild.bin_path() |> IO.puts()')"
+
+            ln -sfv ${tailwindcss}/bin/tailwindcss "$tailwind_path"
+            ln -sfv ${esbuild}/bin/esbuild "$esbuild_path"
+            ln -sfv ${mixNixDeps.heroicons} deps/heroicons
+
+            mix do \
+              app.config --no-deps-check --no-compile, \
+              assets.deploy --no-deps-check
+          '';
+        };
     });
 
     formatter = forEachSystem (system: nixpkgs.legacyPackages.${system}.alejandra);
