@@ -55,6 +55,7 @@
               };
               pre-commit.hooks = {
                 alejandra.enable = true;
+                alejandra.settings.exclude = ["deps.nix"];
                 mix-format.enable = true;
               };
             }
