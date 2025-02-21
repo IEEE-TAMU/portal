@@ -33,7 +33,7 @@ defmodule IeeeTamuPortal.MixProject do
   defp deps do
     [
       {:bcrypt_elixir, "~> 3.0"},
-      {:phoenix, "~> 1.7.19"},
+      {:phoenix, "~> 1.7.20"},
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.10"},
       {:myxql, ">= 0.0.0"},
@@ -58,7 +58,8 @@ defmodule IeeeTamuPortal.MixProject do
       {:gettext, "~> 0.26"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+      {:deps_nix, "~> 2.0", only: :dev}
     ]
   end
 
@@ -80,7 +81,11 @@ defmodule IeeeTamuPortal.MixProject do
         "tailwind ieee_tamu_portal --minify",
         "esbuild ieee_tamu_portal --minify",
         "phx.digest"
-      ]
+      ],
+      fmt: ["format"],
+      # deps_nix
+      "deps.get": ["deps.get", "deps.nix"],
+      "deps.update": ["deps.update", "deps.nix"]
     ]
   end
 end

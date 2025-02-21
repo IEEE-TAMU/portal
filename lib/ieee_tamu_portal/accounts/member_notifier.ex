@@ -8,7 +8,7 @@ defmodule IeeeTamuPortal.Accounts.MemberNotifier do
     email =
       new()
       |> to(recipient)
-      |> from({"IeeeTamuPortal", "contact@example.com"})
+      |> from({"IEEE TAMU Portal", "portal@ieeetamu.org"})
       |> subject(subject)
       |> text_body(body)
 
