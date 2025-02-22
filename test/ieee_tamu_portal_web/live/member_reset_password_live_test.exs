@@ -61,7 +61,7 @@ defmodule IeeeTamuPortalWeb.MemberResetPasswordLiveTest do
           }
         )
         |> render_submit()
-        |> follow_redirect(conn, ~p"/members/log_in")
+        |> follow_redirect(conn, ~p"/members/login")
 
       refute get_session(conn, :member_token)
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Password reset successfully"
@@ -95,7 +95,7 @@ defmodule IeeeTamuPortalWeb.MemberResetPasswordLiveTest do
         lv
         |> element(~s|main a:fl-contains("Log in")|)
         |> render_click()
-        |> follow_redirect(conn, ~p"/members/log_in")
+        |> follow_redirect(conn, ~p"/members/login")
 
       assert conn.resp_body =~ "Log in"
     end

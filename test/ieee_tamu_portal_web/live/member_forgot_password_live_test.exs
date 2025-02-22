@@ -13,7 +13,7 @@ defmodule IeeeTamuPortalWeb.MemberForgotPasswordLiveTest do
 
       assert html =~ "Forgot your password?"
       assert has_element?(lv, ~s|a[href="#{~p"/members/register"}"]|, "Register")
-      assert has_element?(lv, ~s|a[href="#{~p"/members/log_in"}"]|, "Log in")
+      assert has_element?(lv, ~s|a[href="#{~p"/members/login"}"]|, "Log in")
     end
 
     test "redirects if already logged in", %{conn: conn} do

@@ -7,10 +7,10 @@ defmodule IeeeTamuPortalWeb.MemberSessionControllerTest do
     %{member: member_fixture()}
   end
 
-  describe "POST /members/log_in" do
+  describe "POST /members/login" do
     test "logs the member in", %{conn: conn, member: member} do
       conn =
-        post(conn, ~p"/members/log_in", %{
+        post(conn, ~p"/members/login", %{
           "member" => %{"email" => member.email, "password" => valid_member_password()}
         })
 
@@ -27,7 +27,7 @@ defmodule IeeeTamuPortalWeb.MemberSessionControllerTest do
 
     test "logs the member in with remember me", %{conn: conn, member: member} do
       conn =
-        post(conn, ~p"/members/log_in", %{
+        post(conn, ~p"/members/login", %{
           "member" => %{
             "email" => member.email,
             "password" => valid_member_password(),
@@ -43,7 +43,7 @@ defmodule IeeeTamuPortalWeb.MemberSessionControllerTest do
       conn =
         conn
         |> init_test_session(member_return_to: "/foo/bar")
-        |> post(~p"/members/log_in", %{
+        |> post(~p"/members/login", %{
           "member" => %{
             "email" => member.email,
             "password" => valid_member_password()
@@ -57,7 +57,7 @@ defmodule IeeeTamuPortalWeb.MemberSessionControllerTest do
     test "login following registration", %{conn: conn, member: member} do
       conn =
         conn
-        |> post(~p"/members/log_in", %{
+        |> post(~p"/members/login", %{
           "_action" => "registered",
           "member" => %{
             "email" => member.email,
@@ -72,7 +72,7 @@ defmodule IeeeTamuPortalWeb.MemberSessionControllerTest do
     test "login following password update", %{conn: conn, member: member} do
       conn =
         conn
-        |> post(~p"/members/log_in", %{
+        |> post(~p"/members/login", %{
           "_action" => "password_updated",
           "member" => %{
             "email" => member.email,
@@ -86,12 +86,12 @@ defmodule IeeeTamuPortalWeb.MemberSessionControllerTest do
 
     test "redirects to login page with invalid credentials", %{conn: conn} do
       conn =
-        post(conn, ~p"/members/log_in", %{
+        post(conn, ~p"/members/login", %{
           "member" => %{"email" => "invalid@email.com", "password" => "invalid_password"}
         })
 
       assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Invalid email or password"
-      assert redirected_to(conn) == ~p"/members/log_in"
+      assert redirected_to(conn) == ~p"/members/login"
     end
   end
 

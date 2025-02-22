@@ -20,7 +20,7 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLiveTest do
       assert {:error, redirect} = live(conn, ~p"/members/settings")
 
       assert {:redirect, %{to: path, flash: flash}} = redirect
-      assert path == ~p"/members/log_in"
+      assert path == ~p"/members/login"
       assert %{"error" => "You must log in to access this page."} = flash
     end
   end
@@ -211,7 +211,7 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLiveTest do
       conn = build_conn()
       {:error, redirect} = live(conn, ~p"/members/settings/confirm_email/#{token}")
       assert {:redirect, %{to: path, flash: flash}} = redirect
-      assert path == ~p"/members/log_in"
+      assert path == ~p"/members/login"
       assert %{"error" => message} = flash
       assert message == "You must log in to access this page."
     end

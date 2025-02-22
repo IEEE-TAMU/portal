@@ -21,7 +21,7 @@ defmodule IeeeTamuPortalWeb.MemberForgotPasswordLive do
       </.simple_form>
       <p class="text-center text-sm mt-4">
         <.link href={~p"/members/register"}>Register</.link>
-        | <.link href={~p"/members/log_in"}>Log in</.link>
+        | <.link href={~p"/members/login"}>Log in</.link>
       </p>
     </div>
     """

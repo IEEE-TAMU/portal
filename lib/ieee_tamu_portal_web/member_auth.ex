@@ -158,7 +158,7 @@ defmodule IeeeTamuPortalWeb.MemberAuth do
       socket =
         socket
         |> Phoenix.LiveView.put_flash(:error, "You must log in to access this page.")
-        |> Phoenix.LiveView.redirect(to: ~p"/members/log_in")
+        |> Phoenix.LiveView.redirect(to: ~p"/members/login")
 
       {:halt, socket}
     end
@@ -208,7 +208,7 @@ defmodule IeeeTamuPortalWeb.MemberAuth do
       conn
       |> put_flash(:error, "You must log in to access this page.")
       |> maybe_store_return_to()
-      |> redirect(to: ~p"/members/log_in")
+      |> redirect(to: ~p"/members/login")
       |> halt()
     end
   end

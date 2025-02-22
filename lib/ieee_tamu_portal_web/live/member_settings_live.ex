@@ -37,7 +37,7 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
         <.simple_form
           for={@password_form}
           id="password_form"
-          action={~p"/members/log_in?_action=password_updated"}
+          action={~p"/members/login?_action=password_updated"}
           method="post"
           phx-change="validate_password"
           phx-submit="update_password"

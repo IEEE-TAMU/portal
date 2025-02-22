@@ -32,7 +32,7 @@ defmodule IeeeTamuPortalWeb.MemberResetPasswordLive do
 
       <p class="text-center text-sm mt-4">
         <.link href={~p"/members/register"}>Register</.link>
-        | <.link href={~p"/members/log_in"}>Log in</.link>
+        | <.link href={~p"/members/login"}>Log in</.link>
       </p>
     </div>
     """
@@ -61,7 +61,7 @@ defmodule IeeeTamuPortalWeb.MemberResetPasswordLive do
         {:noreply,
          socket
          |> put_flash(:info, "Password reset successfully.")
-         |> redirect(to: ~p"/members/log_in")}
+         |> redirect(to: ~p"/members/login")}
 
       {:error, changeset} ->
         {:noreply, assign_form(socket, Map.put(changeset, :action, :insert))}

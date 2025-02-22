@@ -79,7 +79,7 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLiveTest do
         lv
         |> element(~s|main a:fl-contains("Log in")|)
         |> render_click()
-        |> follow_redirect(conn, ~p"/members/log_in")
+        |> follow_redirect(conn, ~p"/members/login")
 
       assert login_html =~ "Log in"
     end

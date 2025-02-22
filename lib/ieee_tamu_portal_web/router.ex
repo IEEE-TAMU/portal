@@ -53,12 +53,12 @@ defmodule IeeeTamuPortalWeb.Router do
     live_session :redirect_if_member_is_authenticated,
       on_mount: [{IeeeTamuPortalWeb.MemberAuth, :redirect_if_member_is_authenticated}] do
       live "/members/register", MemberRegistrationLive, :new
-      live "/members/log_in", MemberLoginLive, :new
+      live "/members/login", MemberLoginLive, :new
       live "/members/reset_password", MemberForgotPasswordLive, :new
       live "/members/reset_password/:token", MemberResetPasswordLive, :edit
     end
 
-    post "/members/log_in", MemberSessionController, :create
+    post "/members/login", MemberSessionController, :create
   end
 
   scope "/", IeeeTamuPortalWeb do
