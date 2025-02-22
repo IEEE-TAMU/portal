@@ -58,7 +58,7 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLiveTest do
     test "renders errors for duplicated email", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/members/register")
 
-      member = member_fixture(%{email: "test@email.com"})
+      member = member_fixture(%{email: "test@tamu.edu"})
 
       result =
         lv

@@ -62,8 +62,17 @@ defmodule IeeeTamuPortal.AccountsTest do
       {:error, changeset} = Accounts.register_member(%{email: "not valid", password: "not valid"})
 
       assert %{
-               email: ["must have the @ sign and no spaces"],
+               email: ["must be a TAMU email", "must have the @ sign and no spaces"],
                password: ["should be at least 12 character(s)"]
+             } = errors_on(changeset)
+    end
+
+    test "validates email to be a TAMU email" do
+      {:error, changeset} =
+        Accounts.register_member(%{email: "test@example.com", password: "not valid"})
+
+      assert %{
+               email: ["must be a TAMU email"]
              } = errors_on(changeset)
     end
 
@@ -138,7 +147,15 @@ defmodule IeeeTamuPortal.AccountsTest do
       {:error, changeset} =
         Accounts.apply_member_email(member, valid_member_password(), %{email: "not valid"})
 
-      assert %{email: ["must have the @ sign and no spaces"]} = errors_on(changeset)
+      assert %{email: ["must be a TAMU email", "must have the @ sign and no spaces"]} =
+               errors_on(changeset)
+    end
+
+    test "validates TAMU email", %{member: member} do
+      {:error, changeset} =
+        Accounts.apply_member_email(member, valid_member_password(), %{email: "test@eexample.com"})
+
+      assert %{email: ["must be a TAMU email"]} = errors_on(changeset)
     end
 
     test "validates maximum value for email for security", %{member: member} do
