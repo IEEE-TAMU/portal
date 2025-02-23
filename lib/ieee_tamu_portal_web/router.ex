@@ -17,12 +17,6 @@ defmodule IeeeTamuPortalWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", IeeeTamuPortalWeb do
-    pipe_through :browser
-
-    get "/", PageController, :home
-  end
-
   # Other scopes may use custom stacks.
   # scope "/api", IeeeTamuPortalWeb do
   #   pipe_through :api
@@ -45,8 +39,7 @@ defmodule IeeeTamuPortalWeb.Router do
     end
   end
 
-  ## Authentication routes
-
+  # routes available to unauthenticated members
   scope "/", IeeeTamuPortalWeb do
     pipe_through [:browser, :redirect_if_member_is_authenticated]
 
@@ -59,8 +52,10 @@ defmodule IeeeTamuPortalWeb.Router do
     end
 
     post "/members/login", MemberSessionController, :create
+    get "/", PageController, :home
   end
 
+  # routes available to authenticated members
   scope "/", IeeeTamuPortalWeb do
     pipe_through [:browser, :require_authenticated_member]
 
@@ -68,9 +63,11 @@ defmodule IeeeTamuPortalWeb.Router do
       on_mount: [{IeeeTamuPortalWeb.MemberAuth, :ensure_authenticated}] do
       live "/members/settings", MemberSettingsLive, :edit
       live "/members/settings/confirm_email/:token", MemberSettingsLive, :confirm_email
+      live "/membership", MembershipLive, :show
     end
   end
 
+  # routes available to everyone
   scope "/", IeeeTamuPortalWeb do
     pipe_through [:browser]
 

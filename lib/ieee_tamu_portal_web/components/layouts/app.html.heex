@@ -10,21 +10,33 @@
         <.link class="text-[0.8125rem] leading-6 ">
           {@current_member.email}
         </.link>
-        <.link href={~p"/members/settings"} class="text-[0.8125rem] leading-6 font-semibold hover:text-zinc-700">
+        <.link
+          href={~p"/members/settings"}
+          class="text-[0.8125rem] leading-6 font-semibold hover:text-zinc-700"
+        >
           Settings
         </.link>
-        <.link href={~p"/members/log_out"} method="delete"
-          class="text-[0.8125rem] leading-6 font-semibold hover:text-zinc-700">
+        <.link
+          href={~p"/members/log_out"}
+          method="delete"
+          class="text-[0.8125rem] leading-6 font-semibold hover:text-zinc-700"
+        >
           Log out
         </.link>
-        <% else %>
-          <.link href={~p"/members/register"} class="text-[0.8125rem] leading-6 font-semibold hover:text-zinc-700">
-            Register
-          </.link>
-          <.link href={~p"/members/login"} class="text-[0.8125rem] leading-6 font-semibold hover:text-zinc-700">
-            Log in
-          </.link>
-          <% end %>
+      <% else %>
+        <.link
+          href={~p"/members/register"}
+          class="text-[0.8125rem] leading-6 font-semibold hover:text-zinc-700"
+        >
+          Register
+        </.link>
+        <.link
+          href={~p"/members/login"}
+          class="text-[0.8125rem] leading-6 font-semibold hover:text-zinc-700"
+        >
+          Log in
+        </.link>
+      <% end %>
     </div>
   </div>
 </header>
