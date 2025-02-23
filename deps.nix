@@ -557,7 +557,7 @@ let
 
       phoenix_html =
         let
-          version = "4.2.0";
+          version = "4.2.1";
           drv = buildMix {
             inherit version;
             name = "phoenix_html";
@@ -566,7 +566,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "phoenix_html";
-              sha256 = "9713b3f238d07043583a94296cc4bbdceacd3b3a6c74667f4df13971e7866ec8";
+              sha256 = "cff108100ae2715dd959ae8f2a8cef8e20b593f8dfd031c9cba92702cf23e053";
             };
           };
         in
@@ -822,7 +822,7 @@ let
 
       thousand_island =
         let
-          version = "1.3.10";
+          version = "1.3.11";
           drv = buildMix {
             inherit version;
             name = "thousand_island";
@@ -831,7 +831,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "thousand_island";
-              sha256 = "17ab1f1b13aadb1f4b4c8e5b59c06874d701119fed082884c9c6d38addad254f";
+              sha256 = "555c18c62027f45d9c80df389c3d01d86ba11014652c00be26e33b1b64e98d29";
             };
 
             beamDeps = [

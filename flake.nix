@@ -36,6 +36,13 @@
           src = ./.;
           version = "0.0.0";
 
+          stripDebug = true;
+
+          nativeBuildInputs = [
+            esbuild
+            tailwindcss
+          ];
+
           # make runtime.ex happy during build
           NIX_BUILD_ENV = "true";
 
@@ -61,6 +68,12 @@
               assets.deploy --no-deps-check
           '';
         };
+      docker = pkgs.dockerTools.buildLayeredImage {
+        name = "portal";
+        tag = "latest";
+        contents = [portal];
+        config.Cmd = ["/bin/server"];
+      };
     });
 
     formatter = forEachSystem (system: nixpkgs.legacyPackages.${system}.alejandra);

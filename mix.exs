@@ -82,10 +82,10 @@ defmodule IeeeTamuPortal.MixProject do
         "esbuild ieee_tamu_portal --minify",
         "phx.digest"
       ],
-      fmt: ["format"],
+      fmt: ["format"]
       # deps_nix
-      "deps.get": ["deps.get", "deps.nix"],
-      "deps.update": ["deps.update", "deps.nix"]
+      # "deps.get": ["deps.get", "deps.nix"],
+      # "deps.update": ["deps.update", "deps.nix"]
     ]
   end
 end
