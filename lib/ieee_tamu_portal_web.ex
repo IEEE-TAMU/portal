@@ -16,8 +16,9 @@ defmodule IeeeTamuPortalWeb do
   below. Instead, define additional modules and import
   those modules here.
   """
+  @favicon_paths ~w(favicon.ico favicon.svg favicon-96x96.png apple-touch-icon.png site.webmanifest web-app-manifest-192x192.png web-app-manifest-512x512.png)
 
-  def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
+  def static_paths, do: ~w(assets fonts images robots.txt) ++ @favicon_paths
 
   def router do
     quote do

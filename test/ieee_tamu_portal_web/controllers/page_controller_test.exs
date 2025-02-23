@@ -3,6 +3,8 @@ defmodule IeeeTamuPortalWeb.PageControllerTest do
 
   test "GET /", %{conn: conn} do
     conn = get(conn, ~p"/")
-    assert html_response(conn, 200) =~ "Peace of mind from prototype to production"
+    page = html_response(conn, 200)
+    assert page =~ "Members"
+    assert page =~ "Sponsors"
   end
 end

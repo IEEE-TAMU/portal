@@ -6,6 +6,7 @@ const fs = require("fs")
 const path = require("path")
 
 module.exports = {
+  darkMode: 'media', // or 'media' or 'class'
   content: [
     "./js/**/*.js",
     "../lib/ieee_tamu_portal_web.ex",
@@ -14,7 +15,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        brand: "#FD4F00",
+        brand: "#3333cc",
       }
     },
   },
