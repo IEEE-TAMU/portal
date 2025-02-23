@@ -378,26 +378,21 @@ let
         in
         drv;
 
-      finch =
+      gen_smtp =
         let
-          version = "0.19.0";
-          drv = buildMix {
+          version = "1.2.0";
+          drv = buildRebar3 {
             inherit version;
-            name = "finch";
-            appConfigPath = ./config;
+            name = "gen_smtp";
 
             src = fetchHex {
               inherit version;
-              pkg = "finch";
-              sha256 = "fc5324ce209125d1e2fa0fcd2634601c52a787aff1cd33ee833664a5af4ea2b6";
+              pkg = "gen_smtp";
+              sha256 = "5ee0375680bca8f20c4d85f58c2894441443a743355430ff33a783fe03296779";
             };
 
             beamDeps = [
-              mime
-              mint
-              nimble_options
-              nimble_pool
-              telemetry
+              ranch
             ];
           };
         in
@@ -486,28 +481,6 @@ let
         in
         drv;
 
-      mint =
-        let
-          version = "1.7.1";
-          drv = buildMix {
-            inherit version;
-            name = "mint";
-            appConfigPath = ./config;
-
-            src = fetchHex {
-              inherit version;
-              pkg = "mint";
-              sha256 = "fceba0a4d0f24301ddee3024ae116df1c3f4bb7a563a731f45fdfeb9d39a231b";
-            };
-
-            beamDeps = [
-              castore
-              hpax
-            ];
-          };
-        in
-        drv;
-
       myxql =
         let
           version = "0.7.1";
@@ -527,40 +500,6 @@ let
               decimal
               jason
             ];
-          };
-        in
-        drv;
-
-      nimble_options =
-        let
-          version = "1.1.1";
-          drv = buildMix {
-            inherit version;
-            name = "nimble_options";
-            appConfigPath = ./config;
-
-            src = fetchHex {
-              inherit version;
-              pkg = "nimble_options";
-              sha256 = "821b2470ca9442c4b6984882fe9bb0389371b8ddec4d45a9504f00a66f650b44";
-            };
-          };
-        in
-        drv;
-
-      nimble_pool =
-        let
-          version = "1.1.0";
-          drv = buildMix {
-            inherit version;
-            name = "nimble_pool";
-            appConfigPath = ./config;
-
-            src = fetchHex {
-              inherit version;
-              pkg = "nimble_pool";
-              sha256 = "af2e4e6b34197db81f7aad230c1118eac993acc0dae6bc83bac0126d4ae0813a";
-            };
           };
         in
         drv;
@@ -761,6 +700,22 @@ let
         in
         drv;
 
+      ranch =
+        let
+          version = "2.2.0";
+          drv = buildRebar3 {
+            inherit version;
+            name = "ranch";
+
+            src = fetchHex {
+              inherit version;
+              pkg = "ranch";
+              sha256 = "fa0b99a1780c80218a4197a59ea8d3bdae32fbff7e88527d7d8a4787eff4f8e7";
+            };
+          };
+        in
+        drv;
+
       swoosh =
         let
           version = "1.17.10";
@@ -777,7 +732,7 @@ let
 
             beamDeps = [
               bandit
-              finch
+              gen_smtp
               jason
               mime
               plug

@@ -18,7 +18,7 @@ defmodule IeeeTamuPortalWeb.MemberLoginLiveTest do
         conn
         |> log_in_member(member_fixture())
         |> live(~p"/members/login")
-        |> follow_redirect(conn, "/")
+        |> follow_redirect(conn, "/membership")
 
       assert {:ok, _conn} = result
     end
@@ -38,7 +38,7 @@ defmodule IeeeTamuPortalWeb.MemberLoginLiveTest do
 
       conn = submit_form(form, conn)
 
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/membership"
     end
 
     test "redirects to login page with a flash error if there are no valid credentials", %{

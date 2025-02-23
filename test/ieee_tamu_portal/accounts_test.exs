@@ -59,11 +59,11 @@ defmodule IeeeTamuPortal.AccountsTest do
     end
 
     test "validates email and password when given" do
-      {:error, changeset} = Accounts.register_member(%{email: "not valid", password: "not valid"})
+      {:error, changeset} = Accounts.register_member(%{email: "not valid", password: "invalid"})
 
       assert %{
-               email: ["must be a TAMU email", "must have the @ sign and no spaces"],
-               password: ["should be at least 12 character(s)"]
+               email: ["must be a TAMU email"],
+               password: ["should be at least 8 character(s)"]
              } = errors_on(changeset)
     end
 
@@ -147,7 +147,7 @@ defmodule IeeeTamuPortal.AccountsTest do
       {:error, changeset} =
         Accounts.apply_member_email(member, valid_member_password(), %{email: "not valid"})
 
-      assert %{email: ["must be a TAMU email", "must have the @ sign and no spaces"]} =
+      assert %{email: ["must be a TAMU email"]} =
                errors_on(changeset)
     end
 
@@ -288,12 +288,12 @@ defmodule IeeeTamuPortal.AccountsTest do
     test "validates password", %{member: member} do
       {:error, changeset} =
         Accounts.update_member_password(member, valid_member_password(), %{
-          password: "not valid",
+          password: "invalid",
           password_confirmation: "another"
         })
 
       assert %{
-               password: ["should be at least 12 character(s)"],
+               password: ["should be at least 8 character(s)"],
                password_confirmation: ["does not match password"]
              } = errors_on(changeset)
     end
@@ -497,12 +497,12 @@ defmodule IeeeTamuPortal.AccountsTest do
     test "validates password", %{member: member} do
       {:error, changeset} =
         Accounts.reset_member_password(member, %{
-          password: "not valid",
+          password: "invalid",
           password_confirmation: "another"
         })
 
       assert %{
-               password: ["should be at least 12 character(s)"],
+               password: ["should be at least 8 character(s)"],
                password_confirmation: ["does not match password"]
              } = errors_on(changeset)
     end

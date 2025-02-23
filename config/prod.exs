@@ -8,9 +8,6 @@ import Config
 config :ieee_tamu_portal, IeeeTamuPortalWeb.Endpoint,
   cache_static_manifest: "priv/static/cache_manifest.json"
 
-# Configures Swoosh API Client
-config :swoosh, api_client: Swoosh.ApiClient.Finch, finch_name: IeeeTamuPortal.Finch
-
 # Disable Swoosh Local Memory Storage
 config :swoosh, local: false
 

@@ -20,7 +20,7 @@ if System.get_env("PHX_SERVER") do
   config :ieee_tamu_portal, IeeeTamuPortalWeb.Endpoint, server: true
 end
 
-if config_env() == :prod do
+if config_env() == :prod and System.get_env("NIX_BUILD_ENV") not in ~w(true 1) do
   database_url =
     System.get_env("DATABASE_URL") ||
       raise """
@@ -48,7 +48,12 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
-  host = System.get_env("PHX_HOST") || "example.com"
+  host =
+    System.get_env("PHX_HOST") ||
+      raise """
+      environment variable PHX_HOST is missing.
+      """
+
   port = String.to_integer(System.get_env("PORT") || "4000")
 
   config :ieee_tamu_portal, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
@@ -98,16 +103,27 @@ if config_env() == :prod do
   # Check `Plug.SSL` for all available options in `force_ssl`.
 
   # ## Configuring the mailer
-  #
-  # In production you need to configure the mailer to use a different adapter.
-  # Also, you may need to configure the Swoosh API client of your choice if you
-  # are not using SMTP. Here is an example of the configuration:
-  #
-  #     config :ieee_tamu_portal, IeeeTamuPortal.Mailer,
-  #       adapter: Swoosh.Adapters.Mailgun,
-  #       api_key: System.get_env("MAILGUN_API_KEY"),
-  #       domain: System.get_env("MAILGUN_DOMAIN")
-  #
+
+  mail_host =
+    System.get_env("MAIL_HOST") ||
+      raise """
+      environment variable MAIL_HOST is missing.
+      """
+
+  mail_port =
+    System.get_env("MAIL_PORT") ||
+      raise """
+      environment variable MAIL_PORT is missing.
+      """
+
+  config :ieee_tamu_portal, IeeeTamuPortal.Mailer,
+    adapter: Swoosh.Adapters.SMTP,
+    relay: mail_host,
+    ssl: false,
+    port: String.to_integer(mail_port)
+
+  config :swoosh, :api_client, false
+
   # For this example you need include a HTTP client required by Swoosh API client.
   # Swoosh supports Hackney and Finch out of the box:
   #

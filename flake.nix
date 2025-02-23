@@ -26,16 +26,23 @@
     in rec {
       devenv-up = self.devShells.${system}.default.config.procfileScript;
       default = portal;
+      # see https://hexdocs.pm/phoenix/releases.html and
+      # https://github.com/code-supply/nix-phoenix/tree/main/flake-template
+      # for more information
       portal = with pkgs;
         beamPackages.mixRelease {
           inherit mixNixDeps;
-          pname = "portal";
+          pname = "ieee-tamu-portal";
           src = ./.;
           version = "0.0.0";
 
-          # dummy values to allow the build to proceed
-          DATABASE_URL = "";
-          SECRET_KEY_BASE = "";
+          # make runtime.ex happy during build
+          NIX_BUILD_ENV = "true";
+
+          # generate phx overlays (migrate and server)
+          preBuild = ''
+            mix phx.gen.release
+          '';
 
           postBuild = ''
             tailwind_path="$(mix do \

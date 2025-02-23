@@ -17,7 +17,7 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLiveTest do
         conn
         |> log_in_member(member_fixture())
         |> live(~p"/members/register")
-        |> follow_redirect(conn, "/")
+        |> follow_redirect(conn, "/membership")
 
       assert {:ok, _conn} = result
     end
@@ -28,11 +28,11 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLiveTest do
       result =
         lv
         |> element("#registration_form")
-        |> render_change(member: %{"email" => "with spaces", "password" => "too short"})
+        |> render_change(member: %{"email" => "with spaces", "password" => "short"})
 
       assert result =~ "Register"
-      assert result =~ "must have the @ sign and no spaces"
-      assert result =~ "should be at least 12 character"
+      assert result =~ "must be a TAMU email"
+      assert result =~ "should be at least 8 character"
     end
   end
 
@@ -45,10 +45,10 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLiveTest do
       render_submit(form)
       conn = follow_trigger_action(form, conn)
 
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/membership"
 
       # Now do a logged in request and assert on the menu
-      conn = get(conn, "/")
+      conn = get(conn, "/membership")
       response = html_response(conn, 200)
       assert response =~ email
       assert response =~ "Settings"

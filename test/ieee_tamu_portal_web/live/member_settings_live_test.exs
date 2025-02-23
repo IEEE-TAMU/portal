@@ -62,7 +62,7 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLiveTest do
         })
 
       assert result =~ "Change Email"
-      assert result =~ "must have the @ sign and no spaces"
+      assert result =~ "must be a TAMU email"
     end
 
     test "renders errors with invalid data (phx-submit)", %{conn: conn, member: member} do
@@ -127,13 +127,13 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLiveTest do
         |> render_change(%{
           "current_password" => "invalid",
           "member" => %{
-            "password" => "too short",
+            "password" => "short",
             "password_confirmation" => "does not match"
           }
         })
 
       assert result =~ "Change Password"
-      assert result =~ "should be at least 12 character(s)"
+      assert result =~ "should be at least 8 character(s)"
       assert result =~ "does not match password"
     end
 
@@ -145,14 +145,14 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLiveTest do
         |> form("#password_form", %{
           "current_password" => "invalid",
           "member" => %{
-            "password" => "too short",
+            "password" => "short",
             "password_confirmation" => "does not match"
           }
         })
         |> render_submit()
 
       assert result =~ "Change Password"
-      assert result =~ "should be at least 12 character(s)"
+      assert result =~ "should be at least 8 character(s)"
       assert result =~ "does not match password"
       assert result =~ "is not valid"
     end
