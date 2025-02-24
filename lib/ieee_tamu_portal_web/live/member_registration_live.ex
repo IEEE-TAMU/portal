@@ -8,13 +8,13 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLive do
     ~H"""
     <div class="mx-auto max-w-sm">
       <.header class="text-center">
-        Register for an account
+        Register for membership
         <:subtitle>
           Already registered?
           <.link navigate={~p"/members/login"} class="font-semibold text-brand hover:underline">
             Log in
           </.link>
-          to your account now.
+          now.
         </:subtitle>
       </.header>
 

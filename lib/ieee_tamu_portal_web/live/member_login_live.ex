@@ -5,13 +5,13 @@ defmodule IeeeTamuPortalWeb.MemberLoginLive do
     ~H"""
     <div class="mx-auto max-w-sm">
       <.header class="text-center">
-        Log in to account
+        Log in
         <:subtitle>
-          Don't have an account?
+          Aren't a member yet?
           <.link navigate={~p"/members/register"} class="font-semibold text-brand hover:underline">
             Sign up
           </.link>
-          for an account now.
+          for membership now.
         </:subtitle>
       </.header>
 

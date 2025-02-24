@@ -366,7 +366,39 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
     """
   end
 
-  # All other inputs text, datetime-local, url, password, etc. are handled here...
+  def input(%{type: "password"} = assigns) do
+    ~H"""
+    <div>
+      <.label for={@id}>{@label}</.label>
+      <div class="mt-1 relative rounded-md shadow-sm">
+        <input
+          type={@type}
+          name={@name}
+          id={@id}
+          value={Phoenix.HTML.Form.normalize_value(@type, @value)}
+          class={[
+            "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
+            @errors == [] && "border-zinc-300 focus:border-zinc-400",
+            @errors != [] && "border-rose-400 focus:border-rose-400"
+          ]}
+          style="padding-right: 2.5rem"
+          {@rest}
+        />
+        <button
+          type="button"
+          class="absolute right-2 top-1/2 transform -translate-y-1/2"
+          phx-click={toggle_password_visibility(@id)}
+        >
+          <.icon id={"#{@id}-eye"} name="hero-eye" />
+          <.icon id={"#{@id}-eye-slash"} name="hero-eye-slash" class="hidden" />
+        </button>
+      </div>
+      <.error :for={msg <- @errors}>{msg}</.error>
+    </div>
+    """
+  end
+
+  # All other inputs text, datetime-local, url, etc. are handled here...
   def input(assigns) do
     ~H"""
     <div>
@@ -590,10 +622,11 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
   """
   attr :name, :string, required: true
   attr :class, :string, default: nil
+  attr :id, :string, default: nil
 
   def icon(%{name: "hero-" <> _} = assigns) do
     ~H"""
-    <span class={[@name, @class]} />
+    <span class={[@name, @class]} id={@id} />
     """
   end
 
@@ -644,6 +677,13 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
     |> JS.hide(to: "##{id}", transition: {"block", "block", "hidden"})
     |> JS.remove_class("overflow-hidden", to: "body")
     |> JS.pop_focus()
+  end
+
+  def toggle_password_visibility(js \\ %JS{}, id) do
+    js
+    |> JS.toggle_attribute({"type", "password", "text"}, to: "##{id}")
+    |> JS.toggle_class("hidden", to: "##{id}-eye")
+    |> JS.toggle_class("hidden", to: "##{id}-eye-slash")
   end
 
   @doc """
