@@ -2,10 +2,6 @@
   <style>
     circle { fill: white; }
     polygon { fill: black; }
-    @media (prefers-color-scheme: dark) { 
-      circle { fill: black; } 
-      polygon { fill: white; } 
-    }
   </style>
   <circle cx="250" cy="250" r="250"/>
   <polygon points="325,100 175,250 225,250"/>
