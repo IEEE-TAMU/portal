@@ -20,7 +20,12 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <.input field={@info_form[:first_name]} label="First name" type="text" required />
             <.input field={@info_form[:last_name]} label="Last name" type="text" required />
-            <.input field={@info_form[:preferred_name]} label="Preferred name" type="text" />
+            <.input
+              field={@info_form[:preferred_name]}
+              label="Preferred name"
+              type="text"
+              placeholder={@info_form[:first_name].value}
+            />
             <.input
               field={@info_form[:tshirt_size]}
               label="T-shirt size"
