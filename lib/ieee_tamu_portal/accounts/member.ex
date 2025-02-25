@@ -10,7 +10,7 @@ defmodule IeeeTamuPortal.Accounts.Member do
     field :confirmed_at, :utc_datetime
 
     timestamps(type: :utc_datetime)
-    has_many :tokens, IeeeTamuPortal.Accounts.Token
+    has_many :tokens, IeeeTamuPortal.Accounts.MemberToken
     has_one :info, IeeeTamuPortal.Members.Info
   end
 

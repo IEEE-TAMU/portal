@@ -1,38 +1,116 @@
 defmodule IeeeTamuPortalWeb.MemberSettingsLive do
   use IeeeTamuPortalWeb, :live_view
 
-  alias IeeeTamuPortal.Accounts
+  alias IeeeTamuPortal.{Accounts, Members, Repo}
 
   def render(assigns) do
     ~H"""
     <.header class="text-center">
-      Account Settings
-      <:subtitle>Manage your account email address and password settings</:subtitle>
+      Personal information
     </.header>
 
-    <div class="space-y-12 divide-y">
+    <div class="space-y-12">
       <div>
         <.simple_form
-          for={@email_form}
-          id="email_form"
-          phx-submit="update_email"
-          phx-change="validate_email"
+          for={@info_form}
+          id="info_form"
+          phx-submit="update_info"
+          phx-change="validate_info"
         >
-          <.input field={@email_form[:email]} type="email" label="Email" required />
-          <.input
-            field={@email_form[:current_password]}
-            name="current_password"
-            id="current_password_for_email"
-            type="password"
-            label="Current password"
-            value={@email_form_current_password}
-            required
-          />
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <.input field={@info_form[:first_name]} label="First name" type="text" required />
+            <.input field={@info_form[:last_name]} label="Last name" type="text" required />
+            <.input field={@info_form[:preferred_name]} label="Preferred name" type="text" />
+            <.input
+              field={@info_form[:tshirt_size]}
+              label="T-shirt size"
+              type="select"
+              prompt="Select a size"
+              options={Ecto.Enum.values(Members.Info, :tshirt_size)}
+              required
+            />
+            <.input
+              field={@info_form[:phone_number]}
+              label="Phone number"
+              type="tel"
+              placeholder="979-845-7200"
+              phx-hook="PhoneNumber"
+              phx-change="validate_phone_number"
+            />
+            <.input field={@info_form[:age]} label="Age" type="number" />
+            <.input
+              field={@info_form[:gender]}
+              label="Gender"
+              type="select"
+              options={Ecto.Enum.values(Members.Info, :gender)}
+              required
+            />
+            <.input
+              :if={@info_form[:gender].value in [:Other, "Other"]}
+              field={@info_form[:gender_other]}
+              label="Please specify"
+              type="text"
+            />
+          </div>
+          <.header class="text-center mt-4">Academic information</.header>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <.input field={@info_form[:uin]} label="UIN" type="text" required />
+            <.input
+              field={@info_form[:ieee_membership_number]}
+              label="IEEE Membership Number"
+              type="text"
+            />
+            <.input
+              field={@info_form[:major]}
+              label="Major"
+              type="select"
+              options={Ecto.Enum.values(Members.Info, :major)}
+              required
+            />
+            <.input
+              :if={@info_form[:major].value == :Other}
+              field={@info_form[:major_other]}
+              label="Please specify"
+              type="text"
+              required
+            />
+            <div class="flex items-center justify-center">
+              <.input
+                field={@info_form[:international_student]}
+                label="International student?"
+                type="checkbox"
+              />
+            </div>
+            <.input
+              :if={
+                Phoenix.HTML.Form.normalize_value(
+                  "checkbox",
+                  @info_form[:international_student].value
+                ) or
+                  (
+                    country = @info_form[:international_country].value
+                    country != nil and country != ""
+                  )
+              }
+              field={@info_form[:international_country]}
+              label="Country of origin"
+              type="text"
+            />
+            <.input
+              field={@info_form[:graduation_year]}
+              label="Graduation year"
+              type="number"
+              required
+            />
+          </div>
           <:actions>
-            <.button phx-disable-with="Changing...">Change Email</.button>
+            <.button phx-disable-with="Saving...">Save</.button>
           </:actions>
         </.simple_form>
       </div>
+      <.header class="text-center">
+        Change password
+      </.header>
       <div>
         <.simple_form
           for={@password_form}
@@ -73,66 +151,75 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
     """
   end
 
-  def mount(%{"token" => token}, _session, socket) do
-    socket =
-      case Accounts.update_member_email(socket.assigns.current_member, token) do
-        :ok ->
-          put_flash(socket, :info, "Email changed successfully.")
-
-        :error ->
-          put_flash(socket, :error, "Email change link is invalid or it has expired.")
-      end
-
-    {:ok, push_navigate(socket, to: ~p"/members/settings")}
-  end
-
   def mount(_params, _session, socket) do
-    member = socket.assigns.current_member
-    email_changeset = Accounts.change_member_email(member)
+    member =
+      socket.assigns.current_member
+      |> Repo.preload(:info)
+
+    info = member.info || %Members.Info{}
+    info_changeset = Members.change_member_info(info)
     password_changeset = Accounts.change_member_password(member)
 
     socket =
       socket
+      |> assign(:current_member, member)
       |> assign(:current_password, nil)
-      |> assign(:email_form_current_password, nil)
       |> assign(:current_email, member.email)
-      |> assign(:email_form, to_form(email_changeset))
+      |> assign(:info_form, to_form(info_changeset))
       |> assign(:password_form, to_form(password_changeset))
       |> assign(:trigger_submit, false)
 
     {:ok, socket}
   end
 
-  def handle_event("validate_email", params, socket) do
-    %{"current_password" => password, "member" => member_params} = params
+  def handle_event("validate_info", params, socket) do
+    %{"info" => info_params} = params
+    info = socket.assigns.current_member.info || %Members.Info{}
 
-    email_form =
-      socket.assigns.current_member
-      |> Accounts.change_member_email(member_params)
+    info_form =
+      info
+      |> Members.change_member_info(info_params)
       |> Map.put(:action, :validate)
       |> to_form()
 
-    {:noreply, assign(socket, email_form: email_form, email_form_current_password: password)}
+    {:noreply, assign(socket, info_form: info_form)}
   end
 
-  def handle_event("update_email", params, socket) do
-    %{"current_password" => password, "member" => member_params} = params
+  def handle_event("update_info", params, socket) do
+    %{"info" => info_params} = params
     member = socket.assigns.current_member
 
-    case Accounts.apply_member_email(member, password, member_params) do
-      {:ok, applied_member} ->
-        Accounts.deliver_member_update_email_instructions(
-          applied_member,
-          member.email,
-          &url(~p"/members/settings/confirm_email/#{&1}")
-        )
+    update_or_create_info = fn
+      %Members.Info{} = info -> Members.update_member_info(info, info_params)
+      nil -> Members.create_member_info(member, info_params)
+    end
 
-        info = "A link to confirm your email change has been sent to the new address."
-        {:noreply, socket |> put_flash(:info, info) |> assign(email_form_current_password: nil)}
+    case update_or_create_info.(member.info) do
+      {:ok, info} ->
+        member = %Accounts.Member{member | info: info}
+
+        info_form =
+          info
+          |> Members.change_member_info()
+          |> to_form()
+
+        socket =
+          socket
+          |> Phoenix.LiveView.put_flash(:info, "Your information has been updated.")
+          |> assign(:current_member, member)
+          |> assign(:info_form, info_form)
+
+        {:noreply, socket}
 
       {:error, changeset} ->
-        {:noreply, assign(socket, :email_form, to_form(Map.put(changeset, :action, :insert)))}
+        {:noreply, assign(socket, info_form: to_form(changeset))}
     end
+  end
+
+  def handle_event("validate_phone_number", _params, socket) do
+    # ignore validating phone number until form submission
+
+    {:noreply, socket}
   end
 
   def handle_event("validate_password", params, socket) do

@@ -119,6 +119,7 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
         @kind == :info && "bg-emerald-50 text-emerald-800 ring-emerald-500 fill-cyan-900",
         @kind == :error && "bg-rose-50 text-rose-900 shadow-md ring-rose-500 fill-rose-900"
       ]}
+      phx-hook="Flash"
       {@rest}
     >
       <p :if={@title} class="flex items-center gap-1.5 text-sm font-semibold leading-6">
@@ -335,11 +336,13 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
       <select
         id={@id}
         name={@name}
-        class="mt-2 block w-full rounded-md border border-gray-300 bg-gray-100 shadow-sm focus:border-zinc-400 focus:ring-0 sm:text-sm"
+        class="mt-2 block w-full rounded-lg border border-gray-300 shadow-sm focus:border-zinc-400 focus:ring-0 sm:text-sm"
         multiple={@multiple}
         {@rest}
       >
-        <option :if={@prompt} value="">{@prompt}</option>
+        <option value="" class="select-prompt" disabled={@value && @value != ""}>
+          {@prompt || "Select"}
+        </option>
         {Phoenix.HTML.Form.options_for_select(@options, @value)}
       </select>
       <.error :for={msg <- @errors}>{msg}</.error>
@@ -355,7 +358,7 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
         id={@id}
         name={@name}
         class={[
-          "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 min-h-[6rem]",
+          "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm min-h-[6rem]",
           @errors == [] && "border-zinc-300 focus:border-zinc-400",
           @errors != [] && "border-rose-400 focus:border-rose-400"
         ]}
@@ -377,7 +380,7 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
           id={@id}
           value={Phoenix.HTML.Form.normalize_value(@type, @value)}
           class={[
-            "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
+            "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm",
             @errors == [] && "border-zinc-300 focus:border-zinc-400",
             @errors != [] && "border-rose-400 focus:border-rose-400"
           ]}
@@ -388,6 +391,7 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
           type="button"
           class="absolute right-2 top-1/2 transform -translate-y-1/2"
           phx-click={toggle_password_visibility(@id)}
+          tabindex="-1"
         >
           <.icon id={"#{@id}-eye"} name="hero-eye" />
           <.icon id={"#{@id}-eye-slash"} name="hero-eye-slash" class="hidden" />
@@ -409,7 +413,7 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
         id={@id}
         value={Phoenix.HTML.Form.normalize_value(@type, @value)}
         class={[
-          "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
+          "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm",
           @errors == [] && "border-zinc-300 focus:border-zinc-400",
           @errors != [] && "border-rose-400 focus:border-rose-400"
         ]}

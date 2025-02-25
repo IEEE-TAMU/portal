@@ -18,18 +18,50 @@
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
 import "phoenix_html"
 // Establish Phoenix Socket and LiveView configuration.
-import {Socket} from "phoenix"
-import {LiveSocket} from "phoenix_live_view"
+import { Socket } from "phoenix"
+import { LiveSocket } from "phoenix_live_view"
 import topbar from "../vendor/topbar"
+
+let Hooks = {}
+Hooks.Flash = {
+  mounted() {
+    const time = 3000;
+    let hide = () => liveSocket.execJS(this.el, this.el.getAttribute("phx-click"))
+    this.timer = setTimeout(() => hide(), time)
+    this.el.addEventListener("phx:hide-start", () => clearTimeout(this.timer))
+    this.el.addEventListener("mouseover", () => {
+      clearTimeout(this.timer)
+    })
+    this.el.addEventListener("mouseout", () => {
+      this.timer = setTimeout(() => hide(), time)
+    })
+  },
+  destroyed() { clearTimeout(this.timer) }
+}
+Hooks.PhoneNumber = {
+  mounted() {
+    let func = e => {
+      const value = this.el.value.replace(/\D/g, "")
+      this.el.value = value
+      match = value.match(/^(\d{3})(\d{1,3})?(\d{1,4})?$/)
+      if (match) {
+        this.el.value = match[1] + (match[2] ? "-" + match[2] : "") + (match[3] ? "-" + match[3] : "")
+      }
+    }
+    this.el.addEventListener("input", func)
+    func()
+  }
+}
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
-  params: {_csrf_token: csrfToken}
+  params: { _csrf_token: csrfToken },
+  hooks: Hooks
 })
 
 // Show progress bar on live navigation and form submits
-topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
+topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" })
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 
