@@ -18,8 +18,8 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
           phx-change="validate_info"
         >
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <.input field={@info_form[:first_name]} label="First name" type="text" required />
-            <.input field={@info_form[:last_name]} label="Last name" type="text" required />
+            <.input field={@info_form[:first_name]} label="First name *" type="text" required />
+            <.input field={@info_form[:last_name]} label="Last name *" type="text" required />
             <.input
               field={@info_form[:preferred_name]}
               label="Preferred name"
@@ -28,7 +28,7 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
             />
             <.input
               field={@info_form[:tshirt_size]}
-              label="T-shirt size"
+              label="T-shirt size *"
               type="select"
               prompt="Select a size"
               options={Ecto.Enum.values(Members.Info, :tshirt_size)}
@@ -38,14 +38,14 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
               field={@info_form[:phone_number]}
               label="Phone number"
               type="tel"
-              placeholder="979-845-7200"
+              placeholder="Ex. 979-845-7200"
               phx-hook="PhoneNumber"
               phx-change="validate_phone_number"
             />
             <.input field={@info_form[:age]} label="Age" type="number" />
             <.input
               field={@info_form[:gender]}
-              label="Gender"
+              label="Gender *"
               type="select"
               options={Ecto.Enum.values(Members.Info, :gender)}
               required
@@ -59,27 +59,34 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
           </div>
           <.header class="text-center mt-4">Academic information</.header>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <.input field={@info_form[:uin]} label="UIN" type="text" required />
+            <.input
+              field={@info_form[:uin]}
+              label="UIN *"
+              type="text"
+              placeholder="Ex. 7310006823"
+              required
+            />
             <.input
               field={@info_form[:ieee_membership_number]}
               label="IEEE Membership Number"
               type="text"
+              placeholder="Ex. 97775577"
             />
             <.input
               field={@info_form[:major]}
-              label="Major"
+              label="Major *"
               type="select"
               options={Ecto.Enum.values(Members.Info, :major)}
               required
             />
             <.input
-              :if={@info_form[:major].value == :Other}
+              :if={@info_form[:major].value in [:Other, "Other"]}
               field={@info_form[:major_other]}
-              label="Please specify"
+              label="Please specify *"
               type="text"
               required
             />
-            <div class="flex items-center justify-center">
+            <div class="flex justify-center">
               <.input
                 field={@info_form[:international_student]}
                 label="International student?"
@@ -98,12 +105,13 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
                   )
               }
               field={@info_form[:international_country]}
-              label="Country of origin"
+              label="Country of origin *"
               type="text"
+              required
             />
             <.input
               field={@info_form[:graduation_year]}
-              label="Graduation year"
+              label="Graduation year *"
               type="number"
               required
             />
