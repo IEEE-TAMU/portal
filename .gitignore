@@ -47,6 +47,7 @@ result-*
 /.direnv/
 /.pre-commit-config.yaml
 
+.DS_Store
 
 # LSP stuff
 /.elixir_ls/
