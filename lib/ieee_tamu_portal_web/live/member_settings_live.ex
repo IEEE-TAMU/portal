@@ -40,7 +40,6 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
               type="tel"
               placeholder="Ex. 979-845-7200"
               phx-hook="PhoneNumber"
-              phx-change="validate_phone_number"
             />
             <.input field={@info_form[:age]} label="Age" type="number" />
             <.input
@@ -86,7 +85,7 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
               type="text"
               required
             />
-            <div class="flex justify-center">
+            <div class="flex justify-center items-center">
               <.input
                 field={@info_form[:international_student]}
                 label="International student?"
@@ -169,8 +168,7 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
       socket.assigns.current_member
       |> Repo.preload(:info)
 
-    info = member.info || %Members.Info{}
-    info_changeset = Members.change_member_info(info)
+    info_changeset = Members.change_member_info(member.info)
     password_changeset = Accounts.change_member_password(member)
 
     socket =
@@ -187,7 +185,7 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
 
   def handle_event("validate_info", params, socket) do
     %{"info" => info_params} = params
-    info = socket.assigns.current_member.info || %Members.Info{}
+    info = socket.assigns.current_member.info
 
     info_form =
       info
@@ -227,12 +225,6 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
       {:error, changeset} ->
         {:noreply, assign(socket, info_form: to_form(changeset))}
     end
-  end
-
-  def handle_event("validate_phone_number", _params, socket) do
-    # ignore validating phone number until form submission
-
-    {:noreply, socket}
   end
 
   def handle_event("validate_password", params, socket) do

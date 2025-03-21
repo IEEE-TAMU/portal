@@ -12,6 +12,7 @@ defmodule IeeeTamuPortal.Accounts.Member do
     timestamps(type: :utc_datetime)
     has_many :tokens, IeeeTamuPortal.Accounts.MemberToken
     has_one :info, IeeeTamuPortal.Members.Info
+    has_one :resume, IeeeTamuPortal.Members.Resume
   end
 
   @doc """

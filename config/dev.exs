@@ -83,3 +83,23 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+# ## Cloudflare R2
+
+bucket =
+  System.get_env("R2_BUCKET")
+
+account_id =
+  System.get_env("CF_ACCOUNT_ID")
+
+access_key_id =
+  System.get_env("R2_BUCKET_KEY_ID")
+
+secret_access_key =
+  System.get_env("R2_BUCKET_ACCESS_KEY")
+
+config :ieee_tamu_portal, IeeeTamuPortalWeb.Upload.SimpleS3Upload,
+  region: "auto",
+  access_key_id: access_key_id,
+  secret_access_key: secret_access_key,
+  url: "https://#{bucket}.#{account_id}.r2.cloudflarestorage.com"

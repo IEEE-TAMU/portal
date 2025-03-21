@@ -6,7 +6,7 @@ defmodule IeeeTamuPortal.Members do
   import Ecto.Query, warn: false
   alias IeeeTamuPortal.Repo
 
-  alias IeeeTamuPortal.Members.Info
+  alias IeeeTamuPortal.Members.{Info, Resume}
 
   ## Database getters
 
@@ -42,6 +42,7 @@ defmodule IeeeTamuPortal.Members do
 
   """
   def change_member_info(info, attrs \\ %{}) do
+    info = info || %Info{}
     Info.changeset(info, attrs)
   end
 
@@ -66,6 +67,44 @@ defmodule IeeeTamuPortal.Members do
   def create_member_info(member, attrs) do
     %Info{member_id: member.id}
     |> Info.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for changing the member resume.
+
+  ## Examples
+
+      iex> change_member_resume(resume)
+      %Ecto.Changeset{data: %Resume{}}
+
+  """
+  def change_member_resume(resume, attrs \\ %{}) do
+    resume = resume || %Resume{}
+    Resume.changeset(resume, attrs)
+  end
+
+  @doc """
+  Updates the member resume.
+
+  ## Examples
+
+      iex> update_member_resume(resume, attrs)
+      {:ok, %Resume{}}
+
+      iex> update_member_resume(resume, %{})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_member_resume(resume, attrs) do
+    resume
+    |> Resume.changeset(attrs)
+    |> Repo.update()
+  end
+
+  def create_member_resume(member, attrs) do
+    %Resume{member_id: member.id}
+    |> Resume.changeset(attrs)
     |> Repo.insert()
   end
 end

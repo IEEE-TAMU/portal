@@ -130,4 +130,36 @@ if config_env() == :prod and System.get_env("NIX_BUILD_ENV") not in ~w(true 1) d
   #     config :swoosh, :api_client, Swoosh.ApiClient.Hackney
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
+
+  # ## Cloudflare R2
+
+  bucket =
+    System.get_env("R2_BUCKET") ||
+      raise """
+      environment variable R2_BUCKET is missing.
+      """
+
+  account_id =
+    System.get_env("CF_ACCOUNT_ID") ||
+      raise """
+      environment variable CF_ACCOUNT_ID is missing.
+      """
+
+  access_key_id =
+    System.get_env("R2_BUCKET_KEY_ID") ||
+      raise """
+      environment variable R2_BUCKET_KEY_ID is missing.
+      """
+
+  secret_access_key =
+    System.get_env("R2_BUCKET_ACCESS_KEY") ||
+      raise """
+      environment variable R2_BUCKET_ACCESS_KEY is missing.
+      """
+
+  config :ieee_tamu_portal, IeeeTamuPortalWeb.Upload.SimpleS3Upload,
+    region: "auto",
+    access_key_id: access_key_id,
+    secret_access_key: secret_access_key,
+    url: "https://#{bucket}.#{account_id}.r2.cloudflarestorage.com"
 end
