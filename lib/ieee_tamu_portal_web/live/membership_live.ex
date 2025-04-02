@@ -65,7 +65,11 @@ defmodule IeeeTamuPortalWeb.MembershipLive do
       </div>
       <div class="mt-2 flex items-center justify-between gap-6">
         <.button phx-disable-with="Uploading...">Upload</.button>
+        <.button :if={@current_member.resume} phx-click="delete_resume" phx-disable-with="Deleting...">
+          Delete
+        </.button>
       </div>
+      <div class="mt-2 flex items-center justify-between gap-6"></div>
     </form>
     """
   end
@@ -82,7 +86,7 @@ defmodule IeeeTamuPortalWeb.MembershipLive do
           nil
 
         resume ->
-          uri = "#{resume.bucket_url}/#{URI.encode(resume.key)}"
+          uri = uri(resume)
           {:ok, url} = SimpleS3Upload.presigned_get(uri: uri)
           url
       end
@@ -111,6 +115,27 @@ defmodule IeeeTamuPortalWeb.MembershipLive do
 
   def handle_event("save", _params, socket) do
     {:noreply, save_resume(socket)}
+  end
+
+  def handle_event("delete_resume", _params, socket) do
+    {:noreply, delete_resume(socket)}
+  end
+
+  defp delete_resume(socket) do
+    member = socket.assigns.current_member
+    resume = member.resume
+
+    # TODO: delete from S3
+
+    # delete from DB
+    Repo.delete(resume)
+
+    member = %Accounts.Member{member | resume: nil}
+
+    socket
+    |> assign(:resume_url, nil)
+    |> assign(:current_member, member)
+    |> Phoenix.LiveView.put_flash(:info, "Resume deleted successfully")
   end
 
   defp save_resume(socket) do
@@ -151,6 +176,10 @@ defmodule IeeeTamuPortalWeb.MembershipLive do
   defp key(member, entry) do
     filename = "#{member.id}-#{member.email}#{Path.extname(entry.client_name)}"
     "resumes/#{filename}"
+  end
+
+  defp uri(resume) do
+    "#{resume.bucket_url}/#{URI.encode(resume.key)}"
   end
 
   defp presign_upload(entry, socket) do

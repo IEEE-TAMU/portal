@@ -2,19 +2,23 @@
 
 
 ### general
-- email verification before login
-- member info onboarding
-- account deletion
-- preferred name placeholder client side updates - use phoenix framework not heex
+- [ ] email verification before login
+- [ ] member info onboarding
+- [ ] account deletion (and associated info)
+- [ ] preferred name placeholder client side updates - use phoenix framework not heex
+- [ ] only show email in top bar if screen is wide enough
 
 ### resume
-- uploads
-- max file size?
-- pdf only
-- bulk download for sponsors - zip stream
-- previewer for student
-- show original file name
-- set up table - member_id (index), uploaded name, original name, date uploaded, download link
+- [x] uploads
+- [x] max file size? (5MB)
+- [x] pdf only
+- [ ] bulk download for sponsors - zip stream
+- [x] previewer for student
+- [x] show original file name (original filename in DB - not shown to user)
+- [x] set up table - member_id (index), uploaded name, original name, date uploaded, download link
+- [x] delete button
+- [ ] delete resume from S3 when user/resume is deleted
+- [ ] better errors when file is too large or not a pdf
 
 ### admin panel
 - basic auth?
