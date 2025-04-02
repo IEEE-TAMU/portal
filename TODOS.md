@@ -6,7 +6,7 @@
 - [ ] member info onboarding
 - [ ] account deletion (and associated info)
 - [ ] preferred name placeholder client side updates - use phoenix framework not heex
-- [ ] only show email in top bar if screen is wide enough
+- [x] only show email in top bar if screen is wide enough
 
 ### resume
 - [x] uploads

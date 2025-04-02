@@ -14,11 +14,12 @@
     </div>
     <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900 text-[0.8125rem]">
       <%= if @current_member do %>
-        <p>
+        <p class="max-sm:hidden">
           {@current_member.email}
         </p>
         <.link href={~p"/members/settings"} class="hover:text-zinc-700" title="Settings">
-          <.icon name="hero-cog-6-tooth" />
+          <.icon class="sm:hidden" name="hero-cog-6-tooth" />
+          <p class="max-sm:hidden">Settings</p>
         </.link>
         <.link
           href={~p"/members/log_out"}
@@ -26,7 +27,8 @@
           class="hover:text-zinc-700"
           title="Log out"
         >
-          <.icon name="hero-arrow-left-start-on-rectangle" />
+          <.icon class="sm:hidden" name="hero-arrow-left-start-on-rectangle" />
+          <p class="max-sm:hidden">Log out</p>
         </.link>
       <% else %>
         <.link href={~p"/members/register"} class="hover:text-zinc-700">
