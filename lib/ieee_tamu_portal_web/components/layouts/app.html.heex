@@ -18,9 +18,14 @@
           {@current_member.email}
         </p>
         <.link href={~p"/members/settings"} class="hover:text-zinc-700" title="Settings">
-          <.icon name="hero-cog-6-tooth"  />
+          <.icon name="hero-cog-6-tooth" />
         </.link>
-        <.link href={~p"/members/log_out"} method="delete" class="hover:text-zinc-700" title="Log out">
+        <.link
+          href={~p"/members/log_out"}
+          method="delete"
+          class="hover:text-zinc-700"
+          title="Log out"
+        >
           <.icon name="hero-arrow-left-start-on-rectangle" />
         </.link>
       <% else %>
