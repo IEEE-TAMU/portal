@@ -41,23 +41,23 @@ defmodule IeeeTamuPortalWeb.MembershipLive do
           </article>
         <% end %>
         <%= if length(@uploads.member_resume.entries) == 0 do %>
-          <div class="mt-1 sm:mt-0  flex-grow" phx-drop-target={@uploads.member_resume.ref}>
-            <div class="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+          <div class="mt-1 sm:mt-0 flex-grow" phx-drop-target={@uploads.member_resume.ref}>
+            <div class="flex-col justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
               <div class="space-y-1 text-center">
                 <.icon name="hero-document-text" />
-                <div class="flex text-sm text-gray-600">
+                <div class="flex-col justify-center text-sm pb-4">
+                  <p class="pb-2">Drag and drop your resume here, or</p>
                   <label
-                    for="file-upload"
-                    class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
+                    for={@uploads.member_resume.ref}
+                    class="relative cursor-pointer rounded-md font-medium px-4 py-2 text-white bg-zinc-900 hover:bg-zinc-700 focus-within:ring-2 focus-within:ring-offset-1"
                   >
-                    <label for={@uploads.member_resume.ref}>Upload file</label>
+                    Choose file
                     <.live_file_input upload={@uploads.member_resume} class="sr-only" tabindex="0" />
                   </label>
-                  <p class="pl-1">or drag and drop</p>
                 </div>
-                <p class="text-xs text-gray-500">
-                  pdfs up to 5MB
-                </p>
+              </div>
+              <div class="text-xs text-center text-gray-500">
+                PDFs only | Max 5MB
               </div>
             </div>
           </div>
