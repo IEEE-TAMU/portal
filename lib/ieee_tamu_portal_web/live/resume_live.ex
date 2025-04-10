@@ -28,7 +28,6 @@ defmodule IeeeTamuPortalWeb.ResumeLive do
         <%= for entry <- @uploads.member_resume.entries do %>
           <article class="upload-entry" phx-drop-target={@uploads.member_resume.ref}>
             <span class="upload-entry-name">{entry.client_name}</span>
-
             <button
               type="button"
               phx-click="cancel-upload"
@@ -36,11 +35,10 @@ defmodule IeeeTamuPortalWeb.ResumeLive do
               aria-label="cancel"
             >
               <.icon name="hero-x-mark" />
-              <.live_file_input upload={@uploads.member_resume} class="sr-only" tabindex="0" />
             </button>
           </article>
         <% end %>
-        <%= if length(@uploads.member_resume.entries) == 0 do %>
+        <%= if length(@uploads.member_resume.entries) < @uploads.member_resume.max_entries do %>
           <div class="mt-1 sm:mt-0 flex-grow" phx-drop-target={@uploads.member_resume.ref}>
             <div class="flex-col justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
               <div class="space-y-1 text-center">
@@ -52,7 +50,6 @@ defmodule IeeeTamuPortalWeb.ResumeLive do
                     class="relative cursor-pointer rounded-md font-medium px-4 py-2 text-white bg-zinc-900 hover:bg-zinc-700 focus-within:ring-2 focus-within:ring-offset-1"
                   >
                     Choose file
-                    <.live_file_input upload={@uploads.member_resume} class="sr-only" tabindex="0" />
                   </label>
                 </div>
               </div>
@@ -62,11 +59,18 @@ defmodule IeeeTamuPortalWeb.ResumeLive do
             </div>
           </div>
         <% end %>
+        <.live_file_input upload={@uploads.member_resume} class="sr-only" tabindex="0" />
       </div>
       <div class="mt-2 flex items-center justify-between gap-6">
-        <.button phx-disable-with="Uploading...">Upload</.button>
+        <.button phx-disable-with="Uploading...">
+          {if @current_member.resume do
+            "Update"
+          else
+            "Upload"
+          end}
+        </.button>
         <.button :if={@current_member.resume} phx-click="delete_resume" phx-disable-with="Deleting...">
-          Delete
+          Delete Current
         </.button>
       </div>
       <div class="mt-2 flex items-center justify-between gap-6"></div>
