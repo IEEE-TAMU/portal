@@ -39,7 +39,7 @@ defmodule IeeeTamuPortalWeb.Router do
     end
   end
 
-  # routes available to unauthenticated members
+  # routes available to unauthenticated users
   scope "/", IeeeTamuPortalWeb do
     pipe_through [:browser, :redirect_if_member_is_authenticated]
 
@@ -60,7 +60,10 @@ defmodule IeeeTamuPortalWeb.Router do
     pipe_through [:browser, :require_authenticated_member]
 
     live_session :require_authenticated_member,
-      on_mount: [{IeeeTamuPortalWeb.MemberAuth, :ensure_authenticated}] do
+      on_mount: [
+        {IeeeTamuPortalWeb.MemberAuth, :ensure_authenticated},
+        {IeeeTamuPortalWeb.MemberAuth, :ensure_confirmed}
+      ] do
       live "/members/settings", MemberSettingsLive, :edit
       live "/members/settings/confirm_email/:token", MemberSettingsLive, :confirm_email
       live "/resume", ResumeLive, :show

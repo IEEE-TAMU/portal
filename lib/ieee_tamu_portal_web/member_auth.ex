@@ -164,6 +164,21 @@ defmodule IeeeTamuPortalWeb.MemberAuth do
     end
   end
 
+  def on_mount(:ensure_confirmed, _params, session, socket) do
+    socket = mount_current_member(socket, session)
+
+    if socket.assigns.current_member.confirmed_at != nil do
+      {:cont, socket}
+    else
+      socket =
+        socket
+        |> Phoenix.LiveView.put_flash(:error, "You must confirm your email to access this page.")
+        |> Phoenix.LiveView.redirect(to: ~p"/members/confirm")
+
+      {:halt, socket}
+    end
+  end
+
   def on_mount(:redirect_if_member_is_authenticated, _params, session, socket) do
     socket = mount_current_member(socket, session)
 
@@ -225,5 +240,5 @@ defmodule IeeeTamuPortalWeb.MemberAuth do
 
   defp maybe_store_return_to(conn), do: conn
 
-  defp signed_in_path(_conn), do: ~p"/resume"
+  defp signed_in_path(_conn), do: ~p"/members/settings"
 end
