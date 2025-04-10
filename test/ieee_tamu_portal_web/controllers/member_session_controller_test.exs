@@ -15,10 +15,10 @@ defmodule IeeeTamuPortalWeb.MemberSessionControllerTest do
         })
 
       assert get_session(conn, :member_token)
-      assert redirected_to(conn) == ~p"/membership"
+      assert redirected_to(conn) == ~p"/resume"
 
       # Now do a logged in request and assert on the menu
-      conn = get(conn, ~p"/membership")
+      conn = get(conn, ~p"/resume")
       response = html_response(conn, 200)
       assert response =~ member.email
       assert response =~ ~p"/members/settings"
@@ -36,7 +36,7 @@ defmodule IeeeTamuPortalWeb.MemberSessionControllerTest do
         })
 
       assert conn.resp_cookies["_ieee_tamu_portal_web_member_remember_me"]
-      assert redirected_to(conn) == ~p"/membership"
+      assert redirected_to(conn) == ~p"/resume"
     end
 
     test "logs the member in with return to", %{conn: conn, member: member} do
@@ -65,7 +65,7 @@ defmodule IeeeTamuPortalWeb.MemberSessionControllerTest do
           }
         })
 
-      assert redirected_to(conn) == ~p"/membership"
+      assert redirected_to(conn) == ~p"/resume"
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Account created successfully"
     end
 

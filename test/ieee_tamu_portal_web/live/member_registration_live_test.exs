@@ -17,7 +17,7 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLiveTest do
         conn
         |> log_in_member(member_fixture())
         |> live(~p"/members/register")
-        |> follow_redirect(conn, "/membership")
+        |> follow_redirect(conn, "/resume")
 
       assert {:ok, _conn} = result
     end
@@ -45,10 +45,10 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLiveTest do
       render_submit(form)
       conn = follow_trigger_action(form, conn)
 
-      assert redirected_to(conn) == ~p"/membership"
+      assert redirected_to(conn) == ~p"/resume"
 
       # Now do a logged in request and assert on the menu
-      conn = get(conn, "/membership")
+      conn = get(conn, "/resume")
       response = html_response(conn, 200)
       assert response =~ email
       assert response =~ "Settings"

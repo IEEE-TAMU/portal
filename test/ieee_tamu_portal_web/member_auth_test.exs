@@ -22,7 +22,7 @@ defmodule IeeeTamuPortalWeb.MemberAuthTest do
       conn = MemberAuth.log_in_member(conn, member)
       assert token = get_session(conn, :member_token)
       assert get_session(conn, :live_socket_id) == "members_sessions:#{Base.url_encode64(token)}"
-      assert redirected_to(conn) == ~p"/membership"
+      assert redirected_to(conn) == ~p"/resume"
       assert Accounts.get_member_by_session_token(token)
     end
 
@@ -228,7 +228,7 @@ defmodule IeeeTamuPortalWeb.MemberAuthTest do
         |> MemberAuth.redirect_if_member_is_authenticated([])
 
       assert conn.halted
-      assert redirected_to(conn) == ~p"/membership"
+      assert redirected_to(conn) == ~p"/resume"
     end
 
     test "does not redirect if member is not authenticated", %{conn: conn} do

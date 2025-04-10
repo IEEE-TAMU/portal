@@ -4,12 +4,8 @@
       <.link href="/">
         <img src={~p"/images/logo.svg"} width="36" />
       </.link>
-      <.link
-        :if={@current_member}
-        href={~p"/membership"}
-        class="text-[0.8125rem] hover:text-zinc-700"
-      >
-        Membership
+      <.link :if={@current_member} href={~p"/resume"} class="text-[0.8125rem] hover:text-zinc-700">
+        Resume Drop
       </.link>
     </div>
     <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900 text-[0.8125rem]">

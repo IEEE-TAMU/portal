@@ -63,7 +63,7 @@ defmodule IeeeTamuPortalWeb.Router do
       on_mount: [{IeeeTamuPortalWeb.MemberAuth, :ensure_authenticated}] do
       live "/members/settings", MemberSettingsLive, :edit
       live "/members/settings/confirm_email/:token", MemberSettingsLive, :confirm_email
-      live "/membership", MembershipLive, :show
+      live "/resume", ResumeLive, :show
     end
   end
 
