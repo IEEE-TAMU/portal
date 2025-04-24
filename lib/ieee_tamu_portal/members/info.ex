@@ -135,7 +135,7 @@ defmodule IeeeTamuPortal.Members.Info do
   end
 
   def maybe_change_major_other(changeset, attrs) do
-    case get_change(changeset, :major) do
+    case get_field(changeset, :major) do
       :Other ->
         changeset
         |> cast(attrs, [:major_other])
@@ -155,7 +155,7 @@ defmodule IeeeTamuPortal.Members.Info do
   end
 
   def maybe_change_international_country(changeset, attrs) do
-    case get_change(changeset, :international_student) do
+    case get_field(changeset, :international_student) do
       true ->
         changeset
         |> cast(attrs, [:international_country])
@@ -167,7 +167,7 @@ defmodule IeeeTamuPortal.Members.Info do
   end
 
   def maybe_change_gender_other(changeset, attrs) do
-    case get_change(changeset, :gender) do
+    case get_field(changeset, :gender) do
       :Other ->
         changeset
         |> cast(attrs, [:gender_other])
