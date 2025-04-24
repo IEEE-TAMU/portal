@@ -118,6 +118,7 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
           </div>
           <:actions>
             <.button phx-disable-with="Saving...">Save</.button>
+            <.button phx-click="reset_info" phx-disable-with="Resetting...">Reset</.button>
           </:actions>
         </.simple_form>
       </div>
@@ -226,6 +227,13 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
       {:error, changeset} ->
         {:noreply, assign(socket, info_form: to_form(changeset))}
     end
+  end
+
+  def handle_event("reset_info", _params, socket) do
+    member = socket.assigns.current_member
+    info_form = Members.change_member_info(member.info) |> to_form()
+
+    {:noreply, assign(socket, info_form: info_form)}
   end
 
   def handle_event("validate_password", params, socket) do
