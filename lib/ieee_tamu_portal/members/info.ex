@@ -42,8 +42,8 @@ defmodule IeeeTamuPortal.Members.Info do
       :tshirt_size
     ])
     |> validate_uin(opts)
-    |> maybe_change_gender_other(attrs)
     |> validate_phone_number()
+    |> maybe_change_gender_other(attrs)
   end
 
   def academic_info_changeset(info, attrs, _opts \\ []) do
@@ -60,6 +60,7 @@ defmodule IeeeTamuPortal.Members.Info do
       :major,
       :international_student
     ])
+    |> validate_member_number()
     |> maybe_change_major_other(attrs)
     |> maybe_change_international_country(attrs)
   end
@@ -91,10 +92,11 @@ defmodule IeeeTamuPortal.Members.Info do
       :international_student
     ])
     |> validate_uin(opts)
+    |> validate_phone_number()
+    |> validate_member_number()
     |> maybe_change_major_other(attrs)
     |> maybe_change_international_country(attrs)
     |> maybe_change_gender_other(attrs)
-    |> validate_phone_number()
   end
 
   def validate_phone_number(changeset) do
@@ -107,11 +109,29 @@ defmodule IeeeTamuPortal.Members.Info do
   def validate_uin(changeset, _opts) do
     changeset
     |> validate_required([:uin])
-    |> validate_number(:uin,
-      greater_than_or_equal_to: 100_000_000,
-      less_than_or_equal_to: 999_999_999
-    )
+    |> validate_number_regex(:uin, ~r/^\d{3}00\d{4}$/, message: "must be a valid UIN")
     |> unique_constraint(:uin)
+  end
+
+  def validate_member_number(changeset) do
+    changeset
+    # |> validate_required([:ieee_membership_number])
+    |> validate_number_regex(:ieee_membership_number, ~r/^\d{8,9}$/,
+      message: "must be a valid IEEE membership number"
+    )
+
+    # |> unique_constraint(:ieee_membership_number) # uncomment and make DB migration to add unique constraint?
+  end
+
+  def validate_number_regex(changeset, field, regex, opts \\ []) do
+    changeset
+    |> validate_change(field, fn ^field, number ->
+      if Regex.match?(regex, to_string(number)) do
+        []
+      else
+        [{field, Keyword.get(opts, :message, "is invalid")}]
+      end
+    end)
   end
 
   def maybe_change_major_other(changeset, attrs) do
@@ -121,6 +141,13 @@ defmodule IeeeTamuPortal.Members.Info do
         |> cast(attrs, [:major_other])
         |> validate_required([:major_other])
         |> validate_length(:major_other, is: 4)
+        |> validate_format(:major_other, ~r/^[A-Z]*$/, message: "must be all uppercase letters")
+        |> validate_exclusion(
+          :major_other,
+          Ecto.Enum.values(__MODULE__, :major)
+          |> Stream.map(&Atom.to_string/1),
+          message: "only use \"Other\" if your major is not listed"
+        )
 
       _ ->
         changeset
