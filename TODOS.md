@@ -8,6 +8,7 @@
 - [ ] preferred name placeholder client side updates - use phoenix framework not heex
 - [x] only show email in top bar if screen is wide enough
 - [ ] OTP confirmation instead of link based?
+- [ ] events tracking
 
 ### resume
 - [x] uploads
@@ -29,6 +30,7 @@
 - sponsor management
 - alert panel for uncorrelated payments
 - paid member info aggregation
+- start/end event management
 
 ### payment integration
 - endpoint to process webhook
