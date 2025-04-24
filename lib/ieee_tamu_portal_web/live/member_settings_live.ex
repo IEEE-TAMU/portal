@@ -50,7 +50,7 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
               required
             />
             <.input
-              :if={@info_form[:gender].value in [:Other, "Other"]}
+              :if={@info_form[:gender].value |> to_string == "Other"}
               field={@info_form[:gender_other]}
               label="Please specify"
               type="text"
@@ -79,7 +79,7 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
               required
             />
             <.input
-              :if={@info_form[:major].value in [:Other, "Other"]}
+              :if={@info_form[:major].value |> to_string() == "Other"}
               field={@info_form[:major_other]}
               label="Please specify *"
               type="text"
