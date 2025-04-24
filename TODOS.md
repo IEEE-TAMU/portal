@@ -7,6 +7,7 @@
 - [ ] account deletion (and associated info)
 - [ ] preferred name placeholder client side updates - use phoenix framework not heex
 - [x] only show email in top bar if screen is wide enough
+- [ ] OTP confirmation instead of link based?
 
 ### resume
 - [x] uploads
