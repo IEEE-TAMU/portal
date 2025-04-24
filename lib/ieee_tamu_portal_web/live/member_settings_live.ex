@@ -83,6 +83,7 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
               field={@info_form[:major_other]}
               label="Please specify *"
               type="text"
+              phx-hook="AutoUpcase"
               required
             />
             <div class="flex justify-center items-center">

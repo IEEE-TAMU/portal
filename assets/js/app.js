@@ -52,6 +52,16 @@ Hooks.PhoneNumber = {
     func()
   }
 }
+Hooks.AutoUpcase = {
+  mounted() {
+    let func = e => {
+      const value = this.el.value.toUpperCase()
+      this.el.value = value
+    }
+    this.el.addEventListener("input", func)
+    func()
+  }
+}
 
 let Uploaders = {};
 Uploaders.S3 = function (entries, onViewError) {
