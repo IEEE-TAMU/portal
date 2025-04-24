@@ -62,7 +62,7 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
               field={@info_form[:uin]}
               label="UIN *"
               type="text"
-              placeholder="Ex. 7310006823"
+              placeholder="Ex. 731006823"
               required
             />
             <.input
