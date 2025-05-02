@@ -1,7 +1,7 @@
 defmodule IeeeTamuPortalWeb.Router do
   use IeeeTamuPortalWeb, :router
 
-  import IeeeTamuPortalWeb.MemberAuth
+  import IeeeTamuPortalWeb.{MemberAuth, AdminAuth}
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -81,5 +81,12 @@ defmodule IeeeTamuPortalWeb.Router do
       live "/members/confirm/:token", MemberConfirmationLive, :edit
       live "/members/confirm", MemberConfirmationInstructionsLive, :new
     end
+  end
+
+  # admin routes using basic auth
+  scope "/admin", IeeeTamuPortalWeb do
+    pipe_through [:browser, :admin_auth]
+
+    get "/", PageController, :home
   end
 end

@@ -2,7 +2,7 @@
 
 
 ### general
-- [ ] email verification before login
+- [x] email verification before login
 - [ ] member info onboarding
 - [ ] account deletion (and associated info)
 - [ ] preferred name placeholder client side updates - use phoenix framework not heex
@@ -23,7 +23,6 @@
 - [ ] better errors when file is too large or not a pdf
 
 ### admin panel
-- basic auth?
 - user management
 - resume management
 - sponsor creation
@@ -31,6 +30,7 @@
 - alert panel for uncorrelated payments
 - paid member info aggregation
 - start/end event management
+- [x] basic auth?
 
 ### payment integration
 - endpoint to process webhook
