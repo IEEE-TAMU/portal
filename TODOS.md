@@ -23,25 +23,25 @@
 - [ ] better errors when file is too large or not a pdf
 
 ### admin panel
-- user management
-- resume management
-- sponsor creation
-- sponsor management
-- alert panel for uncorrelated payments
-- paid member info aggregation
-- start/end event management
 - [x] basic auth?
+- [ ] user management
+- [ ] resume management
+- [ ] sponsor creation
+- [ ] sponsor management
+- [ ] alert panel for uncorrelated payments
+- [ ] paid member info aggregation
+- [ ] start/end event management
 
 ### payment integration
-- endpoint to process webhook
-- verification - only from flywire
-- correlation with member UIN
-- show members previous payments
+- [ ] endpoint to process webhook from CF
+- [ ] verification - only from flywire
+- [ ] correlation with member UIN
+- [ ] show members previous payments
 
 ### member login
-- tamu identity linking/login - oauth
+- [ ] tamu identity linking/login - oauth
 
 ### sponsor login
-- lost login help - send email to admin
-- demographic charts/export
-- tiers?
+- [ ] lost login help - send email to admin
+- [ ] demographic charts/export
+- [ ] tiers?
