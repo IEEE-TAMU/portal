@@ -1,45 +1,60 @@
-<header class="px-4 sm:px-6 lg:px-8">
-  <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm">
-    <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900">
-      <.link href="/">
-        <img src={~p"/images/logo.svg"} width="36" />
-      </.link>
-      <.link :if={@current_member} href={~p"/resume"} class="text-[0.8125rem] hover:text-zinc-700">
-        Resume Drop
-      </.link>
-    </div>
-    <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900 text-[0.8125rem]">
-      <%= if @current_member do %>
-        <p class="max-sm:hidden">
-          {@current_member.email}
-        </p>
-        <.link href={~p"/members/settings"} class="hover:text-zinc-700" title="Settings">
-          <.icon class="sm:hidden" name="hero-cog-6-tooth" />
-          <p class="max-sm:hidden">Settings</p>
+<div class="min-h-screen flex flex-col">
+  <header class="px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm">
+      <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900">
+        <.link href="/">
+          <img src={~p"/images/logo.svg"} width="36" />
         </.link>
         <.link
-          href={~p"/members/log_out"}
-          method="delete"
-          class="hover:text-zinc-700"
-          title="Log out"
+          :if={@current_member}
+          href={~p"/resume"}
+          class="text-[0.8125rem] hover:text-zinc-700"
         >
-          <.icon class="sm:hidden" name="hero-arrow-left-start-on-rectangle" />
-          <p class="max-sm:hidden">Log out</p>
+          Resume Drop
         </.link>
-      <% else %>
-        <.link href={~p"/members/register"} class="hover:text-zinc-700">
-          Register
-        </.link>
-        <.link href={~p"/members/login"} class="hover:text-zinc-700">
-          Log in
-        </.link>
-      <% end %>
+      </div>
+      <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900 text-[0.8125rem]">
+        <%= if @current_member do %>
+          <p class="max-sm:hidden">
+            {@current_member.email}
+          </p>
+          <.link href={~p"/members/settings"} class="hover:text-zinc-700" title="Settings">
+            <.icon class="sm:hidden" name="hero-cog-6-tooth" />
+            <p class="max-sm:hidden">Settings</p>
+          </.link>
+          <.link
+            href={~p"/members/log_out"}
+            method="delete"
+            class="hover:text-zinc-700"
+            title="Log out"
+          >
+            <.icon class="sm:hidden" name="hero-arrow-left-start-on-rectangle" />
+            <p class="max-sm:hidden">Log out</p>
+          </.link>
+        <% else %>
+          <.link href={~p"/members/register"} class="hover:text-zinc-700">
+            Register
+          </.link>
+          <.link href={~p"/members/login"} class="hover:text-zinc-700">
+            Log in
+          </.link>
+        <% end %>
+      </div>
     </div>
-  </div>
-</header>
-<main class="px-4 py-20 sm:px-6 lg:px-8">
-  <div class="mx-auto max-w-2xl">
-    <.flash_group flash={@flash} />
-    {@inner_content}
-  </div>
-</main>
+  </header>
+  <main class="flex-1 px-4 py-20 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-2xl">
+      <.flash_group flash={@flash} />
+      {@inner_content}
+    </div>
+  </main>
+  <footer class="mt-12 border-t border-zinc-100 py-6 text-center text-xs text-zinc-500">
+    &copy; 2025 IEEE Texas A&M University Student Branch.
+    <a
+      href="mailto:webmaster@ieeetamu.org?subject=IEEE%20TAMU%20Portal%20Feedback"
+      class="underline hover:text-zinc-700 ml-2"
+    >
+      Feedback
+    </a>
+  </footer>
+</div>
