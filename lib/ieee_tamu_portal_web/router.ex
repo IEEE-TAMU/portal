@@ -87,6 +87,6 @@ defmodule IeeeTamuPortalWeb.Router do
   scope "/admin", IeeeTamuPortalWeb do
     pipe_through [:browser, :admin_auth]
 
-    get "/", PageController, :home
+    get "/", AdminController, :home
   end
 end
