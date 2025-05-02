@@ -9,7 +9,7 @@ defmodule IeeeTamuPortal.Members.Info do
     field :international_country, :string
     field :international_student, :boolean, default: false
     field :last_name, :string
-    field :major, Ecto.Enum, values: ~w(ELEN CPEN CSCE ESET MXET BMEN Other)a
+    field :major, Ecto.Enum, values: ~w(ELEN CPEN CSCE ESET MXET Other)a
     field :major_other, :string
     field :phone_number, :string
     field :preferred_name, :string
