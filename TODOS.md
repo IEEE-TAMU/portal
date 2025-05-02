@@ -45,3 +45,17 @@
 - [ ] lost login help - send email to admin
 - [ ] demographic charts/export
 - [ ] tiers?
+
+
+## Ideas
+
+### Flow
+- [x] Account creation
+- [x] Email verification
+- [x] Information onboarding
+- [ ] Registration for current year
+
+Payment Verification id {netid}_{year}_{5 random digits}
+Explain alternative - email registeration@ieeetamu.org - manual verification by officer and update by admin
+
+Enter Payment Verification id when checking out - on flywire
