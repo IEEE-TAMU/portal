@@ -634,6 +634,23 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
     """
   end
 
+  attr :name, :string, required: true
+  attr :icon, :string, default: nil
+  attr :rest, :global, include: ~w(href class method)
+
+  def navbar_button(assigns) do
+    ~H"""
+    <.link {@rest} class="hover:text-zinc-700" title={@name}>
+      <%= if @icon do %>
+        <.icon class="sm:hidden" name={@icon} />
+        <p class="max-sm:hidden">{@name}</p>
+      <% else %>
+        {@name}
+      <% end %>
+    </.link>
+    """
+  end
+
   ## JS Commands
 
   def show(js \\ %JS{}, selector) do

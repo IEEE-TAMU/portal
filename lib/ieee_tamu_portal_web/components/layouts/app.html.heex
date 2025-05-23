@@ -5,39 +5,29 @@
         <.link href="/">
           <img src={~p"/images/logo.svg"} width="36" />
         </.link>
-        <.link
-          :if={@current_member}
-          href={~p"/resume"}
-          class="text-[0.8125rem] hover:text-zinc-700"
-        >
-          Resume Drop
-        </.link>
+        <%= if @current_member do %>
+          <.navbar_button
+            name="Resume Drop"
+            href={~p"/resume"}
+            icon="hero-document-arrow-up"
+          />
+        <% end %>
       </div>
       <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900 text-[0.8125rem]">
         <%= if @current_member do %>
           <p class="max-sm:hidden">
             {@current_member.email}
           </p>
-          <.link href={~p"/members/settings"} class="hover:text-zinc-700" title="Settings">
-            <.icon class="sm:hidden" name="hero-cog-6-tooth" />
-            <p class="max-sm:hidden">Settings</p>
-          </.link>
-          <.link
+          <.navbar_button name="Settings" href={~p"/members/settings"} icon="hero-cog-6-tooth" />
+          <.navbar_button
+            name="Log out"
             href={~p"/members/log_out"}
             method="delete"
-            class="hover:text-zinc-700"
-            title="Log out"
-          >
-            <.icon class="sm:hidden" name="hero-arrow-left-start-on-rectangle" />
-            <p class="max-sm:hidden">Log out</p>
-          </.link>
+            icon="hero-arrow-left-start-on-rectangle"
+          />
         <% else %>
-          <.link href={~p"/members/register"} class="hover:text-zinc-700">
-            Register
-          </.link>
-          <.link href={~p"/members/login"} class="hover:text-zinc-700">
-            Log in
-          </.link>
+          <.navbar_button name="Register" href={~p"/members/register"} />
+          <.navbar_button name="Log in" href={~p"/members/login"} />
         <% end %>
       </div>
     </div>
