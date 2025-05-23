@@ -21,7 +21,7 @@ defmodule IeeeTamuPortalWeb.MemberForgotPasswordLiveTest do
         conn
         |> log_in_member(member_fixture())
         |> live(~p"/members/reset_password")
-        |> follow_redirect(conn, ~p"/resume")
+        |> follow_redirect(conn, ~p"/members/resume")
 
       assert {:ok, _conn} = result
     end
