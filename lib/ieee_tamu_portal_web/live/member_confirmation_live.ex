@@ -14,11 +14,6 @@ defmodule IeeeTamuPortalWeb.MemberConfirmationLive do
           <.button phx-disable-with="Confirming..." class="w-full">Confirm my account</.button>
         </:actions>
       </.simple_form>
-
-      <p class="text-center mt-4">
-        <.link href={~p"/members/register"}>Register</.link>
-        | <.link href={~p"/members/login"}>Log in</.link>
-      </p>
     </div>
     """
   end

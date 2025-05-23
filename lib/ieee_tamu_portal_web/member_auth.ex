@@ -172,7 +172,7 @@ defmodule IeeeTamuPortalWeb.MemberAuth do
     else
       socket =
         socket
-        |> Phoenix.LiveView.put_flash(:error, "You must confirm your email to access this page.")
+        # |> Phoenix.LiveView.put_flash(:error, "You must confirm your email to access this page.")
         |> Phoenix.LiveView.redirect(to: ~p"/members/confirm")
 
       {:halt, socket}

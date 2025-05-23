@@ -7,7 +7,12 @@ defmodule IeeeTamuPortalWeb.MemberConfirmationInstructionsLive do
     ~H"""
     <div class="mx-auto max-w-sm">
       <.header class="text-center">
-        No confirmation instructions received?
+        <%= if @current_member do %>
+          Account Pending Confirmation
+        <% else %>
+          Confirm Your Account
+        <% end %>
+        <:subtitle>No confirmation instructions received?</:subtitle>
         <:subtitle>We'll send a new confirmation link to your inbox</:subtitle>
       </.header>
 
@@ -19,17 +24,25 @@ defmodule IeeeTamuPortalWeb.MemberConfirmationInstructionsLive do
           </.button>
         </:actions>
       </.simple_form>
-
-      <p class="text-center mt-4">
-        <.link href={~p"/members/register"}>Register</.link>
-        | <.link href={~p"/members/login"}>Log in</.link>
-      </p>
     </div>
     """
   end
 
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, form: to_form(%{}, as: "member"))}
+    if member = socket.assigns.current_member do
+      if member.confirmed_at do
+        # If the member is logged in and already confirmed, redirect to the home page
+        {:ok,
+         socket
+         |> put_flash(:info, "Your account is already confirmed.")
+         |> redirect(to: ~p"/")}
+      else
+        # If the member is logged in but not confirmed, show the confirmation instructions page
+        {:ok, assign(socket, form: to_form(%{"email" => member.email}, as: "member"))}
+      end
+    else
+      {:ok, assign(socket, form: to_form(%{}, as: "member"))}
+    end
   end
 
   def handle_event("send_instructions", %{"member" => %{"email" => email}}, socket) do

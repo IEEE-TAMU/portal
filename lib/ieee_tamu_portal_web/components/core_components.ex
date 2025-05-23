@@ -469,7 +469,10 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
           {render_slot(@inner_block)}
         </h1>
         <p :if={@subtitle != []} class="mt-2 text-sm leading-6 text-zinc-600">
-          {render_slot(@subtitle)}
+          <%= for subtitle <- @subtitle do %>
+            {render_slot(subtitle)}
+            <br />
+          <% end %>
         </p>
       </div>
       <div class="flex-none">{render_slot(@actions)}</div>
