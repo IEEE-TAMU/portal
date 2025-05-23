@@ -67,6 +67,7 @@ defmodule IeeeTamuPortalWeb.Router do
       live "/members/settings", MemberSettingsLive, :edit
       live "/members/settings/confirm_email/:token", MemberSettingsLive, :confirm_email
       live "/resume", ResumeLive, :show
+      live "/members/info", MemberInfoLive, :edit
     end
   end
 
