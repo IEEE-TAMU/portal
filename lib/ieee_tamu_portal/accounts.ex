@@ -366,4 +366,9 @@ defmodule IeeeTamuPortal.Accounts do
       {:error, :member, changeset, _} -> {:error, changeset}
     end
   end
+
+  def preload_member_info(member) do
+    member
+    |> Repo.preload(:info)
+  end
 end

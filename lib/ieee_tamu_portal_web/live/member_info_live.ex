@@ -127,9 +127,7 @@ defmodule IeeeTamuPortalWeb.MemberInfoLive do
   end
 
   def mount(_params, _session, socket) do
-    member =
-      socket.assigns.current_member
-      |> Repo.preload(:info)
+    member = Accounts.preload_member_info(socket.assigns.current_member)
 
     info_changeset = Members.change_member_info(member.info)
 

@@ -179,6 +179,26 @@ defmodule IeeeTamuPortalWeb.MemberAuth do
     end
   end
 
+  def on_mount(:ensure_info_submitted, _params, session, socket) do
+    socket = mount_current_member(socket, session)
+    member = socket.assigns.current_member
+    member = Accounts.preload_member_info(member)
+
+    if member.info != nil do
+      {:cont, socket}
+    else
+      socket =
+        socket
+        |> Phoenix.LiveView.put_flash(
+          :error,
+          "You must submit your information to access this page."
+        )
+        |> Phoenix.LiveView.redirect(to: ~p"/members/info")
+
+      {:halt, socket}
+    end
+  end
+
   def on_mount(:redirect_if_member_is_authenticated, _params, session, socket) do
     socket = mount_current_member(socket, session)
 

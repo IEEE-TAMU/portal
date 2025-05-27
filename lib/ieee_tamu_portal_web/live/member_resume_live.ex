@@ -1,4 +1,4 @@
-defmodule IeeeTamuPortalWeb.ResumeLive do
+defmodule IeeeTamuPortalWeb.MemberResumeLive do
   use IeeeTamuPortalWeb, :live_view
 
   alias Phoenix.LiveView.JS

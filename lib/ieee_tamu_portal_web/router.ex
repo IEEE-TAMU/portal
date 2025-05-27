@@ -67,7 +67,15 @@ defmodule IeeeTamuPortalWeb.Router do
       live "/members/settings", MemberSettingsLive, :edit
       live "/members/settings/confirm_email/:token", MemberSettingsLive, :confirm_email
       live "/members/info", MemberInfoLive, :edit
-      live "/members/resume", ResumeLive, :show
+    end
+
+    live_session :ensure_info_submitted,
+      on_mount: [
+        {IeeeTamuPortalWeb.MemberAuth, :ensure_authenticated},
+        {IeeeTamuPortalWeb.MemberAuth, :ensure_confirmed},
+        {IeeeTamuPortalWeb.MemberAuth, :ensure_info_submitted}
+      ] do
+      live "/members/resume", MemberResumeLive, :edit
     end
   end
 
