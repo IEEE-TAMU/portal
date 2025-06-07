@@ -39,6 +39,9 @@ ieee_tamu_portal-*.tar
 npm-debug.log
 /assets/node_modules/
 
+# locally installed mix/hex
+/.mix/
+
 # nix stuff
 result
 result-*
