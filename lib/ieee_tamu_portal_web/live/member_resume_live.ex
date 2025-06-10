@@ -17,7 +17,7 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
           <p class="text-gray-500">Current resume</p>
         </div>
         <div class="flex justify-center items-center">
-          <iframe src={@resume_url} class="w-full h-96" />
+          <embed src={@resume_url} type="application/pdf" class="w-full h-96"></embed>
         </div>
       <% else %>
         <div class="flex justify-center items-center">
@@ -91,7 +91,7 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
 
         resume ->
           uri = uri(resume)
-          {:ok, url} = SimpleS3Upload.presigned_get(uri: uri)
+          {:ok, url} = SimpleS3Upload.presigned_get(uri: uri, response_content_type: "application/pdf")
           url
       end
 
@@ -167,7 +167,7 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
         member = %Accounts.Member{member | resume: resume}
 
         # sign the GET request for the resume
-        {:ok, url} = SimpleS3Upload.presigned_get(key: resume.key)
+        {:ok, url} = SimpleS3Upload.presigned_get(key: resume.key, response_content_type: "application/pdf")
 
         socket
         |> assign(:resume_url, url)
