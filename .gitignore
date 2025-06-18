@@ -55,4 +55,4 @@ result-*
 # LSP stuff
 /.elixir_ls/
 
-.env
+.env*
