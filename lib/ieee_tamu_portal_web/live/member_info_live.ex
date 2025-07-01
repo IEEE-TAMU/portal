@@ -1,7 +1,7 @@
 defmodule IeeeTamuPortalWeb.MemberInfoLive do
   use IeeeTamuPortalWeb, :live_view
 
-  alias IeeeTamuPortal.{Accounts, Members, Repo}
+  alias IeeeTamuPortal.{Accounts, Members}
 
   def render(assigns) do
     ~H"""
