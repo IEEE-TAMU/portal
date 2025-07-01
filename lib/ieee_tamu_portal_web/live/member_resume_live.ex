@@ -91,7 +91,10 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
 
         resume ->
           uri = uri(resume)
-          {:ok, url} = SimpleS3Upload.presigned_get(uri: uri, response_content_type: "application/pdf")
+
+          {:ok, url} =
+            SimpleS3Upload.sign(method: "GET", uri: uri, response_content_type: "application/pdf")
+
           url
       end
 
@@ -129,7 +132,8 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
     member = socket.assigns.current_member
     resume = member.resume
 
-    # TODO: delete from S3
+    # delete from R2
+    :ok = IeeeTamuPortal.S3Delete.delete_object(IeeeTamuPortal.S3Delete, uri(resume))
 
     # delete from DB
     Repo.delete(resume)
@@ -167,7 +171,12 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
         member = %Accounts.Member{member | resume: resume}
 
         # sign the GET request for the resume
-        {:ok, url} = SimpleS3Upload.presigned_get(key: resume.key, response_content_type: "application/pdf")
+        {:ok, url} =
+          SimpleS3Upload.sign(
+            method: "GET",
+            uri: uri(resume),
+            response_content_type: "application/pdf"
+          )
 
         socket
         |> assign(:resume_url, url)
@@ -192,7 +201,8 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
     key = key(member, entry)
 
     {:ok, presigned_url} =
-      SimpleS3Upload.presigned_put(
+      SimpleS3Upload.sign(
+        method: "PUT",
         key: key,
         content_type: entry.client_type,
         max_file_size: uploads[entry.upload_config].max_file_size
@@ -200,7 +210,7 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
 
     meta = %{
       uploader: "S3",
-      key: key,
+      # key: key,
       url: presigned_url
     }
 
