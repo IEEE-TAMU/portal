@@ -4,6 +4,7 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
   alias Phoenix.LiveView.JS
   alias IeeeTamuPortalWeb.Upload.SimpleS3Upload
   alias IeeeTamuPortal.{Accounts, Members, Repo}
+  alias IeeeTamuPortal.Members.Resume
 
   def render(assigns) do
     ~H"""
@@ -90,10 +91,12 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
           nil
 
         resume ->
-          uri = uri(resume)
-
           {:ok, url} =
-            SimpleS3Upload.sign(method: "GET", uri: uri, response_content_type: "application/pdf")
+            SimpleS3Upload.sign(
+              method: "GET",
+              uri: Resume.uri(resume),
+              response_content_type: "application/pdf"
+            )
 
           url
       end
@@ -133,7 +136,7 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
     resume = member.resume
 
     # delete from R2
-    :ok = IeeeTamuPortal.S3Delete.delete_object(IeeeTamuPortal.S3Delete, uri(resume))
+    :ok = IeeeTamuPortal.S3Delete.delete_object(IeeeTamuPortal.S3Delete, Resume.uri(resume))
 
     # delete from DB
     Repo.delete(resume)
@@ -174,7 +177,7 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
         {:ok, url} =
           SimpleS3Upload.sign(
             method: "GET",
-            uri: uri(resume),
+            uri: Resume.uri(resume),
             response_content_type: "application/pdf"
           )
 
@@ -189,10 +192,6 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
   defp key(member, entry) do
     filename = "#{member.id}-#{member.email}#{Path.extname(entry.client_name)}"
     "resumes/#{filename}"
-  end
-
-  defp uri(resume) do
-    "#{resume.bucket_url}/#{URI.encode(resume.key)}"
   end
 
   defp presign_upload(entry, socket) do

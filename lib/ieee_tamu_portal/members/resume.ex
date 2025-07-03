@@ -16,4 +16,8 @@ defmodule IeeeTamuPortal.Members.Resume do
     |> cast(attrs, [:original_filename, :bucket_url, :key])
     |> validate_required([:original_filename, :bucket_url, :key])
   end
+
+  def uri(resume) do
+    "#{resume.bucket_url}/#{URI.encode(resume.key)}"
+  end
 end
