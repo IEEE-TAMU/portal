@@ -4,7 +4,7 @@ defmodule IeeeTamuPortalWeb.MemberSessionControllerTest do
   import IeeeTamuPortal.AccountsFixtures
 
   setup do
-    %{member: member_fixture()}
+    %{member: confirmed_member_fixture()}
   end
 
   describe "POST /members/login" do
@@ -18,7 +18,7 @@ defmodule IeeeTamuPortalWeb.MemberSessionControllerTest do
       assert redirected_to(conn) == ~p"/members/resume"
 
       # Now do a logged in request and assert on the menu
-      conn = get(conn, ~p"/members/resume")
+      conn = get(conn, ~p"/members/info")
       response = html_response(conn, 200)
       assert response =~ member.email
       assert response =~ ~p"/members/settings"

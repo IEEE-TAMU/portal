@@ -37,7 +37,7 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLiveTest do
   end
 
   describe "register member" do
-    test "creates account and logs the member in", %{conn: conn} do
+    test "creates account", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/members/register")
 
       email = unique_member_email()
@@ -47,12 +47,10 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLiveTest do
 
       assert redirected_to(conn) == ~p"/members/resume"
 
-      # Now do a logged in request and assert on the menu
-      conn = get(conn, "/members/resume")
-      response = html_response(conn, 200)
-      assert response =~ email
-      assert response =~ "Settings"
-      assert response =~ "Log out"
+      assert get_session(conn, :member_token)
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
+               "Account created successfully!"
     end
 
     test "renders errors for duplicated email", %{conn: conn} do

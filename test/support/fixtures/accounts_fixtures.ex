@@ -24,6 +24,12 @@ defmodule IeeeTamuPortal.AccountsFixtures do
     member
   end
 
+  def confirmed_member_fixture(attrs \\ %{}) do
+    member = member_fixture(attrs)
+    IeeeTamuPortal.Repo.update!(IeeeTamuPortal.Accounts.Member.confirm_changeset(member))
+    member
+  end
+
   def extract_member_token(fun) do
     {:ok, captured_email} = fun.(&"[TOKEN]#{&1}[TOKEN]")
     [_, token | _] = String.split(captured_email.text_body, "[TOKEN]")

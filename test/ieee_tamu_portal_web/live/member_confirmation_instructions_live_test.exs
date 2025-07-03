@@ -20,13 +20,9 @@ defmodule IeeeTamuPortalWeb.MemberConfirmationInstructionsLiveTest do
     test "sends a new confirmation token", %{conn: conn, member: member} do
       {:ok, lv, _html} = live(conn, ~p"/members/confirm")
 
-      {:ok, conn} =
-        lv
-        |> form("#resend_confirmation_form", member: %{email: member.email})
-        |> render_submit()
-        |> follow_redirect(conn, ~p"/")
-
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
+      assert lv
+             |> form("#resend_confirmation_form", member: %{email: member.email})
+             |> render_submit() =~
                "If your email is in our system"
 
       assert Repo.get_by!(Accounts.MemberToken, member_id: member.id).context == "confirm"
@@ -37,13 +33,9 @@ defmodule IeeeTamuPortalWeb.MemberConfirmationInstructionsLiveTest do
 
       {:ok, lv, _html} = live(conn, ~p"/members/confirm")
 
-      {:ok, conn} =
-        lv
-        |> form("#resend_confirmation_form", member: %{email: member.email})
-        |> render_submit()
-        |> follow_redirect(conn, ~p"/")
-
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
+      assert lv
+             |> form("#resend_confirmation_form", member: %{email: member.email})
+             |> render_submit() =~
                "If your email is in our system"
 
       refute Repo.get_by(Accounts.MemberToken, member_id: member.id)
@@ -52,13 +44,9 @@ defmodule IeeeTamuPortalWeb.MemberConfirmationInstructionsLiveTest do
     test "does not send confirmation token if email is invalid", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/members/confirm")
 
-      {:ok, conn} =
-        lv
-        |> form("#resend_confirmation_form", member: %{email: "unknown@example.com"})
-        |> render_submit()
-        |> follow_redirect(conn, ~p"/")
-
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
+      assert lv
+             |> form("#resend_confirmation_form", member: %{email: "unknown@example.com"})
+             |> render_submit() =~
                "If your email is in our system"
 
       assert Repo.all(Accounts.MemberToken) == []

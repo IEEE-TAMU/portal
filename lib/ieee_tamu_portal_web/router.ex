@@ -65,7 +65,6 @@ defmodule IeeeTamuPortalWeb.Router do
         {IeeeTamuPortalWeb.MemberAuth, :ensure_confirmed}
       ] do
       live "/members/settings", MemberSettingsLive, :edit
-      live "/members/settings/confirm_email/:token", MemberSettingsLive, :confirm_email
       live "/members/info", MemberInfoLive, :edit
     end
 

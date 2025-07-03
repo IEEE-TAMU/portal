@@ -157,28 +157,6 @@ defmodule IeeeTamuPortal.Accounts do
     |> Ecto.Multi.delete_all(:tokens, MemberToken.by_member_and_contexts_query(member, [context]))
   end
 
-  @doc ~S"""
-  Delivers the update email instructions to the given member.
-
-  ## Examples
-
-      iex> deliver_member_update_email_instructions(member, current_email, &url(~p"/members/settings/confirm_email/#{&1}"))
-      {:ok, %{to: ..., body: ...}}
-
-  """
-  def deliver_member_update_email_instructions(
-        %Member{} = member,
-        current_email,
-        update_email_url_fun
-      )
-      when is_function(update_email_url_fun, 1) do
-    {encoded_token, member_token} =
-      MemberToken.build_email_token(member, "change:#{current_email}")
-
-    Repo.insert!(member_token)
-    MemberNotifier.deliver_update_email_instructions(member, update_email_url_fun.(encoded_token))
-  end
-
   @doc """
   Returns an `%Ecto.Changeset{}` for changing the member password.
 
