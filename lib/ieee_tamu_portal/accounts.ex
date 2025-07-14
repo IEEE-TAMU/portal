@@ -11,6 +11,19 @@ defmodule IeeeTamuPortal.Accounts do
   ## Database getters
 
   @doc """
+  Gets the total count of members.
+
+  ## Examples
+
+      iex> count_members()
+      42
+
+  """
+  def count_members do
+    Repo.aggregate(Member, :count, :id)
+  end
+
+  @doc """
   Gets a member by email.
 
   ## Examples
