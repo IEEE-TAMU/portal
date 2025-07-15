@@ -24,6 +24,19 @@ defmodule IeeeTamuPortal.Accounts do
   end
 
   @doc """
+  Gets all members.
+
+  ## Examples
+
+      iex> list_members()
+      [%Member{}, ...]
+
+  """
+  def list_members do
+    Repo.all(Member)
+  end
+
+  @doc """
   Gets a member by email.
 
   ## Examples

@@ -96,5 +96,6 @@ defmodule IeeeTamuPortalWeb.Router do
     pipe_through [:browser, :admin_auth]
 
     live "/", AdminLive, :index
+    live "/members", AdminMembersLive, :index
   end
 end

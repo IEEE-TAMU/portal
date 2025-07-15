@@ -2,8 +2,22 @@
   <header class="bg-white shadow-sm border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
-        <div class="flex items-center">
+        <div class="flex items-center space-x-8">
           <h1 class="text-xl font-semibold text-gray-900">IEEE TAMU Portal - Admin</h1>
+          <nav class="flex space-x-4">
+            <.link
+              href={~p"/admin"}
+              class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              Dashboard
+            </.link>
+            <.link
+              href={~p"/admin/members"}
+              class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              Members
+            </.link>
+          </nav>
         </div>
         <div class="flex items-center space-x-4">
           <span class="text-sm text-gray-600">Admin Panel</span>
