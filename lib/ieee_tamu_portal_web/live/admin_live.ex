@@ -81,13 +81,16 @@ defmodule IeeeTamuPortalWeb.AdminLive do
             <p class="text-xs text-gray-500 mt-1">Coming soon</p>
           </button>
 
-          <button class="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 text-left">
+          <.link
+            href={~p"/admin/download-resumes"}
+            class="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 text-left block"
+          >
             <div class="flex items-center">
               <.icon name="hero-document-arrow-down" class="w-5 h-5 text-gray-500 mr-3" />
-              <span class="text-sm font-medium text-gray-700">Export Member Data</span>
+              <span class="text-sm font-medium text-gray-700">Download Member Resumes</span>
             </div>
-            <p class="text-xs text-gray-500 mt-1">Coming soon</p>
-          </button>
+            <p class="text-xs text-gray-500 mt-1">Download all member resumes as a zip file</p>
+          </.link>
         </div>
       </div>
     </div>

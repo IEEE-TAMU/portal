@@ -15,6 +15,7 @@ defmodule IeeeTamuPortal.Application do
       # Start a worker by calling: IeeeTamuPortal.Worker.start_link(arg)
       # {IeeeTamuPortal.Worker, arg},
       {IeeeTamuPortal.S3Delete, name: IeeeTamuPortal.S3Delete},
+      IeeeTamuPortal.ResumeZipService,
       # Start to serve requests, typically the last entry
       IeeeTamuPortalWeb.Endpoint
     ]
