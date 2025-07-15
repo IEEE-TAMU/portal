@@ -31,7 +31,7 @@ defmodule IeeeTamuPortalWeb.MemberConfirmationLive do
         {:noreply,
          socket
          |> put_flash(:info, "Member confirmed successfully.")
-         |> redirect(to: ~p"/")}
+         |> redirect(to: ~p"/members/info")}
 
       :error ->
         # If there is a current member and the account was already confirmed,
@@ -40,7 +40,7 @@ defmodule IeeeTamuPortalWeb.MemberConfirmationLive do
         # a warning message.
         case socket.assigns do
           %{current_member: %{confirmed_at: confirmed_at}} when not is_nil(confirmed_at) ->
-            {:noreply, redirect(socket, to: ~p"/")}
+            {:noreply, redirect(socket, to: ~p"/members/info")}
 
           %{} ->
             {:noreply,

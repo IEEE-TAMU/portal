@@ -2,17 +2,187 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   use IeeeTamuPortalWeb, :live_view
 
   alias IeeeTamuPortal.Accounts
+  alias IeeeTamuPortal.Members.Resume
+  alias IeeeTamuPortalWeb.Upload.SimpleS3Upload
+  alias IeeeTamuPortal.Members
 
   @impl true
   def mount(_params, _session, socket) do
     members = Accounts.list_members()
-    
+
+    # Sign resume URLs for members who have resumes
+    members_with_signed_urls =
+      Enum.map(members, fn member ->
+        case member.resume do
+          nil ->
+            Map.put(member, :signed_resume_url, nil)
+
+          resume ->
+            {:ok, url} =
+              SimpleS3Upload.sign(
+                method: "GET",
+                uri: Resume.uri(resume),
+                response_content_type: "application/pdf"
+              )
+
+            Map.put(member, :signed_resume_url, url)
+        end
+      end)
+
     socket =
       socket
-      |> assign(:members, members)
+      |> assign(:members, members_with_signed_urls)
       |> assign(:page_title, "Members - Admin")
+      |> assign(:show_resume_modal, false)
+      |> assign(:current_resume_url, nil)
+      |> assign(:current_member_email, nil)
+      |> assign(:show_member_modal, false)
+      |> assign(:current_member, nil)
+      |> assign(:member_info_form, nil)
 
     {:ok, socket, layout: {IeeeTamuPortalWeb.Layouts, :admin}}
+  end
+
+  @impl true
+  def handle_event("show_resume", %{"url" => url, "email" => email}, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_resume_modal, true)
+     |> assign(:current_resume_url, url)
+     |> assign(:current_member_email, email)}
+  end
+
+  @impl true
+  def handle_event("close_resume_modal", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_resume_modal, false)
+     |> assign(:current_resume_url, nil)
+     |> assign(:current_member_email, nil)}
+  end
+
+  @impl true
+  def handle_event("prevent_close", _params, socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("show_member", %{"member_id" => member_id}, socket) do
+    member_id = String.to_integer(member_id)
+    member = Enum.find(socket.assigns.members, &(&1.id == member_id))
+
+    # Preload member info
+    member = Accounts.preload_member_info(member)
+
+    # Create info form
+    info_form = Members.change_member_info(member.info) |> to_form()
+
+    {:noreply,
+     socket
+     |> assign(:show_member_modal, true)
+     |> assign(:current_member, member)
+     |> assign(:member_info_form, info_form)}
+  end
+
+  @impl true
+  def handle_event("close_member_modal", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_member_modal, false)
+     |> assign(:current_member, nil)
+     |> assign(:member_info_form, nil)}
+  end
+
+  @impl true
+  def handle_event("validate_member_info", params, socket) do
+    %{"info" => info_params} = params
+    member = socket.assigns.current_member
+
+    info_form =
+      member.info
+      |> Members.change_member_info(info_params)
+      |> Map.put(:action, :validate)
+      |> to_form()
+
+    {:noreply, assign(socket, member_info_form: info_form)}
+  end
+
+  @impl true
+  def handle_event("update_member_info", params, socket) do
+    %{"info" => info_params} = params
+    member = socket.assigns.current_member
+
+    update_or_create_info = fn
+      %Members.Info{} = info -> Members.update_member_info(info, info_params)
+      nil -> Members.create_member_info(member, info_params)
+    end
+
+    case update_or_create_info.(member.info) do
+      {:ok, info} ->
+        updated_member = %Accounts.Member{member | info: info}
+
+        # Update the member in the members list
+        updated_members =
+          Enum.map(socket.assigns.members, fn m ->
+            if m.id == member.id do
+              Map.put(updated_member, :signed_resume_url, m.signed_resume_url)
+            else
+              m
+            end
+          end)
+
+        info_form = Members.change_member_info(info) |> to_form()
+
+        socket =
+          socket
+          |> Phoenix.LiveView.put_flash(:info, "Member information updated successfully.")
+          |> assign(:current_member, updated_member)
+          |> assign(:member_info_form, info_form)
+          |> assign(:members, updated_members)
+
+        {:noreply, socket}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, member_info_form: to_form(changeset))}
+    end
+  end
+
+  @impl true
+  def handle_event("delete_member_resume", _params, socket) do
+    member = socket.assigns.current_member
+
+    case member.resume do
+      nil ->
+        {:noreply, Phoenix.LiveView.put_flash(socket, :error, "No resume to delete.")}
+
+      resume ->
+        # Delete from storage
+        :ok = IeeeTamuPortal.S3Delete.delete_object(IeeeTamuPortal.S3Delete, Resume.uri(resume))
+
+        # Delete from database
+        IeeeTamuPortal.Repo.delete(resume)
+
+        # Update member
+        updated_member = %Accounts.Member{member | resume: nil}
+
+        # Update members list
+        updated_members =
+          Enum.map(socket.assigns.members, fn m ->
+            if m.id == member.id do
+              Map.merge(updated_member, %{signed_resume_url: nil})
+            else
+              m
+            end
+          end)
+
+        socket =
+          socket
+          |> Phoenix.LiveView.put_flash(:info, "Resume deleted successfully.")
+          |> assign(:current_member, updated_member)
+          |> assign(:members, updated_members)
+
+        {:noreply, socket}
+    end
   end
 
   @impl true
@@ -27,7 +197,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
           </p>
         </div>
       </div>
-      
+
       <div class="mt-8 flow-root">
         <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
@@ -35,7 +205,10 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
               <table class="min-w-full divide-y divide-gray-300">
                 <thead class="bg-gray-50">
                   <tr>
-                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+                    <th
+                      scope="col"
+                      class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+                    >
                       Email
                     </th>
                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -43,6 +216,9 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                     </th>
                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Registered
+                    </th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Resume
                     </th>
                     <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
                       <span class="sr-only">Actions</span>
@@ -53,7 +229,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                   <%= for member <- @members do %>
                     <tr>
                       <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                        <%= member.email %>
+                        {member.email}
                       </td>
                       <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         <%= if member.confirmed_at do %>
@@ -67,10 +243,37 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                         <% end %>
                       </td>
                       <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        <%= Calendar.strftime(member.inserted_at, "%B %d, %Y") %>
+                        {Calendar.strftime(member.inserted_at, "%B %d, %Y")}
+                      </td>
+                      <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        <%= if member.resume do %>
+                          <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                            Uploaded
+                          </span>
+                        <% else %>
+                          <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                            Not Uploaded
+                          </span>
+                        <% end %>
                       </td>
                       <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <button class="text-indigo-600 hover:text-indigo-900">
+                        <%= if member.resume && member.signed_resume_url do %>
+                          <button
+                            phx-click="show_resume"
+                            phx-value-url={member.signed_resume_url}
+                            phx-value-email={member.email}
+                            class="text-indigo-600 hover:text-indigo-900 mr-4"
+                          >
+                            View Resume
+                          </button>
+                        <% else %>
+                          <span class="text-gray-400 mr-4">No Resume</span>
+                        <% end %>
+                        <button
+                          phx-click="show_member"
+                          phx-value-member_id={member.id}
+                          class="text-indigo-600 hover:text-indigo-900"
+                        >
                           View
                         </button>
                       </td>
@@ -90,6 +293,223 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
           <p class="mt-1 text-sm text-gray-500">
             No members have registered yet.
           </p>
+        </div>
+      <% end %>
+
+      <%= if @show_resume_modal do %>
+        <div
+          class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+          phx-click="close_resume_modal"
+          phx-window-keydown="close_resume_modal"
+          phx-key="Escape"
+        >
+          <div
+            class="relative top-20 mx-auto p-5 border w-11/12 max-w-6xl shadow-lg rounded-md bg-white"
+            phx-click="prevent_close"
+          >
+            <div class="mt-3">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">
+                  Resume - {@current_member_email}
+                </h3>
+                <button
+                  phx-click="close_resume_modal"
+                  class="text-gray-400 hover:text-gray-600 focus:outline-none"
+                >
+                  <.icon name="hero-x-mark" class="h-6 w-6" />
+                </button>
+              </div>
+
+              <div class="w-full" style="height: 70vh;">
+                <embed
+                  src={@current_resume_url}
+                  type="application/pdf"
+                  class="w-full h-full border rounded"
+                />
+              </div>
+
+              <div class="flex justify-end mt-4">
+                <button
+                  phx-click="close_resume_modal"
+                  class="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded text-gray-800 font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <%= if @show_member_modal && @current_member do %>
+        <div
+          class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+          phx-click="close_member_modal"
+          phx-window-keydown="close_member_modal"
+          phx-key="Escape"
+        >
+          <div
+            class="relative top-10 mx-auto p-6 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white max-h-screen overflow-y-auto"
+            phx-click="prevent_close"
+          >
+            <div class="mb-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">
+                  Edit Member - {@current_member.email}
+                </h3>
+                <button
+                  phx-click="close_member_modal"
+                  class="text-gray-400 hover:text-gray-600 focus:outline-none"
+                >
+                  <.icon name="hero-x-mark" class="h-6 w-6" />
+                </button>
+              </div>
+
+              <div class="space-y-6">
+                <.simple_form
+                  for={@member_info_form}
+                  id="member_info_form"
+                  phx-submit="update_member_info"
+                  phx-change="validate_member_info"
+                >
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <.input
+                      field={@member_info_form[:first_name]}
+                      label="First name *"
+                      type="text"
+                      required
+                    />
+                    <.input
+                      field={@member_info_form[:last_name]}
+                      label="Last name *"
+                      type="text"
+                      required
+                    />
+                    <.input
+                      field={@member_info_form[:preferred_name]}
+                      label="Preferred name"
+                      type="text"
+                    />
+                    <.input
+                      field={@member_info_form[:tshirt_size]}
+                      label="T-shirt size *"
+                      type="select"
+                      prompt="Select a size"
+                      options={Ecto.Enum.values(Members.Info, :tshirt_size)}
+                      required
+                    />
+                    <.input
+                      field={@member_info_form[:phone_number]}
+                      label="Phone number"
+                      type="tel"
+                      placeholder="Ex. 979-845-7200"
+                    />
+                    <.input field={@member_info_form[:age]} label="Age" type="number" />
+                    <.input
+                      field={@member_info_form[:gender]}
+                      label="Gender *"
+                      type="select"
+                      options={Ecto.Enum.values(Members.Info, :gender)}
+                      required
+                    />
+                    <.input
+                      :if={@member_info_form[:gender].value |> to_string == "Other"}
+                      field={@member_info_form[:gender_other]}
+                      label="Please specify"
+                      type="text"
+                    />
+                  </div>
+
+                  <h4 class="text-md font-semibold text-gray-900 mt-6 mb-4">Academic Information</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <.input
+                      field={@member_info_form[:uin]}
+                      label="UIN *"
+                      type="text"
+                      placeholder="Ex. 731006823"
+                      required
+                    />
+                    <.input
+                      field={@member_info_form[:ieee_membership_number]}
+                      label="IEEE Membership Number"
+                      type="text"
+                      placeholder="Ex. 97775577"
+                    />
+                    <.input
+                      field={@member_info_form[:major]}
+                      label="Major *"
+                      type="select"
+                      options={Ecto.Enum.values(Members.Info, :major)}
+                      required
+                    />
+                    <.input
+                      :if={@member_info_form[:major].value |> to_string() == "Other"}
+                      field={@member_info_form[:major_other]}
+                      label="Please specify *"
+                      type="text"
+                      required
+                    />
+                    <div class="flex justify-center items-center">
+                      <.input
+                        field={@member_info_form[:international_student]}
+                        label="International student?"
+                        type="checkbox"
+                      />
+                    </div>
+                    <.input
+                      :if={
+                        Phoenix.HTML.Form.normalize_value(
+                          "checkbox",
+                          @member_info_form[:international_student].value
+                        ) or
+                          (
+                            country = @member_info_form[:international_country].value
+                            country != nil and country != ""
+                          )
+                      }
+                      field={@member_info_form[:international_country]}
+                      label="Country of origin *"
+                      type="text"
+                      required
+                    />
+                    <.input
+                      field={@member_info_form[:graduation_year]}
+                      label="Graduation year *"
+                      type="number"
+                      required
+                    />
+                  </div>
+
+                  <div class="flex justify-between items-center mt-6">
+                    <div class="flex space-x-3">
+                      <.button type="submit" phx-disable-with="Saving...">
+                        Save Changes
+                      </.button>
+                      <.button
+                        type="button"
+                        phx-click="close_member_modal"
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-800"
+                      >
+                        Cancel
+                      </.button>
+                    </div>
+
+                    <%= if @current_member.resume do %>
+                      <.button
+                        type="button"
+                        phx-click="delete_member_resume"
+                        phx-disable-with="Deleting..."
+                        class="bg-red-600 hover:bg-red-700 text-white"
+                        onclick="return confirm('Are you sure you want to delete this member\\'s resume?')"
+                      >
+                        Delete Resume
+                      </.button>
+                    <% end %>
+                  </div>
+                </.simple_form>
+              </div>
+            </div>
+          </div>
         </div>
       <% end %>
     </div>

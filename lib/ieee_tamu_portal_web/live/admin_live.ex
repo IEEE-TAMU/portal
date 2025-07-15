@@ -34,7 +34,7 @@ defmodule IeeeTamuPortalWeb.AdminLive do
             </div>
             <div class="ml-4">
               <p class="text-sm font-medium text-gray-600">Total Members</p>
-              <p class="text-2xl font-bold text-gray-900"><%= @member_count %></p>
+              <p class="text-2xl font-bold text-gray-900">{@member_count}</p>
             </div>
           </div>
         </div>

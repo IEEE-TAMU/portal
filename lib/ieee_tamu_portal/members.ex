@@ -30,6 +30,28 @@ defmodule IeeeTamuPortal.Members do
     Repo.get_by(Info, uin: uin)
   end
 
+  @doc """
+  Gets a member resume by member ID.
+
+  Returns the resume struct if the member has uploaded one, nil otherwise.
+
+  ## Parameters
+
+    * `member_id` - The integer ID of the member
+
+  ## Examples
+
+      iex> get_resume_by_member_id(123)
+      %Resume{original_filename: "john_doe_resume.pdf", ...}
+
+      iex> get_resume_by_member_id(456)
+      nil
+
+  """
+  def get_resume_by_member_id(member_id) when is_integer(member_id) do
+    Repo.get_by(Resume, member_id: member_id)
+  end
+
   ## Changesets
 
   @doc """

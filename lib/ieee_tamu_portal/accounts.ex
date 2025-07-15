@@ -34,6 +34,7 @@ defmodule IeeeTamuPortal.Accounts do
   """
   def list_members do
     Repo.all(Member)
+    |> Repo.preload(:resume)
   end
 
   @doc """
