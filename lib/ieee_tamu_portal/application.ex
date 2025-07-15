@@ -7,6 +7,9 @@ defmodule IeeeTamuPortal.Application do
 
   @impl true
   def start(_type, _args) do
+    # Ensure :inets is started for HTTP requests
+    :inets.start()
+
     children = [
       IeeeTamuPortalWeb.Telemetry,
       IeeeTamuPortal.Repo,
