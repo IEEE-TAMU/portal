@@ -13,6 +13,7 @@ defmodule IeeeTamuPortal.Accounts.Member do
     has_many :tokens, IeeeTamuPortal.Accounts.MemberToken
     has_one :info, IeeeTamuPortal.Members.Info
     has_one :resume, IeeeTamuPortal.Members.Resume
+    has_many :registrations, IeeeTamuPortal.Members.Registration
   end
 
   @doc """
