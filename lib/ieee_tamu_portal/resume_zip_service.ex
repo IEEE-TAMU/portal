@@ -48,14 +48,14 @@ defmodule IeeeTamuPortal.ResumeZipService do
   end
 
   # Server callbacks
-  
+
   def init(_opts) do
     # Ensure temp directory exists
     File.mkdir_p(@temp_dir)
-    
+
     # Schedule cleanup of old files every hour
     Process.send_after(self(), :cleanup_old_files, :timer.hours(1))
-    
+
     {:ok, %__MODULE__{status: :idle}}
   end
 
@@ -226,5 +226,4 @@ defmodule IeeeTamuPortal.ResumeZipService do
         :ok
     end
   end
-
 end
