@@ -56,6 +56,6 @@
 - [ ] Registration for current year
 
 Payment Verification id {netid}_{year}_{5 random digits}
-Explain alternative - email registeration@ieeetamu.org - manual verification by officer and update by admin
+Explain alternative - email registration@ieeetamu.org - manual verification by officer and update by admin
 
 Enter Payment Verification id when checking out - on flywire

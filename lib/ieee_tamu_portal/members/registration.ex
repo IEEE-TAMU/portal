@@ -4,9 +4,9 @@ defmodule IeeeTamuPortal.Members.Registration do
 
   schema "registrations" do
     field :year, :integer,
-      autogenerate: {IeeeTamuPortal.Settings, :get_setting, ["registeration_year"]}
+      autogenerate: {IeeeTamuPortal.Settings, :get_setting, ["registration_year"]}
 
-    field(:confirmation_code, :string)
+    field :confirmation_code, :string
     field :payment_override, :boolean, default: false
 
     belongs_to :member, IeeeTamuPortal.Accounts.Member
@@ -18,8 +18,8 @@ defmodule IeeeTamuPortal.Members.Registration do
   @doc false
   def changeset(registration, attrs) do
     registration
-    |> cast(attrs, [:confirmation_code, :payment_override, :member_id])
-    |> validate_required([:confirmation_code, :member_id])
+    |> cast(attrs, [:year, :confirmation_code, :payment_override, :member_id])
+    |> validate_required([:year, :confirmation_code, :member_id])
     |> unique_constraint(:confirmation_code)
     |> foreign_key_constraint(:member_id)
   end
@@ -55,9 +55,17 @@ defmodule IeeeTamuPortal.Members.Registration do
     attrs_with_code = Map.put(attrs, :confirmation_code, confirmation_code)
 
     registration
-    |> cast(attrs_with_code, [:confirmation_code, :payment_override, :member_id])
-    |> validate_required([:confirmation_code, :member_id])
+    |> cast(attrs_with_code, [:year, :confirmation_code, :payment_override, :member_id])
+    |> validate_required([:year, :confirmation_code, :member_id])
     |> unique_constraint(:confirmation_code)
     |> foreign_key_constraint(:member_id)
+  end
+
+  @doc """
+  Checks if the registration payment is complete.
+  Returns true if payment_override is true OR there's an associated payment.
+  """
+  def payment_complete?(registration) do
+    registration.payment_override || registration.payment != nil
   end
 end

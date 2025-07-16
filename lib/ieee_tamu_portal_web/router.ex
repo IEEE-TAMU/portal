@@ -68,6 +68,8 @@ defmodule IeeeTamuPortalWeb.Router do
       live "/members/info", MemberInfoLive, :edit
     end
 
+    get "/members/registration", MemberRegistrationController, :show
+
     live_session :ensure_info_submitted,
       on_mount: [
         {IeeeTamuPortalWeb.MemberAuth, :ensure_authenticated},

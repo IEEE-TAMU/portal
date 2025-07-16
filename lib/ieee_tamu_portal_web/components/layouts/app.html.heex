@@ -7,6 +7,11 @@
         </.link>
         <%= if @current_member do %>
           <.navbar_button
+            name="Registration"
+            href={~p"/members/registration"}
+            icon="hero-clipboard-document-check"
+          />
+          <.navbar_button
             name="Resume Drop"
             href={~p"/members/resume"}
             icon="hero-document-arrow-up"
