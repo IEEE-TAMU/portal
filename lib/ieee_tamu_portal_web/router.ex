@@ -99,6 +99,7 @@ defmodule IeeeTamuPortalWeb.Router do
 
     live "/", AdminLive, :index
     live "/members", AdminMembersLive, :index
+    live "/settings", AdminSettingsLive, :index
     get "/download-resumes", AdminResumeZipController, :download
   end
 end

@@ -43,6 +43,20 @@ defmodule IeeeTamuPortal.Settings do
     Repo.get_by(Setting, key: key)
   end
 
+  def get_setting_value(key) do
+    case get_setting(key) do
+      nil -> nil
+      setting -> setting.value
+    end
+  end
+
+  def get_setting_value!(key) do
+    case get_setting_value(key) do
+      nil -> raise "Setting with key '#{key}' not found"
+      value -> value
+    end
+  end
+
   @doc """
   Updates a setting with the given attributes.
 

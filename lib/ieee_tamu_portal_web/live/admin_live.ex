@@ -72,7 +72,7 @@ defmodule IeeeTamuPortalWeb.AdminLive do
 
       <div class="mt-8 bg-white rounded-lg shadow p-6">
         <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button class="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 text-left">
             <div class="flex items-center">
               <.icon name="hero-envelope" class="w-5 h-5 text-gray-500 mr-3" />
@@ -90,6 +90,17 @@ defmodule IeeeTamuPortalWeb.AdminLive do
               <span class="text-sm font-medium text-gray-700">Download Member Resumes</span>
             </div>
             <p class="text-xs text-gray-500 mt-1">Download all member resumes as a zip file</p>
+          </.link>
+
+          <.link
+            href={~p"/admin/settings"}
+            class="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 text-left block"
+          >
+            <div class="flex items-center">
+              <.icon name="hero-cog-6-tooth" class="w-5 h-5 text-gray-500 mr-3" />
+              <span class="text-sm font-medium text-gray-700">Global Settings</span>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Manage application-wide settings</p>
           </.link>
         </div>
       </div>
