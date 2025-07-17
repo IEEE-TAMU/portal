@@ -300,10 +300,15 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                         <% end %>
                       </td>
                       <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        <%= if member.resume do %>
-                          <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
-                            Uploaded
-                          </span>
+                        <%= if member.resume && member.signed_resume_url do %>
+                          <button
+                            phx-click="show_resume"
+                            phx-value-url={member.signed_resume_url}
+                            phx-value-email={member.email}
+                            class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 hover:bg-blue-200 cursor-pointer"
+                          >
+                            View Resume
+                          </button>
                         <% else %>
                           <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
                             Not Uploaded
@@ -311,18 +316,6 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                         <% end %>
                       </td>
                       <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <%= if member.resume && member.signed_resume_url do %>
-                          <button
-                            phx-click="show_resume"
-                            phx-value-url={member.signed_resume_url}
-                            phx-value-email={member.email}
-                            class="text-indigo-600 hover:text-indigo-900 mr-4"
-                          >
-                            View Resume
-                          </button>
-                        <% else %>
-                          <span class="text-gray-400 mr-4">No Resume</span>
-                        <% end %>
                         <%= if member.confirmed_at do %>
                           <button
                             phx-click="show_member"
