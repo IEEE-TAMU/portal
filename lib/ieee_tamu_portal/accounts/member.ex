@@ -162,4 +162,31 @@ defmodule IeeeTamuPortal.Accounts.Member do
       add_error(changeset, :current_password, "is not valid")
     end
   end
+
+  def put_resume(%__MODULE__{} = member, %Phoenix.LiveView.UploadEntry{} = entry) do
+    alias IeeeTamuPortal.Members.Resume
+
+    {:ok, resume} =
+      Ecto.build_assoc(member, :resume)
+      |> Resume.changeset(%{
+        original_filename: entry.client_name,
+        key: Resume.key(member, entry)
+      })
+      |> IeeeTamuPortal.Repo.insert_or_update()
+
+    {:ok, %__MODULE__{member | resume: resume}}
+  end
+
+  def delete_resume(%__MODULE__{} = member) do
+    alias IeeeTamuPortal.Members.Resume
+
+    case member.resume do
+      nil ->
+        {:ok, member}
+
+      resume ->
+        {:ok, _} = Resume.delete(resume)
+        {:ok, %__MODULE__{member | resume: nil}}
+    end
+  end
 end

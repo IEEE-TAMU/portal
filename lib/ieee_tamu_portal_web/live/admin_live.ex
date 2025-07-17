@@ -7,7 +7,7 @@ defmodule IeeeTamuPortalWeb.AdminLive do
   def mount(_params, _session, socket) do
     member_count = Accounts.count_members()
     paid_members_count = paid_members_count()
-    resume_count = resume_count()
+    resume_count = Members.Resume.count()
 
     socket =
       socket
@@ -21,16 +21,11 @@ defmodule IeeeTamuPortalWeb.AdminLive do
 
   defp paid_members_count do
     try do
-      current_year = Settings.get_setting_value!("registration_year") |> String.to_integer()
+      current_year = Settings.get_registration_year!()
       Members.Registration.paid_members_count_for_year(current_year)
     rescue
       _ -> 0
     end
-  end
-
-  defp resume_count do
-    # Count total uploaded resumes
-    IeeeTamuPortal.Repo.aggregate(IeeeTamuPortal.Members.Resume, :count, :id)
   end
 
   @impl true

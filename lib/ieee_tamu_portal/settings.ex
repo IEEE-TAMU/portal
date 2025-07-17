@@ -22,6 +22,10 @@ defmodule IeeeTamuPortal.Settings do
   alias IeeeTamuPortal.Repo
   alias IeeeTamuPortal.Settings.Setting
 
+  defp get_setting(key) do
+    Repo.get_by(Setting, key: key)
+  end
+
   @doc """
   Fetches all settings from the database.
 
@@ -34,27 +38,6 @@ defmodule IeeeTamuPortal.Settings do
   """
   def all_settings do
     Repo.all(Setting)
-  end
-
-  @doc """
-  Fetches a specific setting by key.
-  """
-  def get_setting(key) do
-    Repo.get_by(Setting, key: key)
-  end
-
-  def get_setting_value(key) do
-    case get_setting(key) do
-      nil -> nil
-      setting -> setting.value
-    end
-  end
-
-  def get_setting_value!(key) do
-    case get_setting_value(key) do
-      nil -> raise "Setting with key '#{key}' not found"
-      value -> value
-    end
   end
 
   @doc """
@@ -77,5 +60,12 @@ defmodule IeeeTamuPortal.Settings do
     setting
     |> Setting.changeset(attrs)
     |> Repo.update()
+  end
+
+  def get_registration_year! do
+    case get_setting("registration_year") do
+      nil -> raise "Membership year setting not found"
+      setting -> setting.value |> String.to_integer()
+    end
   end
 end

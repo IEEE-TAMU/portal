@@ -3,7 +3,7 @@ defmodule IeeeTamuPortal.Members.Registration do
   import Ecto.Changeset
 
   schema "registrations" do
-    field :year, :integer, autogenerate: {__MODULE__, :get_registration_year, []}
+    field :year, :integer, autogenerate: {IeeeTamuPortal.Settings, :get_registration_year!, []}
 
     field :confirmation_code, :string
     field :payment_override, :boolean, default: false
@@ -21,11 +21,6 @@ defmodule IeeeTamuPortal.Members.Registration do
     |> validate_required([:confirmation_code, :member_id])
     |> unique_constraint(:confirmation_code)
     |> foreign_key_constraint(:member_id)
-  end
-
-  def get_registration_year do
-    IeeeTamuPortal.Settings.get_setting_value!("registration_year")
-    |> String.to_integer()
   end
 
   @doc """

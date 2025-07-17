@@ -13,7 +13,6 @@ defmodule IeeeTamuPortal.ResumeZipService do
 
   alias IeeeTamuPortal.Accounts
   alias IeeeTamuPortal.Members.Resume
-  alias IeeeTamuPortalWeb.Upload.SimpleS3Upload
 
   @temp_dir "/tmp/resume_zips"
 
@@ -172,11 +171,7 @@ defmodule IeeeTamuPortal.ResumeZipService do
     try do
       # Sign the S3 URL
       {:ok, signed_url} =
-        SimpleS3Upload.sign(
-          method: "GET",
-          uri: Resume.uri(member.resume),
-          response_content_type: "application/pdf"
-        )
+        Resume.signed_url(member.resume, method: "GET", response_content_type: "application/pdf")
 
       # Download the resume content using :httpc
       case :httpc.request(:get, {String.to_charlist(signed_url), []}, [{:timeout, 30_000}], [

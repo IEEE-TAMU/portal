@@ -1,13 +1,12 @@
 defmodule IeeeTamuPortalWeb.AdminMembersLive do
   use IeeeTamuPortalWeb, :live_view
 
-  alias IeeeTamuPortal.{Accounts, Members, Settings, Repo}
-  alias IeeeTamuPortalWeb.Upload.SimpleS3Upload
+  alias IeeeTamuPortal.{Accounts, Members, Settings}
 
   @impl true
   def mount(_params, _session, socket) do
     # Get current registration year
-    current_year = get_current_year()
+    current_year = Settings.get_registration_year!()
 
     # Fetch all members with their registrations in a single query to avoid N+1
     members = Accounts.list_members_with_registrations(current_year)
@@ -40,28 +39,6 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
     {:ok, socket, layout: {IeeeTamuPortalWeb.Layouts, :admin}}
   end
 
-  defp get_current_year do
-    try do
-      Settings.get_setting_value!("registration_year") |> String.to_integer()
-    rescue
-      _ -> DateTime.utc_now().year
-    end
-  end
-
-  # Helper function to generate signed URL for a resume
-  defp get_signed_resume_url(nil), do: nil
-
-  defp get_signed_resume_url(resume) do
-    {:ok, url} =
-      SimpleS3Upload.sign(
-        method: "GET",
-        uri: Members.Resume.uri(resume),
-        response_content_type: "application/pdf"
-      )
-
-    url
-  end
-
   # Helper functions to determine payment status from preloaded registrations
   defp has_paid_for_year?(member, _year) do
     case member.registrations do
@@ -89,7 +66,11 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
     member = Enum.find(socket.assigns.members, &(&1.id == member_id))
 
     # Generate signed URL for the resume
-    signed_url = get_signed_resume_url(member.resume)
+    {:ok, signed_url} =
+      Members.Resume.signed_url(member.resume,
+        method: "GET",
+        response_content_type: "application/pdf"
+      )
 
     {:noreply,
      socket
@@ -226,62 +207,41 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
       socket.assigns[:current_resume_member_id] ||
         (socket.assigns[:current_member] && socket.assigns[:current_member].id)
 
-    if member_id do
-      member = Enum.find(socket.assigns.members, &(&1.id == member_id))
+    member = Enum.find(socket.assigns.members, &(&1.id == member_id))
 
-      case member.resume do
-        nil ->
-          {:noreply, Phoenix.LiveView.put_flash(socket, :error, "No resume to delete.")}
+    {:ok, updated_member} = Accounts.Member.delete_resume(member)
 
-        resume ->
-          # Delete from storage
-          :ok =
-            IeeeTamuPortal.S3Delete.delete_object(
-              IeeeTamuPortal.S3Delete,
-              Members.Resume.uri(resume)
-            )
+    # Update members list
+    updated_members =
+      Enum.map(socket.assigns.members, fn m ->
+        if m.id == member_id do
+          # Update the member with no resume and preserve payment status
+          updated_member
+          |> Map.put(:has_paid, m.has_paid)
+          |> Map.put(:has_override, m.has_override)
+        else
+          m
+        end
+      end)
 
-          # Delete from database
-          Repo.delete(resume)
+    socket =
+      socket
+      |> Phoenix.LiveView.put_flash(:info, "Resume deleted successfully.")
+      |> assign(:members, updated_members)
+      |> assign(:show_resume_modal, false)
+      |> assign(:current_resume_url, nil)
+      |> assign(:current_member_email, nil)
+      |> assign(:current_resume_member_id, nil)
 
-          # Update member
-          updated_member = %Accounts.Member{member | resume: nil}
-
-          # Update members list
-          updated_members =
-            Enum.map(socket.assigns.members, fn m ->
-              if m.id == member_id do
-                # Update the member with no resume and preserve payment status
-                updated_member
-                |> Map.put(:has_paid, m.has_paid)
-                |> Map.put(:has_override, m.has_override)
-              else
-                m
-              end
-            end)
-
-          socket =
-            socket
-            |> Phoenix.LiveView.put_flash(:info, "Resume deleted successfully.")
-            |> assign(:members, updated_members)
-            |> assign(:show_resume_modal, false)
-            |> assign(:current_resume_url, nil)
-            |> assign(:current_member_email, nil)
-            |> assign(:current_resume_member_id, nil)
-
-          # If we're also in member modal, update current_member
-          socket =
-            if socket.assigns[:current_member] && socket.assigns.current_member.id == member_id do
-              assign(socket, :current_member, updated_member)
-            else
-              socket
-            end
-
-          {:noreply, socket}
+    # If we're also in member modal, update current_member
+    socket =
+      if socket.assigns[:current_member] && socket.assigns.current_member.id == member_id do
+        assign(socket, :current_member, updated_member)
+      else
+        socket
       end
-    else
-      {:noreply, Phoenix.LiveView.put_flash(socket, :error, "No member selected.")}
-    end
+
+    {:noreply, socket}
   end
 
   @impl true
@@ -309,7 +269,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   def handle_event("toggle_payment_override", %{"member_id" => member_id}, socket) do
     member_id = String.to_integer(member_id)
     member = Enum.find(socket.assigns.members, &(&1.id == member_id))
-    current_year = get_current_year()
+    current_year = Settings.get_registration_year!()
 
     # Find or create registration for current year
     case Members.Registration.get_or_create_registration_for_member(member, current_year) do

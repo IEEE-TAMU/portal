@@ -1,8 +1,7 @@
 defmodule IeeeTamuPortalWeb.MemberResumeLive do
   use IeeeTamuPortalWeb, :live_view
 
-  alias IeeeTamuPortalWeb.Upload.SimpleS3Upload
-  alias IeeeTamuPortal.{Accounts, Members, Repo}
+  alias IeeeTamuPortal.{Accounts, Repo}
   alias IeeeTamuPortal.Members.Resume
 
   @impl true
@@ -19,11 +18,7 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
 
         resume ->
           {:ok, url} =
-            SimpleS3Upload.sign(
-              method: "GET",
-              uri: Resume.uri(resume),
-              response_content_type: "application/pdf"
-            )
+            Resume.signed_url(resume, method: "GET", response_content_type: "application/pdf")
 
           url
       end
@@ -42,78 +37,14 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
     {:ok, socket}
   end
 
-  defp delete_resume(socket) do
-    member = socket.assigns.current_member
-    resume = member.resume
-
-    # delete from R2
-    :ok = IeeeTamuPortal.S3Delete.delete_object(IeeeTamuPortal.S3Delete, Resume.uri(resume))
-
-    # delete from DB
-    Repo.delete(resume)
-
-    member = %Accounts.Member{member | resume: nil}
-
-    socket
-    |> assign(:resume_url, nil)
-    |> assign(:current_member, member)
-    |> Phoenix.LiveView.put_flash(:info, "Resume deleted successfully")
-  end
-
-  defp save_resume(socket) do
-    {completed, []} = uploaded_entries(socket, :member_resume)
-
-    case completed do
-      [] ->
-        socket
-
-      [entry] ->
-        member = socket.assigns.current_member
-
-        resume_changes =
-          %{
-            original_filename: entry.client_name,
-            bucket_url: SimpleS3Upload.bucket_url(),
-            key: key(member, entry)
-          }
-
-        resume = member.resume || %Members.Resume{member_id: member.id}
-
-        changeset = Members.change_member_resume(resume, resume_changes)
-        resume = Repo.insert_or_update!(changeset)
-
-        member = %Accounts.Member{member | resume: resume}
-
-        # sign the GET request for the resume
-        {:ok, url} =
-          SimpleS3Upload.sign(
-            method: "GET",
-            uri: Resume.uri(resume),
-            response_content_type: "application/pdf"
-          )
-
-        socket
-        |> assign(:resume_url, url)
-        |> cancel_upload(:member_resume, entry.ref)
-        |> Phoenix.LiveView.put_flash(:info, "Resume uploaded successfully")
-        |> assign(:current_member, member)
-    end
-  end
-
-  defp key(member, entry) do
-    filename = "#{member.id}-#{member.email}#{Path.extname(entry.client_name)}"
-    "resumes/#{filename}"
-  end
-
   defp presign_upload(entry, socket) do
     uploads = socket.assigns.uploads
     member = socket.assigns.current_member
-    key = key(member, entry)
 
     {:ok, presigned_url} =
-      SimpleS3Upload.sign(
+      Resume.signed_url(
         method: "PUT",
-        key: key,
+        key: Resume.key(member, entry),
         content_type: entry.client_type,
         max_file_size: uploads[entry.upload_config].max_file_size
       )
@@ -139,12 +70,48 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
 
   @impl true
   def handle_event("save", _params, socket) do
-    {:noreply, save_resume(socket)}
+    {completed, []} = uploaded_entries(socket, :member_resume)
+
+    socket =
+      case completed do
+        [] ->
+          socket
+
+        [entry] ->
+          {:ok, member} =
+            socket.assigns.current_member
+            |> Accounts.Member.put_resume(entry)
+
+          # sign the GET request for the resume
+          {:ok, url} =
+            Resume.signed_url(member.resume,
+              method: "GET",
+              response_content_type: "application/pdf"
+            )
+
+          socket
+          |> assign(:current_member, member)
+          |> assign(:resume_url, url)
+          |> cancel_upload(:member_resume, entry.ref)
+          |> Phoenix.LiveView.put_flash(:info, "Resume uploaded successfully")
+      end
+
+    {:noreply, socket}
   end
 
   @impl true
   def handle_event("delete_resume", _params, socket) do
-    {:noreply, delete_resume(socket)}
+    {:ok, member} =
+      socket.assigns.current_member
+      |> Accounts.Member.delete_resume()
+
+    socket =
+      socket
+      |> assign(:current_member, member)
+      |> assign(:resume_url, nil)
+      |> Phoenix.LiveView.put_flash(:info, "Resume deleted successfully")
+
+    {:noreply, socket}
   end
 
   @impl true
