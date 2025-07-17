@@ -7,11 +7,13 @@ defmodule IeeeTamuPortalWeb.AdminLive do
   def mount(_params, _session, socket) do
     member_count = Accounts.count_members()
     paid_members_count = paid_members_count()
+    resume_count = resume_count()
 
     socket =
       socket
       |> assign(:member_count, member_count)
       |> assign(:paid_members_count, paid_members_count)
+      |> assign(:resume_count, resume_count)
       |> assign(:page_title, "Admin Dashboard")
 
     {:ok, socket, layout: {IeeeTamuPortalWeb.Layouts, :admin}}
@@ -24,6 +26,11 @@ defmodule IeeeTamuPortalWeb.AdminLive do
     rescue
       _ -> 0
     end
+  end
+
+  defp resume_count do
+    # Count total uploaded resumes
+    IeeeTamuPortal.Repo.aggregate(IeeeTamuPortal.Members.Resume, :count, :id)
   end
 
   @impl true
@@ -65,16 +72,25 @@ defmodule IeeeTamuPortalWeb.AdminLive do
         </div>
 
         <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                <.icon name="hero-document-text" class="w-5 h-5 text-white" />
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                  <.icon name="hero-document-text" class="w-5 h-5 text-white" />
+                </div>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Uploaded Resumes</p>
+                <p class="text-2xl font-bold text-gray-900">{@resume_count}</p>
               </div>
             </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Resumes</p>
-              <p class="text-2xl font-bold text-gray-900">-</p>
-              <p class="text-xs text-gray-500">Coming soon</p>
+            <div class="flex-shrink-0">
+              <.link
+                href={~p"/admin/download-resumes"}
+                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+              >
+                <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download
+              </.link>
             </div>
           </div>
         </div>
@@ -82,7 +98,7 @@ defmodule IeeeTamuPortalWeb.AdminLive do
 
       <div class="mt-8 bg-white rounded-lg shadow p-6">
         <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button class="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 text-left">
             <div class="flex items-center">
               <.icon name="hero-envelope" class="w-5 h-5 text-gray-500 mr-3" />
@@ -90,17 +106,6 @@ defmodule IeeeTamuPortalWeb.AdminLive do
             </div>
             <p class="text-xs text-gray-500 mt-1">Coming soon</p>
           </button>
-
-          <.link
-            href={~p"/admin/download-resumes"}
-            class="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 text-left block"
-          >
-            <div class="flex items-center">
-              <.icon name="hero-document-arrow-down" class="w-5 h-5 text-gray-500 mr-3" />
-              <span class="text-sm font-medium text-gray-700">Download Member Resumes</span>
-            </div>
-            <p class="text-xs text-gray-500 mt-1">Download all member resumes as a zip file</p>
-          </.link>
 
           <.link
             href={~p"/admin/settings"}
