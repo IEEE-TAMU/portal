@@ -388,25 +388,27 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                             Not Paid
                           </span>
                         <% end %>
-                        <div class="mt-1">
-                          <%= if member.has_override do %>
-                            <button
-                              phx-click="toggle_payment_override"
-                              phx-value-member_id={member.id}
-                              class="text-xs text-blue-600 hover:text-blue-800 underline"
-                            >
-                              Remove Override
-                            </button>
-                          <% else %>
-                            <button
-                              phx-click="toggle_payment_override"
-                              phx-value-member_id={member.id}
-                              class="text-xs text-blue-600 hover:text-blue-800 underline"
-                            >
-                              Override Payment
-                            </button>
-                          <% end %>
-                        </div>
+                        <%= if member.has_override or not member.has_paid do %>
+                          <div class="mt-1">
+                            <%= if member.has_override do %>
+                              <button
+                                phx-click="toggle_payment_override"
+                                phx-value-member_id={member.id}
+                                class="text-xs text-blue-600 hover:text-blue-800 underline"
+                              >
+                                Remove Override
+                              </button>
+                            <% else %>
+                              <button
+                                phx-click="toggle_payment_override"
+                                phx-value-member_id={member.id}
+                                class="text-xs text-blue-600 hover:text-blue-800 underline"
+                              >
+                                Override Payment
+                              </button>
+                            <% end %>
+                          </div>
+                        <% end %>
                       </td>
                       <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         <%= if member.resume && member.signed_resume_url do %>
