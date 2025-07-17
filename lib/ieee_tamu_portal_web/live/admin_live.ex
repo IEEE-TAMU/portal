@@ -1,18 +1,29 @@
 defmodule IeeeTamuPortalWeb.AdminLive do
   use IeeeTamuPortalWeb, :live_view
 
-  alias IeeeTamuPortal.Accounts
+  alias IeeeTamuPortal.{Accounts, Members.Registration, Settings}
 
   @impl true
   def mount(_params, _session, socket) do
     member_count = Accounts.count_members()
+    paid_members_count = paid_members_count()
 
     socket =
       socket
       |> assign(:member_count, member_count)
+      |> assign(:paid_members_count, paid_members_count)
       |> assign(:page_title, "Admin Dashboard")
 
     {:ok, socket, layout: {IeeeTamuPortalWeb.Layouts, :admin}}
+  end
+
+  defp paid_members_count do
+    try do
+      current_year = Settings.get_setting_value!("registration_year") |> String.to_integer()
+      Registration.paid_members_count_for_year(current_year)
+    rescue
+      _ -> 0
+    end
   end
 
   @impl true
@@ -43,13 +54,12 @@ defmodule IeeeTamuPortalWeb.AdminLive do
           <div class="flex items-center">
             <div class="flex-shrink-0">
               <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                <.icon name="hero-check-circle" class="w-5 h-5 text-white" />
+                <.icon name="hero-credit-card" class="w-5 h-5 text-white" />
               </div>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Active Members</p>
-              <p class="text-2xl font-bold text-gray-900">-</p>
-              <p class="text-xs text-gray-500">Coming soon</p>
+              <p class="text-sm font-medium text-gray-600">Paid Members</p>
+              <p class="text-2xl font-bold text-gray-900">{@paid_members_count}</p>
             </div>
           </div>
         </div>

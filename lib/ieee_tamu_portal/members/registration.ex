@@ -72,4 +72,20 @@ defmodule IeeeTamuPortal.Members.Registration do
   def payment_complete?(registration) do
     registration.payment_override || registration.payment != nil
   end
+
+  @doc """
+  Counts the number of paid members for a specific year.
+  A member is considered paid if they have payment_override = true OR an associated payment.
+  """
+  def paid_members_count_for_year(year) do
+    alias IeeeTamuPortal.{Repo, Members.Payment}
+    import Ecto.Query
+
+    from(r in __MODULE__,
+      left_join: p in Payment,
+      on: r.id == p.registration_id,
+      where: r.year == ^year and (r.payment_override == true or not is_nil(p.id))
+    )
+    |> Repo.aggregate(:count, :id)
+  end
 end
