@@ -87,6 +87,8 @@ defmodule IeeeTamuPortalWeb.AdminLive do
             <div class="flex-shrink-0">
               <.link
                 href={~p"/admin/download-resumes"}
+                target="_blank"
+                rel="noopener noreferrer"
                 class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
               >
                 <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download
