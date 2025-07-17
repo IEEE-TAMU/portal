@@ -426,16 +426,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                         <% end %>
                       </td>
                       <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <%= if member.confirmed_at do %>
-                          <button
-                            phx-click="show_member"
-                            phx-value-member_id={member.id}
-                            class="text-indigo-600 hover:text-indigo-900"
-                            onclick="event.stopPropagation();"
-                          >
-                            Edit
-                          </button>
-                        <% else %>
+                        <%= if !member.confirmed_at do %>
                           <button
                             phx-click="resend_confirmation"
                             phx-value-member_id={member.id}
