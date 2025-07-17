@@ -698,134 +698,136 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                 <% else %>
                   <!-- Edit mode - show form -->
                   <.simple_form
-                  for={@member_info_form}
-                  id="member_info_form"
-                  phx-submit="update_member_info"
-                  phx-change="validate_member_info"
-                >
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <.input
-                      field={@member_info_form[:first_name]}
-                      label="First name *"
-                      type="text"
-                      required
-                    />
-                    <.input
-                      field={@member_info_form[:last_name]}
-                      label="Last name *"
-                      type="text"
-                      required
-                    />
-                    <.input
-                      field={@member_info_form[:preferred_name]}
-                      label="Preferred name"
-                      type="text"
-                    />
-                    <.input
-                      field={@member_info_form[:tshirt_size]}
-                      label="T-shirt size *"
-                      type="select"
-                      prompt="Select a size"
-                      options={Ecto.Enum.values(Members.Info, :tshirt_size)}
-                      required
-                    />
-                    <.input
-                      field={@member_info_form[:phone_number]}
-                      label="Phone number"
-                      type="tel"
-                      placeholder="Ex. 979-845-7200"
-                    />
-                    <.input field={@member_info_form[:age]} label="Age" type="number" />
-                    <.input
-                      field={@member_info_form[:gender]}
-                      label="Gender *"
-                      type="select"
-                      options={Ecto.Enum.values(Members.Info, :gender)}
-                      required
-                    />
-                    <.input
-                      :if={@member_info_form[:gender].value |> to_string == "Other"}
-                      field={@member_info_form[:gender_other]}
-                      label="Please specify"
-                      type="text"
-                    />
-                  </div>
-
-                  <h4 class="text-md font-semibold text-gray-900 mt-6 mb-4">Academic Information</h4>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <.input
-                      field={@member_info_form[:uin]}
-                      label="UIN *"
-                      type="text"
-                      placeholder="Ex. 731006823"
-                      required
-                    />
-                    <.input
-                      field={@member_info_form[:ieee_membership_number]}
-                      label="IEEE Membership Number"
-                      type="text"
-                      placeholder="Ex. 97775577"
-                    />
-                    <.input
-                      field={@member_info_form[:major]}
-                      label="Major *"
-                      type="select"
-                      options={Ecto.Enum.values(Members.Info, :major)}
-                      required
-                    />
-                    <.input
-                      :if={@member_info_form[:major].value |> to_string() == "Other"}
-                      field={@member_info_form[:major_other]}
-                      label="Please specify *"
-                      type="text"
-                      required
-                    />
-                    <div class="flex justify-center items-center">
+                    for={@member_info_form}
+                    id="member_info_form"
+                    phx-submit="update_member_info"
+                    phx-change="validate_member_info"
+                  >
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <.input
-                        field={@member_info_form[:international_student]}
-                        label="International student?"
-                        type="checkbox"
+                        field={@member_info_form[:first_name]}
+                        label="First name *"
+                        type="text"
+                        required
+                      />
+                      <.input
+                        field={@member_info_form[:last_name]}
+                        label="Last name *"
+                        type="text"
+                        required
+                      />
+                      <.input
+                        field={@member_info_form[:preferred_name]}
+                        label="Preferred name"
+                        type="text"
+                      />
+                      <.input
+                        field={@member_info_form[:tshirt_size]}
+                        label="T-shirt size *"
+                        type="select"
+                        prompt="Select a size"
+                        options={Ecto.Enum.values(Members.Info, :tshirt_size)}
+                        required
+                      />
+                      <.input
+                        field={@member_info_form[:phone_number]}
+                        label="Phone number"
+                        type="tel"
+                        placeholder="Ex. 979-845-7200"
+                      />
+                      <.input field={@member_info_form[:age]} label="Age" type="number" />
+                      <.input
+                        field={@member_info_form[:gender]}
+                        label="Gender *"
+                        type="select"
+                        options={Ecto.Enum.values(Members.Info, :gender)}
+                        required
+                      />
+                      <.input
+                        :if={@member_info_form[:gender].value |> to_string == "Other"}
+                        field={@member_info_form[:gender_other]}
+                        label="Please specify"
+                        type="text"
                       />
                     </div>
-                    <.input
-                      :if={
-                        Phoenix.HTML.Form.normalize_value(
-                          "checkbox",
-                          @member_info_form[:international_student].value
-                        ) or
-                          (
-                            country = @member_info_form[:international_country].value
-                            country != nil and country != ""
-                          )
-                      }
-                      field={@member_info_form[:international_country]}
-                      label="Country of origin *"
-                      type="text"
-                      required
-                    />
-                    <.input
-                      field={@member_info_form[:graduation_year]}
-                      label="Graduation year *"
-                      type="number"
-                      required
-                    />
-                  </div>
 
-                  <div class="flex justify-between items-center mt-6">
-                    <div class="flex space-x-3">
-                      <.button type="submit" phx-disable-with="Saving...">
-                        Save Changes
-                      </.button>
-                      <.button
-                        type="button"
-                        phx-click="close_member_modal"
-                        class="bg-gray-300 hover:bg-gray-400 text-gray-800"
-                      >
-                        Cancel
-                      </.button>
+                    <h4 class="text-md font-semibold text-gray-900 mt-6 mb-4">
+                      Academic Information
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <.input
+                        field={@member_info_form[:uin]}
+                        label="UIN *"
+                        type="text"
+                        placeholder="Ex. 731006823"
+                        required
+                      />
+                      <.input
+                        field={@member_info_form[:ieee_membership_number]}
+                        label="IEEE Membership Number"
+                        type="text"
+                        placeholder="Ex. 97775577"
+                      />
+                      <.input
+                        field={@member_info_form[:major]}
+                        label="Major *"
+                        type="select"
+                        options={Ecto.Enum.values(Members.Info, :major)}
+                        required
+                      />
+                      <.input
+                        :if={@member_info_form[:major].value |> to_string() == "Other"}
+                        field={@member_info_form[:major_other]}
+                        label="Please specify *"
+                        type="text"
+                        required
+                      />
+                      <div class="flex justify-center items-center">
+                        <.input
+                          field={@member_info_form[:international_student]}
+                          label="International student?"
+                          type="checkbox"
+                        />
+                      </div>
+                      <.input
+                        :if={
+                          Phoenix.HTML.Form.normalize_value(
+                            "checkbox",
+                            @member_info_form[:international_student].value
+                          ) or
+                            (
+                              country = @member_info_form[:international_country].value
+                              country != nil and country != ""
+                            )
+                        }
+                        field={@member_info_form[:international_country]}
+                        label="Country of origin *"
+                        type="text"
+                        required
+                      />
+                      <.input
+                        field={@member_info_form[:graduation_year]}
+                        label="Graduation year *"
+                        type="number"
+                        required
+                      />
                     </div>
-                  </div>
-                </.simple_form>
+
+                    <div class="flex justify-between items-center mt-6">
+                      <div class="flex space-x-3">
+                        <.button type="submit" phx-disable-with="Saving...">
+                          Save Changes
+                        </.button>
+                        <.button
+                          type="button"
+                          phx-click="close_member_modal"
+                          class="bg-gray-300 hover:bg-gray-400 text-gray-800"
+                        >
+                          Cancel
+                        </.button>
+                      </div>
+                    </div>
+                  </.simple_form>
                 <% end %>
               </div>
             </div>
