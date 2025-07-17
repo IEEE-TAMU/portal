@@ -52,6 +52,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
       |> assign(:show_resume_modal, false)
       |> assign(:current_resume_url, nil)
       |> assign(:current_member_email, nil)
+      |> assign(:current_resume_member_id, nil)
       |> assign(:show_member_modal, false)
       |> assign(:current_member, nil)
       |> assign(:member_info_form, nil)
@@ -69,12 +70,17 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   end
 
   @impl true
-  def handle_event("show_resume", %{"url" => url, "email" => email}, socket) do
+  def handle_event(
+        "show_resume",
+        %{"url" => url, "email" => email, "member_id" => member_id},
+        socket
+      ) do
     {:noreply,
      socket
      |> assign(:show_resume_modal, true)
      |> assign(:current_resume_url, url)
-     |> assign(:current_member_email, email)}
+     |> assign(:current_member_email, email)
+     |> assign(:current_resume_member_id, String.to_integer(member_id))}
   end
 
   @impl true
@@ -83,7 +89,8 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
      socket
      |> assign(:show_resume_modal, false)
      |> assign(:current_resume_url, nil)
-     |> assign(:current_member_email, nil)}
+     |> assign(:current_member_email, nil)
+     |> assign(:current_resume_member_id, nil)}
   end
 
   @impl true
@@ -112,7 +119,6 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
 
   @impl true
   def handle_event("view_member", %{"member_id" => member_id}, socket) do
-    IO.puts("view_member called with member_id: #{member_id}")
     member_id = String.to_integer(member_id)
     member = Enum.find(socket.assigns.members, &(&1.id == member_id))
 
@@ -196,39 +202,59 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
 
   @impl true
   def handle_event("delete_member_resume", _params, socket) do
-    member = socket.assigns.current_member
+    # Check if we're in resume modal or member modal context
+    member_id =
+      socket.assigns[:current_resume_member_id] ||
+        (socket.assigns[:current_member] && socket.assigns[:current_member].id)
 
-    case member.resume do
-      nil ->
-        {:noreply, Phoenix.LiveView.put_flash(socket, :error, "No resume to delete.")}
+    if member_id do
+      member = Enum.find(socket.assigns.members, &(&1.id == member_id))
 
-      resume ->
-        # Delete from storage
-        :ok = IeeeTamuPortal.S3Delete.delete_object(IeeeTamuPortal.S3Delete, Resume.uri(resume))
+      case member.resume do
+        nil ->
+          {:noreply, Phoenix.LiveView.put_flash(socket, :error, "No resume to delete.")}
 
-        # Delete from database
-        IeeeTamuPortal.Repo.delete(resume)
+        resume ->
+          # Delete from storage
+          :ok = IeeeTamuPortal.S3Delete.delete_object(IeeeTamuPortal.S3Delete, Resume.uri(resume))
 
-        # Update member
-        updated_member = %Accounts.Member{member | resume: nil}
+          # Delete from database
+          IeeeTamuPortal.Repo.delete(resume)
 
-        # Update members list
-        updated_members =
-          Enum.map(socket.assigns.members, fn m ->
-            if m.id == member.id do
-              Map.merge(updated_member, %{signed_resume_url: nil})
+          # Update member
+          updated_member = %Accounts.Member{member | resume: nil}
+
+          # Update members list
+          updated_members =
+            Enum.map(socket.assigns.members, fn m ->
+              if m.id == member_id do
+                Map.merge(updated_member, %{signed_resume_url: nil})
+              else
+                m
+              end
+            end)
+
+          socket =
+            socket
+            |> Phoenix.LiveView.put_flash(:info, "Resume deleted successfully.")
+            |> assign(:members, updated_members)
+            |> assign(:show_resume_modal, false)
+            |> assign(:current_resume_url, nil)
+            |> assign(:current_member_email, nil)
+            |> assign(:current_resume_member_id, nil)
+
+          # If we're also in member modal, update current_member
+          socket =
+            if socket.assigns[:current_member] && socket.assigns.current_member.id == member_id do
+              assign(socket, :current_member, updated_member)
             else
-              m
+              socket
             end
-          end)
 
-        socket =
-          socket
-          |> Phoenix.LiveView.put_flash(:info, "Resume deleted successfully.")
-          |> assign(:current_member, updated_member)
-          |> assign(:members, updated_members)
-
-        {:noreply, socket}
+          {:noreply, socket}
+      end
+    else
+      {:noreply, Phoenix.LiveView.put_flash(socket, :error, "No member selected.")}
     end
   end
 
@@ -255,7 +281,6 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
 
   @impl true
   def handle_event("toggle_payment_override", %{"member_id" => member_id}, socket) do
-    IO.puts("toggle_payment_override called with member_id: #{member_id}")
     member_id = String.to_integer(member_id)
     member = Enum.find(socket.assigns.members, &(&1.id == member_id))
     current_year = get_current_year()
@@ -416,8 +441,8 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                             phx-click="show_resume"
                             phx-value-url={member.signed_resume_url}
                             phx-value-email={member.email}
+                            phx-value-member_id={member.id}
                             class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 hover:bg-blue-200 cursor-pointer"
-                            onclick="event.stopPropagation();"
                           >
                             View Resume
                           </button>
@@ -433,7 +458,6 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                             phx-click="resend_confirmation"
                             phx-value-member_id={member.id}
                             class="text-orange-600 hover:text-orange-900"
-                            onclick="event.stopPropagation();"
                           >
                             Resend Confirmation
                           </button>
@@ -490,7 +514,16 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                 />
               </div>
 
-              <div class="flex justify-end mt-4">
+              <div class="flex justify-between items-center mt-4">
+                <.button
+                  type="button"
+                  phx-click="delete_member_resume"
+                  phx-disable-with="Deleting..."
+                  class="bg-red-600 hover:bg-red-700 text-white"
+                  onclick="return confirm('Are you sure you want to delete this member\\'s resume?')"
+                >
+                  Delete Resume
+                </.button>
                 <button
                   phx-click="close_resume_modal"
                   class="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded text-gray-800 font-medium"
@@ -661,18 +694,6 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                         Close
                       </.button>
                     </div>
-
-                    <%= if @current_member.resume do %>
-                      <.button
-                        type="button"
-                        phx-click="delete_member_resume"
-                        phx-disable-with="Deleting..."
-                        class="bg-red-600 hover:bg-red-700 text-white"
-                        onclick="return confirm('Are you sure you want to delete this member\\'s resume?')"
-                      >
-                        Delete Resume
-                      </.button>
-                    <% end %>
                   </div>
                 <% else %>
                   <!-- Edit mode - show form -->
@@ -803,18 +824,6 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                         Cancel
                       </.button>
                     </div>
-
-                    <%= if @current_member.resume do %>
-                      <.button
-                        type="button"
-                        phx-click="delete_member_resume"
-                        phx-disable-with="Deleting..."
-                        class="bg-red-600 hover:bg-red-700 text-white"
-                        onclick="return confirm('Are you sure you want to delete this member\\'s resume?')"
-                      >
-                        Delete Resume
-                      </.button>
-                    <% end %>
                   </div>
                 </.simple_form>
                 <% end %>
