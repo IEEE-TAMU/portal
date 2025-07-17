@@ -205,6 +205,27 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   end
 
   @impl true
+  def handle_event("resend_confirmation", %{"member_id" => member_id}, socket) do
+    member_id = String.to_integer(member_id)
+    member = Enum.find(socket.assigns.members, &(&1.id == member_id))
+
+    case Accounts.deliver_member_confirmation_instructions(
+           member,
+           &url(~p"/members/confirm/#{&1}")
+         ) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Confirmation email sent successfully to #{member.email}")}
+
+      {:error, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to send confirmation email to #{member.email}")}
+    end
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="px-4 sm:px-6 lg:px-8">
@@ -302,13 +323,23 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                         <% else %>
                           <span class="text-gray-400 mr-4">No Resume</span>
                         <% end %>
-                        <button
-                          phx-click="show_member"
-                          phx-value-member_id={member.id}
-                          class="text-indigo-600 hover:text-indigo-900"
-                        >
-                          View
-                        </button>
+                        <%= if member.confirmed_at do %>
+                          <button
+                            phx-click="show_member"
+                            phx-value-member_id={member.id}
+                            class="text-indigo-600 hover:text-indigo-900"
+                          >
+                            View
+                          </button>
+                        <% else %>
+                          <button
+                            phx-click="resend_confirmation"
+                            phx-value-member_id={member.id}
+                            class="text-orange-600 hover:text-orange-900"
+                          >
+                            Resend Confirmation
+                          </button>
+                        <% end %>
                       </td>
                     </tr>
                   <% end %>
