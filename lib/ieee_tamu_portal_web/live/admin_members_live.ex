@@ -20,11 +20,15 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
         # Check if member has paid for current year
         has_paid = Registration.member_paid_for_year?(member.id, current_year)
 
+        # Check if member has payment override
+        has_override = Registration.member_has_payment_override?(member.id, current_year)
+
         case member.resume do
           nil ->
             member
             |> Map.put(:signed_resume_url, nil)
             |> Map.put(:has_paid, has_paid)
+            |> Map.put(:has_override, has_override)
 
           resume ->
             {:ok, url} =
@@ -37,6 +41,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
             member
             |> Map.put(:signed_resume_url, url)
             |> Map.put(:has_paid, has_paid)
+            |> Map.put(:has_override, has_override)
         end
       end)
 
@@ -249,6 +254,58 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   end
 
   @impl true
+  def handle_event("toggle_payment_override", %{"member_id" => member_id}, socket) do
+    IO.puts("toggle_payment_override called with member_id: #{member_id}")
+    member_id = String.to_integer(member_id)
+    member = Enum.find(socket.assigns.members, &(&1.id == member_id))
+    current_year = get_current_year()
+
+    # Find or create registration for current year
+    case Registration.get_or_create_registration_for_member(member, current_year) do
+      {:ok, registration} ->
+        # Toggle the payment override
+        new_override_value = !registration.payment_override
+
+        case IeeeTamuPortal.Repo.update(
+               Registration.changeset(registration, %{payment_override: new_override_value})
+             ) do
+          {:ok, _updated_registration} ->
+            # Update the member's payment status and override status in the socket
+            updated_members =
+              Enum.map(socket.assigns.members, fn m ->
+                if m.id == member_id do
+                  has_paid = Registration.member_paid_for_year?(m.id, current_year)
+                  has_override = Registration.member_has_payment_override?(m.id, current_year)
+
+                  m
+                  |> Map.put(:has_paid, has_paid)
+                  |> Map.put(:has_override, has_override)
+                else
+                  m
+                end
+              end)
+
+            action = if new_override_value, do: "enabled", else: "disabled"
+
+            {:noreply,
+             socket
+             |> assign(:members, updated_members)
+             |> put_flash(:info, "Payment override #{action} for #{member.email}")}
+
+          {:error, _changeset} ->
+            {:noreply,
+             socket
+             |> put_flash(:error, "Failed to update payment override for #{member.email}")}
+        end
+
+      {:error, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to find or create registration for #{member.email}")}
+    end
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="px-4 sm:px-6 lg:px-8">
@@ -317,14 +374,39 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                       </td>
                       <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         <%= if member.has_paid do %>
-                          <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                            Paid
-                          </span>
+                          <%= if member.has_override do %>
+                            <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 border border-yellow-300">
+                              Paid (Override)
+                            </span>
+                          <% else %>
+                            <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                              Paid
+                            </span>
+                          <% end %>
                         <% else %>
                           <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
                             Not Paid
                           </span>
                         <% end %>
+                        <div class="mt-1">
+                          <%= if member.has_override do %>
+                            <button
+                              phx-click="toggle_payment_override"
+                              phx-value-member_id={member.id}
+                              class="text-xs text-blue-600 hover:text-blue-800 underline"
+                            >
+                              Remove Override
+                            </button>
+                          <% else %>
+                            <button
+                              phx-click="toggle_payment_override"
+                              phx-value-member_id={member.id}
+                              class="text-xs text-blue-600 hover:text-blue-800 underline"
+                            >
+                              Override Payment
+                            </button>
+                          <% end %>
+                        </div>
                       </td>
                       <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         <%= if member.resume && member.signed_resume_url do %>

@@ -108,4 +108,42 @@ defmodule IeeeTamuPortal.Members.Registration do
 
     Repo.exists?(query)
   end
+
+  @doc """
+  Gets existing registration for a member and year, or creates a new one if none exists.
+  """
+  def get_or_create_registration_for_member(member, year) do
+    alias IeeeTamuPortal.Repo
+    import Ecto.Query
+
+    # First try to find existing registration
+    case from(r in __MODULE__,
+           where: r.member_id == ^member.id and r.year == ^year,
+           limit: 1
+         )
+         |> Repo.one() do
+      nil ->
+        # No registration exists, create one
+        %__MODULE__{}
+        |> create_changeset(%{member_id: member.id, year: year}, member)
+        |> Repo.insert()
+
+      registration ->
+        # Registration exists
+        {:ok, registration}
+    end
+  end
+
+  @doc """
+  Checks if a member has payment override enabled for a specific year.
+  """
+  def member_has_payment_override?(member_id, year) do
+    alias IeeeTamuPortal.Repo
+    import Ecto.Query
+
+    from(r in __MODULE__,
+      where: r.member_id == ^member_id and r.year == ^year and r.payment_override == true
+    )
+    |> Repo.exists?()
+  end
 end
