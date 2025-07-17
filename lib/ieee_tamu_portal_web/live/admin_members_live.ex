@@ -14,8 +14,8 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
     # Get current registration year
     current_year = get_current_year()
 
-    # Sign resume URLs for members who have resumes and add payment status
-    members_with_signed_urls =
+    # Add payment status without signing URLs
+    members_with_payment_status =
       Enum.map(members, fn member ->
         # Check if member has paid for current year
         has_paid = Registration.member_paid_for_year?(member.id, current_year)
@@ -23,31 +23,14 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
         # Check if member has payment override
         has_override = Registration.member_has_payment_override?(member.id, current_year)
 
-        case member.resume do
-          nil ->
-            member
-            |> Map.put(:signed_resume_url, nil)
-            |> Map.put(:has_paid, has_paid)
-            |> Map.put(:has_override, has_override)
-
-          resume ->
-            {:ok, url} =
-              SimpleS3Upload.sign(
-                method: "GET",
-                uri: Resume.uri(resume),
-                response_content_type: "application/pdf"
-              )
-
-            member
-            |> Map.put(:signed_resume_url, url)
-            |> Map.put(:has_paid, has_paid)
-            |> Map.put(:has_override, has_override)
-        end
+        member
+        |> Map.put(:has_paid, has_paid)
+        |> Map.put(:has_override, has_override)
       end)
 
     socket =
       socket
-      |> assign(:members, members_with_signed_urls)
+      |> assign(:members, members_with_payment_status)
       |> assign(:page_title, "Members - Admin")
       |> assign(:show_resume_modal, false)
       |> assign(:current_resume_url, nil)
@@ -69,18 +52,38 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
     end
   end
 
+  # Helper function to generate signed URL for a resume
+  defp get_signed_resume_url(nil), do: nil
+
+  defp get_signed_resume_url(resume) do
+    case SimpleS3Upload.sign(
+           method: "GET",
+           uri: Resume.uri(resume),
+           response_content_type: "application/pdf"
+         ) do
+      {:ok, url} -> url
+      _ -> nil
+    end
+  end
+
   @impl true
   def handle_event(
         "show_resume",
-        %{"url" => url, "email" => email, "member_id" => member_id},
+        %{"email" => email, "member_id" => member_id},
         socket
       ) do
+    member_id = String.to_integer(member_id)
+    member = Enum.find(socket.assigns.members, &(&1.id == member_id))
+
+    # Generate signed URL for the resume
+    signed_url = get_signed_resume_url(member.resume)
+
     {:noreply,
      socket
      |> assign(:show_resume_modal, true)
-     |> assign(:current_resume_url, url)
+     |> assign(:current_resume_url, signed_url)
      |> assign(:current_member_email, email)
-     |> assign(:current_resume_member_id, String.to_integer(member_id))}
+     |> assign(:current_resume_member_id, member_id)}
   end
 
   @impl true
@@ -178,7 +181,10 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
         updated_members =
           Enum.map(socket.assigns.members, fn m ->
             if m.id == member.id do
-              Map.put(updated_member, :signed_resume_url, m.signed_resume_url)
+              # Copy over the payment status fields that we track
+              updated_member
+              |> Map.put(:has_paid, m.has_paid)
+              |> Map.put(:has_override, m.has_override)
             else
               m
             end
@@ -228,7 +234,10 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
           updated_members =
             Enum.map(socket.assigns.members, fn m ->
               if m.id == member_id do
-                Map.merge(updated_member, %{signed_resume_url: nil})
+                # Update the member with no resume and preserve payment status
+                updated_member
+                |> Map.put(:has_paid, m.has_paid)
+                |> Map.put(:has_override, m.has_override)
               else
                 m
               end
@@ -436,10 +445,9 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                         <% end %>
                       </td>
                       <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        <%= if member.resume && member.signed_resume_url do %>
+                        <%= if member.resume do %>
                           <button
                             phx-click="show_resume"
-                            phx-value-url={member.signed_resume_url}
                             phx-value-email={member.email}
                             phx-value-member_id={member.id}
                             class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 hover:bg-blue-200 cursor-pointer"
