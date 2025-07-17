@@ -235,7 +235,11 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
 
         resume ->
           # Delete from storage
-          :ok = IeeeTamuPortal.S3Delete.delete_object(IeeeTamuPortal.S3Delete, Members.Resume.uri(resume))
+          :ok =
+            IeeeTamuPortal.S3Delete.delete_object(
+              IeeeTamuPortal.S3Delete,
+              Members.Resume.uri(resume)
+            )
 
           # Delete from database
           Repo.delete(resume)
@@ -314,20 +318,33 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
         new_override_value = !registration.payment_override
 
         case IeeeTamuPortal.Repo.update(
-               Members.Registration.changeset(registration, %{payment_override: new_override_value})
+               Members.Registration.changeset(registration, %{
+                 payment_override: new_override_value
+               })
              ) do
           {:ok, updated_registration} ->
             # Update the member's payment status and override status in the socket
             updated_members =
               Enum.map(socket.assigns.members, fn m ->
                 if m.id == member_id do
-                  # Update the preloaded registration data
+                  # Update the preloaded registration data, preserving the payment association
                   updated_registrations =
                     case m.registrations do
-                      [] -> [updated_registration]
-                      [_old_reg] -> [updated_registration]
+                      [] ->
+                        [updated_registration]
+
+                      [old_reg] ->
+                        # Preserve the payment association from the original registration
+                        updated_reg_with_payment = %{
+                          updated_registration
+                          | payment: old_reg.payment
+                        }
+
+                        [updated_reg_with_payment]
+
                       # This shouldn't happen with our query
-                      multiple -> multiple
+                      multiple ->
+                        multiple
                     end
 
                   updated_member = %{m | registrations: updated_registrations}
