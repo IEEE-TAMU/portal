@@ -1,7 +1,7 @@
 defmodule IeeeTamuPortalWeb.AdminLive do
   use IeeeTamuPortalWeb, :live_view
 
-  alias IeeeTamuPortal.{Accounts, Members.Registration, Settings}
+  alias IeeeTamuPortal.{Accounts, Members, Settings}
 
   @impl true
   def mount(_params, _session, socket) do
@@ -22,7 +22,7 @@ defmodule IeeeTamuPortalWeb.AdminLive do
   defp paid_members_count do
     try do
       current_year = Settings.get_setting_value!("registration_year") |> String.to_integer()
-      Registration.paid_members_count_for_year(current_year)
+      Members.Registration.paid_members_count_for_year(current_year)
     rescue
       _ -> 0
     end

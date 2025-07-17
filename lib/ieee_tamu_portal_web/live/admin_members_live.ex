@@ -1,11 +1,8 @@
 defmodule IeeeTamuPortalWeb.AdminMembersLive do
   use IeeeTamuPortalWeb, :live_view
 
-  alias IeeeTamuPortal.Accounts
-  alias IeeeTamuPortal.Members.Resume
+  alias IeeeTamuPortal.{Accounts, Members, Settings, Repo}
   alias IeeeTamuPortalWeb.Upload.SimpleS3Upload
-  alias IeeeTamuPortal.Members
-  alias IeeeTamuPortal.{Settings, Members.Registration}
 
   @impl true
   def mount(_params, _session, socket) do
@@ -238,10 +235,10 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
 
         resume ->
           # Delete from storage
-          :ok = IeeeTamuPortal.S3Delete.delete_object(IeeeTamuPortal.S3Delete, Resume.uri(resume))
+          :ok = IeeeTamuPortal.S3Delete.delete_object(IeeeTamuPortal.S3Delete, Members.Resume.uri(resume))
 
           # Delete from database
-          IeeeTamuPortal.Repo.delete(resume)
+          Repo.delete(resume)
 
           # Update member
           updated_member = %Accounts.Member{member | resume: nil}
@@ -311,13 +308,13 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
     current_year = get_current_year()
 
     # Find or create registration for current year
-    case Registration.get_or_create_registration_for_member(member, current_year) do
+    case Members.Registration.get_or_create_registration_for_member(member, current_year) do
       {:ok, registration} ->
         # Toggle the payment override
         new_override_value = !registration.payment_override
 
         case IeeeTamuPortal.Repo.update(
-               Registration.changeset(registration, %{payment_override: new_override_value})
+               Members.Registration.changeset(registration, %{payment_override: new_override_value})
              ) do
           {:ok, updated_registration} ->
             # Update the member's payment status and override status in the socket
