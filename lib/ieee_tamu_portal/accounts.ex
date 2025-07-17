@@ -38,6 +38,33 @@ defmodule IeeeTamuPortal.Accounts do
   end
 
   @doc """
+  Gets all members with their registrations for a specific year.
+  This is optimized to avoid N+1 queries when checking payment status.
+
+  ## Examples
+
+      iex> list_members_with_registrations(2024)
+      [%Member{registrations: [%Registration{}, ...]}, ...]
+
+  """
+  def list_members_with_registrations(year) do
+    alias IeeeTamuPortal.Members.{Registration, Payment}
+    import Ecto.Query
+
+    from(m in Member,
+      left_join: r in Registration,
+      on: m.id == r.member_id and r.year == ^year,
+      left_join: p in Payment,
+      on: r.id == p.registration_id,
+      preload: [
+        :resume,
+        registrations: {r, payment: p}
+      ]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Gets a member by email.
 
   ## Examples

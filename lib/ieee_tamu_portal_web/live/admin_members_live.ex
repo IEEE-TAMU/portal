@@ -9,19 +9,18 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    members = Accounts.list_members()
-
     # Get current registration year
     current_year = get_current_year()
 
-    # Add payment status without signing URLs
+    # Fetch all members with their registrations in a single query to avoid N+1
+    members = Accounts.list_members_with_registrations(current_year)
+
+    # Add payment status using preloaded data
     members_with_payment_status =
       Enum.map(members, fn member ->
-        # Check if member has paid for current year
-        has_paid = Registration.member_paid_for_year?(member.id, current_year)
-
-        # Check if member has payment override
-        has_override = Registration.member_has_payment_override?(member.id, current_year)
+        # Check payment status using preloaded registrations
+        has_paid = has_paid_for_year?(member, current_year)
+        has_override = has_payment_override_for_year?(member, current_year)
 
         member
         |> Map.put(:has_paid, has_paid)
@@ -56,13 +55,30 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   defp get_signed_resume_url(nil), do: nil
 
   defp get_signed_resume_url(resume) do
-    case SimpleS3Upload.sign(
-           method: "GET",
-           uri: Resume.uri(resume),
-           response_content_type: "application/pdf"
-         ) do
-      {:ok, url} -> url
-      _ -> nil
+    {:ok, url} =
+      SimpleS3Upload.sign(
+        method: "GET",
+        uri: Members.Resume.uri(resume),
+        response_content_type: "application/pdf"
+      )
+
+    url
+  end
+
+  # Helper functions to determine payment status from preloaded registrations
+  defp has_paid_for_year?(member, _year) do
+    case member.registrations do
+      [] -> false
+      [registration] -> registration.payment_override || registration.payment != nil
+      _ -> false
+    end
+  end
+
+  defp has_payment_override_for_year?(member, _year) do
+    case member.registrations do
+      [] -> false
+      [registration] -> registration.payment_override
+      _ -> false
     end
   end
 
@@ -303,15 +319,27 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
         case IeeeTamuPortal.Repo.update(
                Registration.changeset(registration, %{payment_override: new_override_value})
              ) do
-          {:ok, _updated_registration} ->
+          {:ok, updated_registration} ->
             # Update the member's payment status and override status in the socket
             updated_members =
               Enum.map(socket.assigns.members, fn m ->
                 if m.id == member_id do
-                  has_paid = Registration.member_paid_for_year?(m.id, current_year)
-                  has_override = Registration.member_has_payment_override?(m.id, current_year)
+                  # Update the preloaded registration data
+                  updated_registrations =
+                    case m.registrations do
+                      [] -> [updated_registration]
+                      [_old_reg] -> [updated_registration]
+                      # This shouldn't happen with our query
+                      multiple -> multiple
+                    end
 
-                  m
+                  updated_member = %{m | registrations: updated_registrations}
+
+                  # Calculate payment status from updated data
+                  has_paid = has_paid_for_year?(updated_member, current_year)
+                  has_override = has_payment_override_for_year?(updated_member, current_year)
+
+                  updated_member
                   |> Map.put(:has_paid, has_paid)
                   |> Map.put(:has_override, has_override)
                 else
