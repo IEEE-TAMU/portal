@@ -3,6 +3,54 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
 
   alias IeeeTamuPortal.Accounts
 
+  @impl true
+  def mount(_params, _session, socket) do
+    member = socket.assigns.current_member
+    password_changeset = Accounts.change_member_password(member)
+
+    socket =
+      socket
+      |> assign(:current_password, nil)
+      |> assign(:current_email, member.email)
+      |> assign(:password_form, to_form(password_changeset))
+      |> assign(:trigger_submit, false)
+
+    {:ok, socket}
+  end
+
+  @impl true
+  def handle_event("validate_password", params, socket) do
+    %{"current_password" => password, "member" => member_params} = params
+
+    password_form =
+      socket.assigns.current_member
+      |> Accounts.change_member_password(member_params)
+      |> Map.put(:action, :validate)
+      |> to_form()
+
+    {:noreply, assign(socket, password_form: password_form, current_password: password)}
+  end
+
+  @impl true
+  def handle_event("update_password", params, socket) do
+    %{"current_password" => password, "member" => member_params} = params
+    member = socket.assigns.current_member
+
+    case Accounts.update_member_password(member, password, member_params) do
+      {:ok, member} ->
+        password_form =
+          member
+          |> Accounts.change_member_password(member_params)
+          |> to_form()
+
+        {:noreply, assign(socket, trigger_submit: true, password_form: password_form)}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, password_form: to_form(changeset))}
+    end
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <.header class="text-center">
@@ -45,49 +93,5 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
       </.simple_form>
     </div>
     """
-  end
-
-  def mount(_params, _session, socket) do
-    member = socket.assigns.current_member
-    password_changeset = Accounts.change_member_password(member)
-
-    socket =
-      socket
-      |> assign(:current_password, nil)
-      |> assign(:current_email, member.email)
-      |> assign(:password_form, to_form(password_changeset))
-      |> assign(:trigger_submit, false)
-
-    {:ok, socket}
-  end
-
-  def handle_event("validate_password", params, socket) do
-    %{"current_password" => password, "member" => member_params} = params
-
-    password_form =
-      socket.assigns.current_member
-      |> Accounts.change_member_password(member_params)
-      |> Map.put(:action, :validate)
-      |> to_form()
-
-    {:noreply, assign(socket, password_form: password_form, current_password: password)}
-  end
-
-  def handle_event("update_password", params, socket) do
-    %{"current_password" => password, "member" => member_params} = params
-    member = socket.assigns.current_member
-
-    case Accounts.update_member_password(member, password, member_params) do
-      {:ok, member} ->
-        password_form =
-          member
-          |> Accounts.change_member_password(member_params)
-          |> to_form()
-
-        {:noreply, assign(socket, trigger_submit: true, password_form: password_form)}
-
-      {:error, changeset} ->
-        {:noreply, assign(socket, password_form: to_form(changeset))}
-    end
   end
 end

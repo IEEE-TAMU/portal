@@ -2,27 +2,13 @@ defmodule IeeeTamuPortalWeb.MemberConfirmationLive do
   use IeeeTamuPortalWeb, :live_view
 
   alias IeeeTamuPortal.Accounts
-
-  def render(%{live_action: :edit} = assigns) do
-    ~H"""
-    <div class="mx-auto max-w-sm">
-      <.header class="text-center">Confirm Account</.header>
-
-      <.simple_form for={@form} id="confirmation_form" phx-submit="confirm_account">
-        <input type="hidden" name={@form[:token].name} value={@form[:token].value} />
-        <:actions>
-          <.button phx-disable-with="Confirming..." class="w-full">Confirm my account</.button>
-        </:actions>
-      </.simple_form>
-    </div>
-    """
-  end
-
+  @impl true
   def mount(%{"token" => token}, _session, socket) do
     form = to_form(%{"token" => token}, as: "member")
     {:ok, assign(socket, form: form), temporary_assigns: [form: nil]}
   end
 
+  @impl true
   # Do not log in the member after confirmation to avoid a
   # leaked token giving the member access to the account.
   def handle_event("confirm_account", %{"member" => %{"token" => token}}, socket) do
@@ -49,5 +35,21 @@ defmodule IeeeTamuPortalWeb.MemberConfirmationLive do
              |> redirect(to: ~p"/")}
         end
     end
+  end
+
+  @impl true
+  def render(%{live_action: :edit} = assigns) do
+    ~H"""
+    <div class="mx-auto max-w-sm">
+      <.header class="text-center">Confirm Account</.header>
+
+      <.simple_form for={@form} id="confirmation_form" phx-submit="confirm_account">
+        <input type="hidden" name={@form[:token].name} value={@form[:token].value} />
+        <:actions>
+          <.button phx-disable-with="Confirming..." class="w-full">Confirm my account</.button>
+        </:actions>
+      </.simple_form>
+    </div>
+    """
   end
 end

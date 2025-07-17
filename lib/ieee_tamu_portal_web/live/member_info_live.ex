@@ -3,6 +3,76 @@ defmodule IeeeTamuPortalWeb.MemberInfoLive do
 
   alias IeeeTamuPortal.{Accounts, Members}
 
+  @impl true
+  def mount(_params, _session, socket) do
+    member = Accounts.preload_member_info(socket.assigns.current_member)
+
+    info_changeset = Members.change_member_info(member.info)
+
+    socket =
+      socket
+      |> assign(:current_member, member)
+      |> assign(:info_form, to_form(info_changeset))
+      |> assign(:trigger_submit, false)
+
+    {:ok, socket}
+  end
+
+  @impl true
+  def handle_event("validate_info", params, socket) do
+    %{"info" => info_params} = params
+    info = socket.assigns.current_member.info
+
+    info_form =
+      info
+      |> Members.change_member_info(info_params)
+      |> Map.put(:action, :validate)
+      |> to_form()
+
+    {:noreply, assign(socket, info_form: info_form)}
+  end
+
+  @impl true
+  def handle_event("update_info", params, socket) do
+    %{"info" => info_params} = params
+    member = socket.assigns.current_member
+
+    update_or_create_info = fn
+      %Members.Info{} = info -> Members.update_member_info(info, info_params)
+      nil -> Members.create_member_info(member, info_params)
+    end
+
+    case update_or_create_info.(member.info) do
+      {:ok, info} ->
+        member = %Accounts.Member{member | info: info}
+
+        info_form =
+          info
+          |> Members.change_member_info()
+          |> to_form()
+
+        socket =
+          socket
+          |> Phoenix.LiveView.put_flash(:info, "Your information has been updated.")
+          |> assign(:current_member, member)
+          |> assign(:info_form, info_form)
+
+        {:noreply, socket}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, info_form: to_form(changeset))}
+    end
+  end
+
+  @impl true
+  def handle_event("reset_info", _params, socket) do
+    member = socket.assigns.current_member
+    info_form = Members.change_member_info(member.info) |> to_form()
+
+    {:noreply, assign(socket, info_form: info_form)}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <.header class="text-center">
@@ -124,70 +194,5 @@ defmodule IeeeTamuPortalWeb.MemberInfoLive do
       </div>
     </div>
     """
-  end
-
-  def mount(_params, _session, socket) do
-    member = Accounts.preload_member_info(socket.assigns.current_member)
-
-    info_changeset = Members.change_member_info(member.info)
-
-    socket =
-      socket
-      |> assign(:current_member, member)
-      |> assign(:info_form, to_form(info_changeset))
-      |> assign(:trigger_submit, false)
-
-    {:ok, socket}
-  end
-
-  def handle_event("validate_info", params, socket) do
-    %{"info" => info_params} = params
-    info = socket.assigns.current_member.info
-
-    info_form =
-      info
-      |> Members.change_member_info(info_params)
-      |> Map.put(:action, :validate)
-      |> to_form()
-
-    {:noreply, assign(socket, info_form: info_form)}
-  end
-
-  def handle_event("update_info", params, socket) do
-    %{"info" => info_params} = params
-    member = socket.assigns.current_member
-
-    update_or_create_info = fn
-      %Members.Info{} = info -> Members.update_member_info(info, info_params)
-      nil -> Members.create_member_info(member, info_params)
-    end
-
-    case update_or_create_info.(member.info) do
-      {:ok, info} ->
-        member = %Accounts.Member{member | info: info}
-
-        info_form =
-          info
-          |> Members.change_member_info()
-          |> to_form()
-
-        socket =
-          socket
-          |> Phoenix.LiveView.put_flash(:info, "Your information has been updated.")
-          |> assign(:current_member, member)
-          |> assign(:info_form, info_form)
-
-        {:noreply, socket}
-
-      {:error, changeset} ->
-        {:noreply, assign(socket, info_form: to_form(changeset))}
-    end
-  end
-
-  def handle_event("reset_info", _params, socket) do
-    member = socket.assigns.current_member
-    info_form = Members.change_member_info(member.info) |> to_form()
-
-    {:noreply, assign(socket, info_form: info_form)}
   end
 end

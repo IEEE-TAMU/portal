@@ -4,6 +4,53 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLive do
   alias IeeeTamuPortal.Accounts
   alias IeeeTamuPortal.Accounts.Member
 
+  @impl true
+  def mount(_params, _session, socket) do
+    changeset = Accounts.change_member_registration(%Member{})
+
+    socket =
+      socket
+      |> assign(trigger_submit: false, check_errors: false)
+      |> assign_form(changeset)
+
+    {:ok, socket, temporary_assigns: [form: nil]}
+  end
+
+  defp assign_form(socket, %Ecto.Changeset{} = changeset) do
+    form = to_form(changeset, as: "member")
+
+    if changeset.valid? do
+      assign(socket, form: form, check_errors: false)
+    else
+      assign(socket, form: form)
+    end
+  end
+
+  @impl true
+  def handle_event("save", %{"member" => member_params}, socket) do
+    case Accounts.register_member(member_params) do
+      {:ok, member} ->
+        {:ok, _} =
+          Accounts.deliver_member_confirmation_instructions(
+            member,
+            &url(~p"/members/confirm/#{&1}")
+          )
+
+        changeset = Accounts.change_member_registration(member)
+        {:noreply, socket |> assign(trigger_submit: true) |> assign_form(changeset)}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, socket |> assign(check_errors: true) |> assign_form(changeset)}
+    end
+  end
+
+  @impl true
+  def handle_event("validate", %{"member" => member_params}, socket) do
+    changeset = Accounts.change_member_registration(%Member{}, member_params)
+    {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="mx-auto max-w-sm">
@@ -40,48 +87,5 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLive do
       </.simple_form>
     </div>
     """
-  end
-
-  def mount(_params, _session, socket) do
-    changeset = Accounts.change_member_registration(%Member{})
-
-    socket =
-      socket
-      |> assign(trigger_submit: false, check_errors: false)
-      |> assign_form(changeset)
-
-    {:ok, socket, temporary_assigns: [form: nil]}
-  end
-
-  def handle_event("save", %{"member" => member_params}, socket) do
-    case Accounts.register_member(member_params) do
-      {:ok, member} ->
-        {:ok, _} =
-          Accounts.deliver_member_confirmation_instructions(
-            member,
-            &url(~p"/members/confirm/#{&1}")
-          )
-
-        changeset = Accounts.change_member_registration(member)
-        {:noreply, socket |> assign(trigger_submit: true) |> assign_form(changeset)}
-
-      {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, socket |> assign(check_errors: true) |> assign_form(changeset)}
-    end
-  end
-
-  def handle_event("validate", %{"member" => member_params}, socket) do
-    changeset = Accounts.change_member_registration(%Member{}, member_params)
-    {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
-  end
-
-  defp assign_form(socket, %Ecto.Changeset{} = changeset) do
-    form = to_form(changeset, as: "member")
-
-    if changeset.valid? do
-      assign(socket, form: form, check_errors: false)
-    else
-      assign(socket, form: form)
-    end
   end
 end

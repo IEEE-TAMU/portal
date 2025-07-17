@@ -1,6 +1,14 @@
 defmodule IeeeTamuPortalWeb.MemberLoginLive do
   use IeeeTamuPortalWeb, :live_view
 
+  @impl true
+  def mount(_params, _session, socket) do
+    email = Phoenix.Flash.get(socket.assigns.flash, :email)
+    form = to_form(%{"email" => email}, as: "member")
+    {:ok, assign(socket, form: form), temporary_assigns: [form: form]}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="mx-auto max-w-sm">
@@ -33,11 +41,5 @@ defmodule IeeeTamuPortalWeb.MemberLoginLive do
       </.simple_form>
     </div>
     """
-  end
-
-  def mount(_params, _session, socket) do
-    email = Phoenix.Flash.get(socket.assigns.flash, :email)
-    form = to_form(%{"email" => email}, as: "member")
-    {:ok, assign(socket, form: form), temporary_assigns: [form: form]}
   end
 end

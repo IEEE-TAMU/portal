@@ -3,6 +3,30 @@ defmodule IeeeTamuPortalWeb.MemberForgotPasswordLive do
 
   alias IeeeTamuPortal.Accounts
 
+  @impl true
+  def mount(_params, _session, socket) do
+    {:ok, assign(socket, form: to_form(%{}, as: "member"))}
+  end
+
+  @impl true
+  def handle_event("send_email", %{"member" => %{"email" => email}}, socket) do
+    if member = Accounts.get_member_by_email(email) do
+      Accounts.deliver_member_reset_password_instructions(
+        member,
+        &url(~p"/members/reset_password/#{&1}")
+      )
+    end
+
+    info =
+      "If your email is in our system, you will receive instructions to reset your password shortly."
+
+    {:noreply,
+     socket
+     |> put_flash(:info, info)
+     |> redirect(to: ~p"/")}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="mx-auto max-w-sm">
@@ -25,26 +49,5 @@ defmodule IeeeTamuPortalWeb.MemberForgotPasswordLive do
       </p>
     </div>
     """
-  end
-
-  def mount(_params, _session, socket) do
-    {:ok, assign(socket, form: to_form(%{}, as: "member"))}
-  end
-
-  def handle_event("send_email", %{"member" => %{"email" => email}}, socket) do
-    if member = Accounts.get_member_by_email(email) do
-      Accounts.deliver_member_reset_password_instructions(
-        member,
-        &url(~p"/members/reset_password/#{&1}")
-      )
-    end
-
-    info =
-      "If your email is in our system, you will receive instructions to reset your password shortly."
-
-    {:noreply,
-     socket
-     |> put_flash(:info, info)
-     |> redirect(to: ~p"/")}
   end
 end
