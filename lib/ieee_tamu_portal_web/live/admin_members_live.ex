@@ -50,6 +50,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
       |> assign(:show_member_modal, false)
       |> assign(:current_member, nil)
       |> assign(:member_info_form, nil)
+      |> assign(:view_only_mode, false)
 
     {:ok, socket, layout: {IeeeTamuPortalWeb.Layouts, :admin}}
   end
@@ -100,7 +101,28 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
      socket
      |> assign(:show_member_modal, true)
      |> assign(:current_member, member)
-     |> assign(:member_info_form, info_form)}
+     |> assign(:member_info_form, info_form)
+     |> assign(:view_only_mode, false)}
+  end
+
+  @impl true
+  def handle_event("view_member", %{"member_id" => member_id}, socket) do
+    IO.puts("view_member called with member_id: #{member_id}")
+    member_id = String.to_integer(member_id)
+    member = Enum.find(socket.assigns.members, &(&1.id == member_id))
+
+    # Preload member info
+    member = Accounts.preload_member_info(member)
+
+    # Create info form
+    info_form = Members.change_member_info(member.info) |> to_form()
+
+    {:noreply,
+     socket
+     |> assign(:show_member_modal, true)
+     |> assign(:current_member, member)
+     |> assign(:member_info_form, info_form)
+     |> assign(:view_only_mode, true)}
   end
 
   @impl true
@@ -109,7 +131,8 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
      socket
      |> assign(:show_member_modal, false)
      |> assign(:current_member, nil)
-     |> assign(:member_info_form, nil)}
+     |> assign(:member_info_form, nil)
+     |> assign(:view_only_mode, false)}
   end
 
   @impl true
@@ -270,7 +293,11 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
                   <%= for member <- @members do %>
-                    <tr>
+                    <tr
+                      phx-click="view_member"
+                      phx-value-member_id={member.id}
+                      class="hover:bg-gray-50 cursor-pointer"
+                    >
                       <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                         {member.email}
                       </td>
@@ -306,6 +333,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                             phx-value-url={member.signed_resume_url}
                             phx-value-email={member.email}
                             class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 hover:bg-blue-200 cursor-pointer"
+                            onclick="event.stopPropagation();"
                           >
                             View Resume
                           </button>
@@ -321,14 +349,16 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                             phx-click="show_member"
                             phx-value-member_id={member.id}
                             class="text-indigo-600 hover:text-indigo-900"
+                            onclick="event.stopPropagation();"
                           >
-                            View
+                            Edit
                           </button>
                         <% else %>
                           <button
                             phx-click="resend_confirmation"
                             phx-value-member_id={member.id}
                             class="text-orange-600 hover:text-orange-900"
+                            onclick="event.stopPropagation();"
                           >
                             Resend Confirmation
                           </button>
@@ -412,7 +442,11 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
             <div class="mb-6">
               <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-gray-900">
-                  Edit Member - {@current_member.email}
+                  <%= if @view_only_mode do %>
+                    View Member - {@current_member.email}
+                  <% else %>
+                    Edit Member - {@current_member.email}
+                  <% end %>
                 </h3>
                 <button
                   phx-click="close_member_modal"
@@ -423,7 +457,151 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
               </div>
 
               <div class="space-y-6">
-                <.simple_form
+                <%= if @view_only_mode do %>
+                  <!-- View-only mode - show information without form -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">First name</label>
+                      <div class="mt-1 text-sm text-gray-900">
+                        {(@current_member.info && @current_member.info.first_name) || "Not provided"}
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Last name</label>
+                      <div class="mt-1 text-sm text-gray-900">
+                        {(@current_member.info && @current_member.info.last_name) || "Not provided"}
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Preferred name</label>
+                      <div class="mt-1 text-sm text-gray-900">
+                        {(@current_member.info && @current_member.info.preferred_name) ||
+                          "Not provided"}
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">T-shirt size</label>
+                      <div class="mt-1 text-sm text-gray-900">
+                        {(@current_member.info && @current_member.info.tshirt_size) || "Not provided"}
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Phone number</label>
+                      <div class="mt-1 text-sm text-gray-900">
+                        {(@current_member.info && @current_member.info.phone_number) || "Not provided"}
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Age</label>
+                      <div class="mt-1 text-sm text-gray-900">
+                        {(@current_member.info && @current_member.info.age) || "Not provided"}
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Gender</label>
+                      <div class="mt-1 text-sm text-gray-900">
+                        <%= if @current_member.info && @current_member.info.gender do %>
+                          <%= if @current_member.info.gender == :other do %>
+                            {@current_member.info.gender_other || "Other"}
+                          <% else %>
+                            {@current_member.info.gender}
+                          <% end %>
+                        <% else %>
+                          Not provided
+                        <% end %>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h4 class="text-md font-semibold text-gray-900 mt-6 mb-4">Academic Information</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">UIN</label>
+                      <div class="mt-1 text-sm text-gray-900">
+                        {(@current_member.info && @current_member.info.uin) || "Not provided"}
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">
+                        IEEE Membership Number
+                      </label>
+                      <div class="mt-1 text-sm text-gray-900">
+                        {(@current_member.info && @current_member.info.ieee_membership_number) ||
+                          "Not provided"}
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Major</label>
+                      <div class="mt-1 text-sm text-gray-900">
+                        <%= if @current_member.info && @current_member.info.major do %>
+                          <%= if @current_member.info.major == :other do %>
+                            {@current_member.info.major_other || "Other"}
+                          <% else %>
+                            {@current_member.info.major}
+                          <% end %>
+                        <% else %>
+                          Not provided
+                        <% end %>
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">
+                        International student
+                      </label>
+                      <div class="mt-1 text-sm text-gray-900">
+                        <%= if @current_member.info && @current_member.info.international_student do %>
+                          Yes
+                          <%= if @current_member.info.international_country do %>
+                            ({@current_member.info.international_country})
+                          <% end %>
+                        <% else %>
+                          No
+                        <% end %>
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Graduation year</label>
+                      <div class="mt-1 text-sm text-gray-900">
+                        {(@current_member.info && @current_member.info.graduation_year) ||
+                          "Not provided"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex justify-between items-center mt-6">
+                    <div class="flex space-x-3">
+                      <.button
+                        type="button"
+                        phx-click="show_member"
+                        phx-value-member_id={@current_member.id}
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white"
+                      >
+                        Edit Member
+                      </.button>
+                      <.button
+                        type="button"
+                        phx-click="close_member_modal"
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-800"
+                      >
+                        Close
+                      </.button>
+                    </div>
+
+                    <%= if @current_member.resume do %>
+                      <.button
+                        type="button"
+                        phx-click="delete_member_resume"
+                        phx-disable-with="Deleting..."
+                        class="bg-red-600 hover:bg-red-700 text-white"
+                        onclick="return confirm('Are you sure you want to delete this member\\'s resume?')"
+                      >
+                        Delete Resume
+                      </.button>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <!-- Edit mode - show form -->
+                  <.simple_form
                   for={@member_info_form}
                   id="member_info_form"
                   phx-submit="update_member_info"
@@ -564,6 +742,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                     <% end %>
                   </div>
                 </.simple_form>
+                <% end %>
               </div>
             </div>
           </div>
