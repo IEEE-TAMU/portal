@@ -5,17 +5,26 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   alias IeeeTamuPortal.Members.Resume
   alias IeeeTamuPortalWeb.Upload.SimpleS3Upload
   alias IeeeTamuPortal.Members
+  alias IeeeTamuPortal.{Settings, Members.Registration}
 
   @impl true
   def mount(_params, _session, socket) do
     members = Accounts.list_members()
 
-    # Sign resume URLs for members who have resumes
+    # Get current registration year
+    current_year = get_current_year()
+
+    # Sign resume URLs for members who have resumes and add payment status
     members_with_signed_urls =
       Enum.map(members, fn member ->
+        # Check if member has paid for current year
+        has_paid = Registration.member_paid_for_year?(member.id, current_year)
+
         case member.resume do
           nil ->
-            Map.put(member, :signed_resume_url, nil)
+            member
+            |> Map.put(:signed_resume_url, nil)
+            |> Map.put(:has_paid, has_paid)
 
           resume ->
             {:ok, url} =
@@ -25,7 +34,9 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                 response_content_type: "application/pdf"
               )
 
-            Map.put(member, :signed_resume_url, url)
+            member
+            |> Map.put(:signed_resume_url, url)
+            |> Map.put(:has_paid, has_paid)
         end
       end)
 
@@ -41,6 +52,14 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
       |> assign(:member_info_form, nil)
 
     {:ok, socket, layout: {IeeeTamuPortalWeb.Layouts, :admin}}
+  end
+
+  defp get_current_year do
+    try do
+      Settings.get_setting_value!("registration_year") |> String.to_integer()
+    rescue
+      _ -> DateTime.utc_now().year
+    end
   end
 
   @impl true
@@ -218,6 +237,9 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                       Registered
                     </th>
                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Payment Status
+                    </th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Resume
                     </th>
                     <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
@@ -244,6 +266,17 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                       </td>
                       <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {Calendar.strftime(member.inserted_at, "%B %d, %Y")}
+                      </td>
+                      <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        <%= if member.has_paid do %>
+                          <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                            Paid
+                          </span>
+                        <% else %>
+                          <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                            Not Paid
+                          </span>
+                        <% end %>
                       </td>
                       <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         <%= if member.resume do %>

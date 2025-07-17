@@ -88,4 +88,24 @@ defmodule IeeeTamuPortal.Members.Registration do
     )
     |> Repo.aggregate(:count, :id)
   end
+
+  @doc """
+  Checks if a member has paid for a specific year.
+  Returns true if the member has a registration with payment_override = true OR an associated payment.
+  """
+  def member_paid_for_year?(member_id, year) do
+    alias IeeeTamuPortal.{Repo, Members.Payment}
+    import Ecto.Query
+
+    query =
+      from(r in __MODULE__,
+        left_join: p in Payment,
+        on: r.id == p.registration_id,
+        where:
+          r.member_id == ^member_id and r.year == ^year and
+            (r.payment_override == true or not is_nil(p.id))
+      )
+
+    Repo.exists?(query)
+  end
 end
