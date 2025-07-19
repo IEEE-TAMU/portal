@@ -1,7 +1,7 @@
 defmodule IeeeTamuPortalWeb.Router do
   use IeeeTamuPortalWeb, :router
 
-  import IeeeTamuPortalWeb.{MemberAuth, AdminAuth}
+  import IeeeTamuPortalWeb.{MemberAuth, AdminAuth, ApiAuth}
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -15,12 +15,16 @@ defmodule IeeeTamuPortalWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug :api_auth
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", IeeeTamuPortalWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", IeeeTamuPortalWeb do
+    pipe_through :api
+
+    # Test API endpoint
+    get "/ping", ApiController, :ping
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:ieee_tamu_portal, :dev_routes) do
@@ -100,6 +104,7 @@ defmodule IeeeTamuPortalWeb.Router do
     live "/", AdminLive, :index
     live "/members", AdminMembersLive, :index
     live "/settings", AdminSettingsLive, :index
+    live "/api-keys", AdminApiKeysLive, :index
     get "/download-resumes", AdminResumeZipController, :download
   end
 end

@@ -8,12 +8,14 @@ defmodule IeeeTamuPortalWeb.AdminLive do
     member_count = Accounts.count_members()
     paid_members_count = paid_members_count()
     resume_count = Members.Resume.count()
+    api_key_count = length(Accounts.list_api_keys())
 
     socket =
       socket
       |> assign(:member_count, member_count)
       |> assign(:paid_members_count, paid_members_count)
       |> assign(:resume_count, resume_count)
+      |> assign(:api_key_count, api_key_count)
       |> assign(:page_title, "Admin Dashboard")
 
     {:ok, socket, layout: {IeeeTamuPortalWeb.Layouts, :admin}}
@@ -37,7 +39,7 @@ defmodule IeeeTamuPortalWeb.AdminLive do
         <p class="text-gray-600 mt-2">Overview of the IEEE TAMU Portal</p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="bg-white rounded-lg shadow p-6">
           <div class="flex items-center">
             <div class="flex-shrink-0">
@@ -87,6 +89,30 @@ defmodule IeeeTamuPortalWeb.AdminLive do
                 class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
               >
                 <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download
+              </.link>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                  <.icon name="hero-key" class="w-5 h-5 text-white" />
+                </div>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">API Keys</p>
+                <p class="text-2xl font-bold text-gray-900">{@api_key_count}</p>
+              </div>
+            </div>
+            <div class="flex-shrink-0">
+              <.link
+                href={~p"/admin/api-keys"}
+                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+              >
+                <.icon name="hero-cog-6-tooth" class="w-4 h-4 mr-2" /> Manage
               </.link>
             </div>
           </div>
