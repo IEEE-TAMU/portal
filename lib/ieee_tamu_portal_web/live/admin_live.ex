@@ -1,14 +1,14 @@
 defmodule IeeeTamuPortalWeb.AdminLive do
   use IeeeTamuPortalWeb, :live_view
 
-  alias IeeeTamuPortal.{Accounts, Members, Settings}
+  alias IeeeTamuPortal.{Accounts, Members, Settings, Api}
 
   @impl true
   def mount(_params, _session, socket) do
     member_count = Accounts.count_members()
     paid_members_count = paid_members_count()
     resume_count = Members.Resume.count()
-    api_key_count = length(Accounts.list_api_keys())
+    api_key_count = length(Api.list_api_keys())
 
     socket =
       socket

@@ -1,8 +1,8 @@
 defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
   use IeeeTamuPortalWeb, :live_view
 
-  alias IeeeTamuPortal.Accounts
-  alias IeeeTamuPortal.Accounts.ApiKey
+  alias IeeeTamuPortal.Api
+  alias IeeeTamuPortal.Api.ApiKey
 
   @impl true
   def mount(_params, _session, socket) do
@@ -11,14 +11,14 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
       |> assign(:page_title, "API Keys")
       |> assign(:api_keys, list_api_keys())
       |> assign(:show_form, false)
-      |> assign(:form, to_form(Accounts.change_api_key(%ApiKey{})))
+      |> assign(:form, to_form(Api.change_api_key(%ApiKey{})))
       |> assign(:new_token, nil)
 
     {:ok, socket, layout: {IeeeTamuPortalWeb.Layouts, :admin}}
   end
 
   defp list_api_keys do
-    Accounts.list_api_keys()
+    Api.list_api_keys()
   end
 
   @impl true
@@ -31,7 +31,7 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
     socket =
       socket
       |> assign(:show_form, false)
-      |> assign(:form, to_form(Accounts.change_api_key(%ApiKey{})))
+      |> assign(:form, to_form(Api.change_api_key(%ApiKey{})))
       |> assign(:new_token, nil)
 
     {:noreply, socket}
@@ -41,7 +41,7 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
   def handle_event("validate", %{"api_key" => api_key_params}, socket) do
     changeset =
       %ApiKey{}
-      |> Accounts.change_api_key(api_key_params)
+      |> Api.change_api_key(api_key_params)
       |> Map.put(:action, :validate)
 
     {:noreply, assign(socket, :form, to_form(changeset))}
@@ -49,13 +49,13 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
 
   @impl true
   def handle_event("save", %{"api_key" => api_key_params}, socket) do
-    case Accounts.create_api_key(api_key_params) do
+    case Api.create_admin_api_key(api_key_params) do
       {:ok, {plain_token, _api_key}} ->
         socket =
           socket
           |> assign(:api_keys, list_api_keys())
           |> assign(:new_token, plain_token)
-          |> assign(:form, to_form(Accounts.change_api_key(%ApiKey{})))
+          |> assign(:form, to_form(Api.change_api_key(%ApiKey{})))
           |> put_flash(:info, "API key created successfully!")
 
         {:noreply, socket}
@@ -67,9 +67,9 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
 
   @impl true
   def handle_event("toggle_active", %{"id" => id}, socket) do
-    api_key = Accounts.get_api_key!(id)
+    api_key = Api.get_api_key!(id)
 
-    case Accounts.update_api_key(api_key, %{is_active: !api_key.is_active}) do
+    case Api.update_api_key(api_key, %{is_active: !api_key.is_active}) do
       {:ok, _api_key} ->
         socket =
           socket
@@ -85,9 +85,9 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
 
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
-    api_key = Accounts.get_api_key!(id)
+    api_key = Api.get_api_key!(id)
 
-    case Accounts.delete_api_key(api_key) do
+    case Api.delete_api_key(api_key) do
       {:ok, _api_key} ->
         socket =
           socket
@@ -157,7 +157,12 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
           <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Create New API Key</h3>
 
           <.simple_form for={@form} phx-change="validate" phx-submit="save">
-            <.input field={@form[:name]} type="text" label="Name" placeholder="e.g., Mobile App Integration" />
+            <.input
+              field={@form[:name]}
+              type="text"
+              label="Name"
+              placeholder="e.g., Mobile App Integration"
+            />
 
             <div class="flex items-center gap-4">
               <.button phx-disable-with="Creating...">Create API Key</.button>
@@ -179,11 +184,17 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
             <table class="min-w-full divide-y divide-gray-300">
               <thead>
                 <tr>
-                  <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
+                  <th
+                    scope="col"
+                    class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0"
+                  >
                     Name
                   </th>
                   <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                     Token Prefix
+                  </th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    Context
                   </th>
                   <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                     Last Used
@@ -208,6 +219,20 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
                     {api_key.prefix}...
                   </td>
                   <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                    <span
+                      :if={api_key.context == :admin}
+                      class="inline-flex rounded-full bg-blue-100 px-2 text-xs font-semibold leading-5 text-blue-800"
+                    >
+                      Admin
+                    </span>
+                    <span
+                      :if={api_key.context == :member}
+                      class="inline-flex rounded-full bg-purple-100 px-2 text-xs font-semibold leading-5 text-purple-800"
+                    >
+                      Member
+                    </span>
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                     <span :if={api_key.last_used_at}>
                       {Calendar.strftime(api_key.last_used_at, "%b %d, %Y at %I:%M %p")}
                     </span>
@@ -216,10 +241,16 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
                     </span>
                   </td>
                   <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    <span :if={api_key.is_active} class="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
+                    <span
+                      :if={api_key.is_active}
+                      class="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800"
+                    >
                       Active
                     </span>
-                    <span :if={!api_key.is_active} class="inline-flex rounded-full bg-red-100 px-2 text-xs font-semibold leading-5 text-red-800">
+                    <span
+                      :if={!api_key.is_active}
+                      class="inline-flex rounded-full bg-red-100 px-2 text-xs font-semibold leading-5 text-red-800"
+                    >
                       Inactive
                     </span>
                   </td>
@@ -230,7 +261,11 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
                     <button
                       phx-click="toggle_active"
                       phx-value-id={api_key.id}
-                      data-confirm={if api_key.is_active, do: "Are you sure you want to deactivate this API key?", else: "Are you sure you want to activate this API key?"}
+                      data-confirm={
+                        if api_key.is_active,
+                          do: "Are you sure you want to deactivate this API key?",
+                          else: "Are you sure you want to activate this API key?"
+                      }
                       class="text-indigo-600 hover:text-indigo-900 mr-4"
                     >
                       {if api_key.is_active, do: "Deactivate", else: "Activate"}
@@ -258,8 +293,7 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
                   type="button"
                   class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 >
-                  <.icon name="hero-plus" class="-ml-0.5 mr-1.5 h-5 w-5" />
-                  Create API Key
+                  <.icon name="hero-plus" class="-ml-0.5 mr-1.5 h-5 w-5" /> Create API Key
                 </button>
               </div>
             </div>

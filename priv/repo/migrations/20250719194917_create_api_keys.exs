@@ -7,6 +7,8 @@ defmodule IeeeTamuPortal.Repo.Migrations.CreateApiKeys do
       add :token_hash, :binary, null: false, size: 32
       add :prefix, :string, null: false, size: 30
       add :last_used_at, :utc_datetime
+      add :context, :string, null: false
+      add :member_id, references(:members, on_delete: :delete_all)
       add :is_active, :boolean, default: true, null: false
 
       timestamps(type: :utc_datetime)
@@ -15,5 +17,6 @@ defmodule IeeeTamuPortal.Repo.Migrations.CreateApiKeys do
     create unique_index(:api_keys, [:token_hash])
     create index(:api_keys, [:is_active])
     create index(:api_keys, [:name])
+    create index(:api_keys, [:member_id])
   end
 end

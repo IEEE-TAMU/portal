@@ -24,6 +24,7 @@ defmodule IeeeTamuPortalWeb.Router do
 
     # Test API endpoint
     get "/ping", ApiController, :ping
+    get "/token_info", ApiController, :token_info, this: :thing
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

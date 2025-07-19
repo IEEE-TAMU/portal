@@ -3,10 +3,9 @@ defmodule IeeeTamuPortal.Accounts do
   The Accounts context.
   """
 
-  import Ecto.Query, warn: false
   alias IeeeTamuPortal.Repo
 
-  alias IeeeTamuPortal.Accounts.{Member, MemberToken, MemberNotifier, ApiKey}
+  alias IeeeTamuPortal.Accounts.{Member, MemberToken, MemberNotifier}
 
   ## Database getters
 
@@ -402,131 +401,5 @@ defmodule IeeeTamuPortal.Accounts do
   def preload_member_info(member) do
     member
     |> Repo.preload(:info)
-  end
-
-  ## API Keys
-
-  @doc """
-  Lists all API keys.
-
-  ## Examples
-
-      iex> list_api_keys()
-      [%ApiKey{}, ...]
-
-  """
-  def list_api_keys do
-    Repo.all(from k in ApiKey, order_by: [desc: k.inserted_at])
-  end
-
-  @doc """
-  Gets a single API key.
-
-  Raises `Ecto.NoResultsError` if the API key does not exist.
-
-  ## Examples
-
-      iex> get_api_key!(123)
-      %ApiKey{}
-
-      iex> get_api_key!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_api_key!(id), do: Repo.get!(ApiKey, id)
-
-  @doc """
-  Creates an API key.
-
-  ## Examples
-
-      iex> create_api_key(%{name: "My API Key"})
-      {:ok, {plain_token, %ApiKey{}}}
-
-      iex> create_api_key(%{name: ""})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def create_api_key(attrs \\ %{}) do
-    {plain_token, changeset} = ApiKey.build_api_key(attrs)
-
-    case Repo.insert(changeset) do
-      {:ok, api_key} -> {:ok, {plain_token, api_key}}
-      {:error, changeset} -> {:error, changeset}
-    end
-  end
-
-  @doc """
-  Updates an API key.
-
-  ## Examples
-
-      iex> update_api_key(api_key, %{name: "Updated Name"})
-      {:ok, %ApiKey{}}
-
-      iex> update_api_key(api_key, %{name: ""})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def update_api_key(%ApiKey{} = api_key, attrs) do
-    api_key
-    |> ApiKey.changeset(attrs)
-    |> Repo.update()
-  end
-
-  @doc """
-  Deletes an API key.
-
-  ## Examples
-
-      iex> delete_api_key(api_key)
-      {:ok, %ApiKey{}}
-
-      iex> delete_api_key(api_key)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def delete_api_key(%ApiKey{} = api_key) do
-    Repo.delete(api_key)
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking API key changes.
-
-  ## Examples
-
-      iex> change_api_key(api_key)
-      %Ecto.Changeset{data: %ApiKey{}}
-
-  """
-  def change_api_key(%ApiKey{} = api_key, attrs \\ %{}) do
-    ApiKey.changeset(api_key, attrs)
-  end
-
-  @doc """
-  Verifies an API token and returns the API key if valid.
-
-  ## Examples
-
-      iex> verify_api_token("portal_api_abc123")
-      {:ok, %ApiKey{}}
-
-      iex> verify_api_token("invalid_token")
-      {:error, :invalid_token}
-
-  """
-  def verify_api_token(token) when is_binary(token) do
-    case Repo.one(ApiKey.verify_token(token)) do
-      %ApiKey{} = api_key ->
-        # Update last_used_at timestamp
-        api_key
-        |> ApiKey.touch_last_used()
-        |> Repo.update()
-
-        {:ok, api_key}
-
-      nil ->
-        {:error, :invalid_token}
-    end
   end
 end

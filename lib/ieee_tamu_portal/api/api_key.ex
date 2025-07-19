@@ -1,4 +1,4 @@
-defmodule IeeeTamuPortal.Accounts.ApiKey do
+defmodule IeeeTamuPortal.Api.ApiKey do
   use Ecto.Schema
   import Ecto.Changeset
   import Ecto.Query
@@ -11,7 +11,10 @@ defmodule IeeeTamuPortal.Accounts.ApiKey do
     field :token_hash, :binary
     field :prefix, :string
     field :last_used_at, :utc_datetime
+    field :context, Ecto.Enum, values: ~w(admin member)a
     field :is_active, :boolean, default: true
+
+    belongs_to :member, IeeeTamuPortal.Accounts.Member
 
     timestamps(type: :utc_datetime)
   end
@@ -33,11 +36,12 @@ defmodule IeeeTamuPortal.Accounts.ApiKey do
 
     changeset =
       %__MODULE__{}
-      |> cast(attrs, [:name])
+      |> cast(attrs, [:name, :context, :member_id])
       |> put_change(:token_hash, token_hash)
       |> put_change(:prefix, prefix)
-      |> validate_required([:name, :token_hash, :prefix])
+      |> validate_required([:name, :context, :token_hash, :prefix])
       |> validate_length(:name, min: 1, max: 100)
+      |> validate_inclusion(:context, [:admin, :member])
 
     {plain_token, changeset}
   end
@@ -67,8 +71,9 @@ defmodule IeeeTamuPortal.Accounts.ApiKey do
   """
   def changeset(api_key, attrs) do
     api_key
-    |> cast(attrs, [:name, :is_active])
-    |> validate_required([:name])
+    |> cast(attrs, [:name, :is_active, :context, :member_id])
+    |> validate_required([:name, :context])
     |> validate_length(:name, min: 1, max: 100)
+    |> validate_inclusion(:context, [:admin, :member])
   end
 end

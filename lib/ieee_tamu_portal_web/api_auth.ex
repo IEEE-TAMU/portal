@@ -2,16 +2,17 @@ defmodule IeeeTamuPortalWeb.ApiAuth do
   import Plug.Conn
   import Phoenix.Controller
 
-  alias IeeeTamuPortal.Accounts
+  alias IeeeTamuPortal.Api
 
   def api_auth(conn, _opts) do
     token = get_req_header(conn, "authorization") |> List.first()
 
     case token do
       "Bearer " <> provided_token ->
-        case Accounts.verify_api_token(provided_token) do
-          {:ok, _api_key} ->
+        case Api.verify_api_token(provided_token) do
+          {:ok, api_key} ->
             conn
+            |> assign(:api_key, api_key)
 
           {:error, :invalid_token} ->
             unauthorized(conn)
