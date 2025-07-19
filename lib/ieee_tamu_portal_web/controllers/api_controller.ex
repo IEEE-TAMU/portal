@@ -26,14 +26,14 @@ defmodule IeeeTamuPortalWeb.ApiController do
         :admin ->
           %{
             context: "admin",
-            last_used_at: api_key.last_used_at,
+            last_used_at: api_key.last_used_at
           }
 
         :member ->
           %{
             context: "member",
             member_id: api_key.member_id,
-            last_used_at: api_key.last_used_at,
+            last_used_at: api_key.last_used_at
           }
       end
 

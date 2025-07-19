@@ -181,120 +181,122 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
       <div class="mt-8 flow-root">
         <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <table class="min-w-full divide-y divide-gray-300">
-              <thead>
-                <tr>
-                  <th
-                    scope="col"
-                    class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0"
-                  >
-                    Name
-                  </th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    Token Prefix
-                  </th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    Context
-                  </th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    Last Used
-                  </th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    Status
-                  </th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    Created
-                  </th>
-                  <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-0">
-                    <span class="sr-only">Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-200">
-                <tr :for={api_key <- @api_keys}>
-                  <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-                    {api_key.name}
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 font-mono">
-                    {api_key.prefix}...
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    <span
-                      :if={api_key.context == :admin}
-                      class="inline-flex rounded-full bg-blue-100 px-2 text-xs font-semibold leading-5 text-blue-800"
+            <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+              <table class="min-w-full divide-y divide-gray-300">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th
+                      scope="col"
+                      class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
                     >
-                      Admin
-                    </span>
-                    <span
-                      :if={api_key.context == :member}
-                      class="inline-flex rounded-full bg-purple-100 px-2 text-xs font-semibold leading-5 text-purple-800"
-                    >
-                      Member
-                    </span>
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    <span :if={api_key.last_used_at}>
-                      {Calendar.strftime(api_key.last_used_at, "%b %d, %Y at %I:%M %p")}
-                    </span>
-                    <span :if={!api_key.last_used_at} class="text-gray-400">
-                      Never used
-                    </span>
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    <span
-                      :if={api_key.is_active}
-                      class="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800"
-                    >
-                      Active
-                    </span>
-                    <span
-                      :if={!api_key.is_active}
-                      class="inline-flex rounded-full bg-red-100 px-2 text-xs font-semibold leading-5 text-red-800"
-                    >
-                      Inactive
-                    </span>
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    {Calendar.strftime(api_key.inserted_at, "%b %d, %Y")}
-                  </td>
-                  <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                    <button
-                      phx-click="toggle_active"
-                      phx-value-id={api_key.id}
-                      data-confirm={
-                        if api_key.is_active,
-                          do: "Are you sure you want to deactivate this API key?",
-                          else: "Are you sure you want to activate this API key?"
-                      }
-                      class="text-indigo-600 hover:text-indigo-900 mr-4"
-                    >
-                      {if api_key.is_active, do: "Deactivate", else: "Activate"}
-                    </button>
-                    <button
-                      phx-click="delete"
-                      phx-value-id={api_key.id}
-                      data-confirm="Are you sure you want to delete this API key? This action cannot be undone."
-                      class="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                      Name
+                    </th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Token Prefix
+                    </th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Context
+                    </th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Last Used
+                    </th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Status
+                    </th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Created
+                    </th>
+                    <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                      <span class="sr-only">Actions</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 bg-white">
+                  <tr :for={api_key <- @api_keys}>
+                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                      {api_key.name}
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 font-mono">
+                      {api_key.prefix}...
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      <span
+                        :if={api_key.context == :admin}
+                        class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800"
+                      >
+                        Admin
+                      </span>
+                      <span
+                        :if={api_key.context == :member}
+                        class="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800"
+                      >
+                        Member
+                      </span>
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      <span :if={api_key.last_used_at}>
+                        {Calendar.strftime(api_key.last_used_at, "%b %d, %Y at %I:%M %p")}
+                      </span>
+                      <span :if={!api_key.last_used_at} class="text-gray-400">
+                        Never used
+                      </span>
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      <span
+                        :if={api_key.is_active}
+                        class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800"
+                      >
+                        Active
+                      </span>
+                      <span
+                        :if={!api_key.is_active}
+                        class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800"
+                      >
+                        Inactive
+                      </span>
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {Calendar.strftime(api_key.inserted_at, "%b %d, %Y")}
+                    </td>
+                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                      <button
+                        phx-click="toggle_active"
+                        phx-value-id={api_key.id}
+                        data-confirm={
+                          if api_key.is_active,
+                            do: "Are you sure you want to deactivate this API key?",
+                            else: "Are you sure you want to activate this API key?"
+                        }
+                        class="text-indigo-600 hover:text-indigo-900 mr-4"
+                      >
+                        {if api_key.is_active, do: "Deactivate", else: "Activate"}
+                      </button>
+                      <button
+                        phx-click="delete"
+                        phx-value-id={api_key.id}
+                        data-confirm="Are you sure you want to delete this API key? This action cannot be undone."
+                        class="text-red-600 hover:text-red-900"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 
-            <div :if={@api_keys == []} class="text-center py-12">
-              <.icon name="hero-key" class="mx-auto h-12 w-12 text-gray-400" />
-              <h3 class="mt-2 text-sm font-semibold text-gray-900">No API keys</h3>
-              <p class="mt-1 text-sm text-gray-500">Get started by creating your first API key.</p>
-              <div class="mt-6">
-                <button
-                  phx-click="show_form"
-                  type="button"
-                  class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                >
-                  <.icon name="hero-plus" class="-ml-0.5 mr-1.5 h-5 w-5" /> Create API Key
-                </button>
+              <div :if={@api_keys == []} class="text-center py-12 bg-white">
+                <.icon name="hero-key" class="mx-auto h-12 w-12 text-gray-400" />
+                <h3 class="mt-2 text-sm font-semibold text-gray-900">No API keys</h3>
+                <p class="mt-1 text-sm text-gray-500">Get started by creating your first API key.</p>
+                <div class="mt-6">
+                  <button
+                    phx-click="show_form"
+                    type="button"
+                    class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  >
+                    <.icon name="hero-plus" class="-ml-0.5 mr-1.5 h-5 w-5" /> Create API Key
+                  </button>
+                </div>
               </div>
             </div>
           </div>

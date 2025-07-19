@@ -477,20 +477,20 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                   <% end %>
                 </tbody>
               </table>
+
+              <%= if Enum.empty?(@members) do %>
+                <div class="text-center py-12 bg-white">
+                  <.icon name="hero-users" class="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 class="mt-2 text-sm font-semibold text-gray-900">No members</h3>
+                  <p class="mt-1 text-sm text-gray-500">
+                    No members have registered yet.
+                  </p>
+                </div>
+              <% end %>
             </div>
           </div>
         </div>
       </div>
-
-      <%= if Enum.empty?(@members) do %>
-        <div class="text-center py-12">
-          <.icon name="hero-users" class="mx-auto h-12 w-12 text-gray-400" />
-          <h3 class="mt-2 text-sm font-semibold text-gray-900">No members</h3>
-          <p class="mt-1 text-sm text-gray-500">
-            No members have registered yet.
-          </p>
-        </div>
-      <% end %>
 
       <%= if @show_resume_modal do %>
         <div
