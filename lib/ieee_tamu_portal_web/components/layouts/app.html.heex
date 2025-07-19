@@ -8,12 +8,12 @@
         <%= if @current_member do %>
           <.navbar_button
             name="Registration"
-            href={~p"/members/registration"}
+            navigate={~p"/members/registration"}
             icon="hero-clipboard-document-check"
           />
           <.navbar_button
             name="Resume Drop"
-            href={~p"/members/resume"}
+            navigate={~p"/members/resume"}
             icon="hero-document-arrow-up"
           />
           <.navbar_button name="Member Info" href={~p"/members/info"} icon="hero-user" />

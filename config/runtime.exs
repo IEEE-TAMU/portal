@@ -163,7 +163,7 @@ if config_env() == :prod and System.get_env("NIX_BUILD_ENV") not in ~w(true 1) d
     secret_access_key: secret_access_key,
     url: "https://#{bucket}.#{account_id}.r2.cloudflarestorage.com"
 
-  config :ieee_tamu_portal, IeeeTamuPortalWeb.AdminAuth,
+  config :ieee_tamu_portal, IeeeTamuPortalWeb.Auth.AdminAuth,
     username:
       System.get_env("ADMIN_USERNAME") ||
         raise("environment variable ADMIN_USERNAME is missing."),

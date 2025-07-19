@@ -1,4 +1,4 @@
-defmodule IeeeTamuPortalWeb.MemberAuth do
+defmodule IeeeTamuPortalWeb.Auth.MemberAuth do
   use IeeeTamuPortalWeb, :verified_routes
 
   import Plug.Conn

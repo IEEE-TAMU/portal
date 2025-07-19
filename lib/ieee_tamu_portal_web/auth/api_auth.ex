@@ -1,4 +1,6 @@
-defmodule IeeeTamuPortalWeb.ApiAuth do
+defmodule IeeeTamuPortalWeb.Auth.ApiAuth do
+  use IeeeTamuPortalWeb, :verified_routes
+
   import Plug.Conn
   import Phoenix.Controller
 
@@ -23,7 +25,7 @@ defmodule IeeeTamuPortalWeb.ApiAuth do
     end
   end
 
-  # Admin-only plug -must come after api_auth
+  # Admin-only plug must come after api_auth
   def admin_only(conn, _opts) do
     case conn.assigns[:api_key].context do
       :admin ->

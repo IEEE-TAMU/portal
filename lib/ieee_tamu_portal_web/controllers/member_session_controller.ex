@@ -2,7 +2,7 @@ defmodule IeeeTamuPortalWeb.MemberSessionController do
   use IeeeTamuPortalWeb, :controller
 
   alias IeeeTamuPortal.Accounts
-  alias IeeeTamuPortalWeb.MemberAuth
+  alias IeeeTamuPortalWeb.Auth.MemberAuth
 
   def create(conn, %{"_action" => "registered"} = params) do
     create(conn, params, "Account created successfully!")

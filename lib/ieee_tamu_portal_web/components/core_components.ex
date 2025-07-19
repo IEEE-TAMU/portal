@@ -639,7 +639,7 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
 
   attr :name, :string, required: true
   attr :icon, :string, default: nil
-  attr :rest, :global, include: ~w(href class method)
+  attr :rest, :global, include: ~w(href navigate patch replace class method)
 
   def navbar_button(assigns) do
     ~H"""

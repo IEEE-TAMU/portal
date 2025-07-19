@@ -104,6 +104,8 @@ config :ieee_tamu_portal, IeeeTamuPortalWeb.Upload.SimpleS3Upload,
   secret_access_key: secret_access_key,
   url: "https://#{bucket}.#{account_id}.r2.cloudflarestorage.com"
 
-config :ieee_tamu_portal, IeeeTamuPortalWeb.AdminAuth,
+config :ieee_tamu_portal, IeeeTamuPortalWeb.Auth.AdminAuth,
   username: "admin",
   password: "password"
+
+config :open_api_spex, :cache_adapter, OpenApiSpex.Plug.NoneCache

@@ -1,7 +1,7 @@
 defmodule IeeeTamuPortalWeb.Router do
   use IeeeTamuPortalWeb, :router
 
-  import IeeeTamuPortalWeb.{MemberAuth, AdminAuth, ApiAuth}
+  import IeeeTamuPortalWeb.Auth.{MemberAuth, AdminAuth, ApiAuth}
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -15,19 +15,24 @@ defmodule IeeeTamuPortalWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
-    plug :api_auth
-    plug :admin_only # TODO: open up some api calls to member api keys
+    plug OpenApiSpex.Plug.PutApiSpec, module: IeeeTamuPortalWeb.Api.Spec
   end
 
-  scope "/api", IeeeTamuPortalWeb do
+  scope "/api", IeeeTamuPortalWeb.Api do
     pipe_through :api
 
-    # Test API endpoint
-    get "/ping", ApiController, :ping
-    get "/token_info", ApiController, :token_info
+    get "/openapi", RenderSpec, []
 
-    # Payment endpoint (admin only)
-    post "/payments", ApiController, :create_payment
+    # authenticated API V1 routes
+    scope "/v1/auth", V1 do
+      pipe_through [:api_auth]
+      resources "/ping", PingController, only: [:index]
+    end
+
+    # unauthenticated API V1 routes
+    scope "/v1", V1 do
+      resources "/ping", PingController, only: [:show], singleton: true
+    end
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
@@ -51,16 +56,16 @@ defmodule IeeeTamuPortalWeb.Router do
   scope "/", IeeeTamuPortalWeb do
     pipe_through [:browser, :redirect_if_member_is_authenticated]
 
+    post "/members/login", MemberSessionController, :create
+    get "/", PageController, :home
+
     live_session :redirect_if_member_is_authenticated,
-      on_mount: [{IeeeTamuPortalWeb.MemberAuth, :redirect_if_member_is_authenticated}] do
+      on_mount: [{IeeeTamuPortalWeb.Auth.MemberAuth, :redirect_if_member_is_authenticated}] do
       live "/members/register", MemberRegistrationLive, :new
       live "/members/login", MemberLoginLive, :new
       live "/members/reset_password", MemberForgotPasswordLive, :new
       live "/members/reset_password/:token", MemberResetPasswordLive, :edit
     end
-
-    post "/members/login", MemberSessionController, :create
-    get "/", PageController, :home
   end
 
   # routes available to authenticated members
@@ -69,8 +74,8 @@ defmodule IeeeTamuPortalWeb.Router do
 
     live_session :require_authenticated_member,
       on_mount: [
-        {IeeeTamuPortalWeb.MemberAuth, :ensure_authenticated},
-        {IeeeTamuPortalWeb.MemberAuth, :ensure_confirmed}
+        {IeeeTamuPortalWeb.Auth.MemberAuth, :ensure_authenticated},
+        {IeeeTamuPortalWeb.Auth.MemberAuth, :ensure_confirmed}
       ] do
       live "/members/settings", MemberSettingsLive, :edit
       live "/members/info", MemberInfoLive, :edit
@@ -80,22 +85,23 @@ defmodule IeeeTamuPortalWeb.Router do
 
     live_session :ensure_info_submitted,
       on_mount: [
-        {IeeeTamuPortalWeb.MemberAuth, :ensure_authenticated},
-        {IeeeTamuPortalWeb.MemberAuth, :ensure_confirmed},
-        {IeeeTamuPortalWeb.MemberAuth, :ensure_info_submitted}
+        {IeeeTamuPortalWeb.Auth.MemberAuth, :ensure_authenticated},
+        {IeeeTamuPortalWeb.Auth.MemberAuth, :ensure_confirmed},
+        {IeeeTamuPortalWeb.Auth.MemberAuth, :ensure_info_submitted}
       ] do
       live "/members/resume", MemberResumeLive, :edit
     end
   end
 
   # routes available to everyone
-  scope "/", IeeeTamuPortalWeb do
+  scope "/" do
     pipe_through [:browser]
 
-    delete "/members/log_out", MemberSessionController, :delete
+    get "/swaggerui", OpenApiSpex.Plug.SwaggerUI, path: "/api/openapi"
+    delete "/members/log_out", IeeeTamuPortalWeb.MemberSessionController, :delete
 
     live_session :current_member,
-      on_mount: [{IeeeTamuPortalWeb.MemberAuth, :mount_current_member}] do
+      on_mount: [{IeeeTamuPortalWeb.Auth.MemberAuth, :mount_current_member}] do
       live "/members/confirm/:token", MemberConfirmationLive, :edit
       live "/members/confirm", MemberConfirmationInstructionsLive, :new
     end
