@@ -23,6 +23,20 @@ defmodule IeeeTamuPortalWeb.ApiAuth do
     end
   end
 
+  # Admin-only plug -must come after api_auth
+  def admin_only(conn, _opts) do
+    case conn.assigns[:api_key].context do
+      :admin ->
+        conn
+
+      _ ->
+        conn
+        |> put_status(:forbidden)
+        |> json(%{error: "Forbidden: Admin access required"})
+        |> halt()
+    end
+  end
+
   defp unauthorized(conn) do
     conn
     |> put_status(:unauthorized)

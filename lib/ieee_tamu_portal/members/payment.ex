@@ -18,7 +18,7 @@ defmodule IeeeTamuPortal.Members.Payment do
   def changeset(payment, attrs) do
     payment
     |> cast(attrs, [:amount, :confirmation_code, :tshirt_size, :contact_email, :name])
-    |> validate_required([:amount, :confirmation_code, :tshirt_size, :contact_email, :name])
+    |> validate_required([:amount, :tshirt_size, :contact_email, :name])
     |> validate_format(:contact_email, ~r/^[^\s]+@[^\s]+\.[^\s]+$/,
       message: "must be a valid email"
     )

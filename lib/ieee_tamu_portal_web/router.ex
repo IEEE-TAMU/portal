@@ -16,15 +16,18 @@ defmodule IeeeTamuPortalWeb.Router do
   pipeline :api do
     plug :accepts, ["json"]
     plug :api_auth
+    plug :admin_only # TODO: open up some api calls to member api keys
   end
 
-  # Other scopes may use custom stacks.
   scope "/api", IeeeTamuPortalWeb do
     pipe_through :api
 
     # Test API endpoint
     get "/ping", ApiController, :ping
-    get "/token_info", ApiController, :token_info, this: :thing
+    get "/token_info", ApiController, :token_info
+
+    # Payment endpoint (admin only)
+    post "/payments", ApiController, :create_payment
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

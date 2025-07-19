@@ -6,7 +6,7 @@ defmodule IeeeTamuPortal.Members do
   import Ecto.Query, warn: false
   alias IeeeTamuPortal.Repo
 
-  alias IeeeTamuPortal.Members.{Info, Resume}
+  alias IeeeTamuPortal.Members.{Info, Resume, Payment}
 
   ## Database getters
 
@@ -128,5 +128,81 @@ defmodule IeeeTamuPortal.Members do
     %Resume{member_id: member.id}
     |> Resume.changeset(attrs)
     |> Repo.insert()
+  end
+
+  ## Payment functions
+
+  @doc """
+  Creates a payment.
+
+  ## Examples
+
+      iex> create_payment(%{amount: 25.00, confirmation_code: "ABC123"})
+      {:ok, %Payment{}}
+
+      iex> create_payment(%{amount: -10})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_payment(attrs \\ %{}) do
+    %Payment{}
+    |> Payment.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Gets a payment by id.
+
+  ## Examples
+
+      iex> get_payment(123)
+      %Payment{}
+
+      iex> get_payment(456)
+      nil
+
+  """
+  def get_payment(id), do: Repo.get(Payment, id)
+
+  @doc """
+  Gets a payment by confirmation code.
+
+  ## Examples
+
+      iex> get_payment_by_confirmation_code("ABC123")
+      %Payment{}
+
+      iex> get_payment_by_confirmation_code("INVALID")
+      nil
+
+  """
+  def get_payment_by_confirmation_code(confirmation_code) do
+    Repo.get_by(Payment, confirmation_code: confirmation_code)
+  end
+
+  @doc """
+  Lists all payments.
+
+  ## Examples
+
+      iex> list_payments()
+      [%Payment{}, ...]
+
+  """
+  def list_payments do
+    Repo.all(Payment)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking payment changes.
+
+  ## Examples
+
+      iex> change_payment(payment)
+      %Ecto.Changeset{data: %Payment{}}
+
+  """
+  def change_payment(%Payment{} = payment, attrs \\ %{}) do
+    Payment.changeset(payment, attrs)
   end
 end
