@@ -1,49 +1,21 @@
 defmodule IeeeTamuPortalWeb.Api.V1.PingController do
-  use IeeeTamuPortalWeb, :api_controller
+  use IeeeTamuPortalWeb.ApiController
 
   # alias IeeeTamuPortal.Members
   # # TODO: move logic to Members context
   # alias IeeeTamuPortal.Repo
 
-  tags ["info"]
-
-  operation :index,
-    summary: "Ping the API (Authenticated)",
-    description: "Returns a simple 'pong' response to check if the authenticated API is reachable.",
-    responses: [
-      ok:
-        {"Pong response", "application/json",
-         %OpenApiSpex.Schema{
-           type: :object,
-           properties: %{
-             message: %OpenApiSpex.Schema{type: :string, example: "pong"}
-           },
-           required: [:message]
-         }}
-    ]
-
-  def index(conn, _params) do
-    json(conn, %{message: "pong"})
-  end
+  tags ["demo"]
 
   operation :show,
-    summary: "Ping the API (Public)",
-    description: "Returns a simple 'pong' response to check if the public API is reachable.",
-    responses: [
-      ok:
-        {"Pong response", "application/json",
-         %OpenApiSpex.Schema{
-           type: :object,
-           properties: %{
-             message: %OpenApiSpex.Schema{type: :string, example: "pong"}
-           },
-           required: [:message]
-         }}
-    ]
+    summary: "Ping the API",
+    description: "Returns a simple 'pong' response to check if the API is reachable.",
+    responses:
+      [
+        ok: {"Pong response", "application/json", IeeeTamuPortalWeb.Api.V1.Schemas.PingResponse}
+      ] ++ List.flatten(@auth_responses)
 
   def show(conn, _params) do
-    # This endpoint is just a placeholder for now
-    # It can be used to check if the API is reachable
     json(conn, %{message: "pong"})
   end
 

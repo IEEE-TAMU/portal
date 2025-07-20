@@ -58,8 +58,6 @@ defmodule IeeeTamuPortalWeb do
 
       use OpenApiSpex.ControllerSpecs
 
-      import Plug.Conn
-
       unquote(verified_routes())
     end
   end

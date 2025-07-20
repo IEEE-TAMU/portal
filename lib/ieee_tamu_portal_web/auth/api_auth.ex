@@ -17,11 +17,13 @@ defmodule IeeeTamuPortalWeb.Auth.ApiAuth do
             |> assign(:api_key, api_key)
 
           {:error, :invalid_token} ->
-            unauthorized(conn)
+            conn
+            |> unauthorized()
         end
 
       _ ->
-        unauthorized(conn)
+        conn
+        |> unauthorized()
     end
   end
 
@@ -44,5 +46,37 @@ defmodule IeeeTamuPortalWeb.Auth.ApiAuth do
     |> put_status(:unauthorized)
     |> json(%{error: "Unauthorized: Invalid or missing API token"})
     |> halt()
+  end
+
+  @doc """
+  When used, invokes `api_auth` plug and sets up security schemes for OpenAPI.
+  If `:admin_only` is set to true, it also invokes the `admin_only` plug.
+  """
+  defmacro __using__(opts) do
+    admin_only = Keyword.get(opts, :admin_only, false)
+
+    quote do
+      import unquote(__MODULE__), only: [api_auth: 2, admin_only: 2]
+
+      plug :api_auth
+
+      @auth_responses [
+        unauthorized:
+          {"Unauthorized response", "application/json",
+           IeeeTamuPortalWeb.Api.V1.Schemas.UnauthorizedResponse}
+      ]
+
+      if unquote(admin_only) do
+        plug :admin_only
+
+        @auth_responses [
+          forbidden:
+            {"Forbidden response", "application/json",
+             IeeeTamuPortalWeb.Api.V1.Schemas.ForbiddenResponse}
+        ]
+      end
+
+      security [%{"authorization" => []}]
+    end
   end
 end

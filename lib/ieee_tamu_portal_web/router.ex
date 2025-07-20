@@ -1,7 +1,7 @@
 defmodule IeeeTamuPortalWeb.Router do
   use IeeeTamuPortalWeb, :router
 
-  import IeeeTamuPortalWeb.Auth.{MemberAuth, AdminAuth, ApiAuth}
+  import IeeeTamuPortalWeb.Auth.{MemberAuth, AdminAuth}
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -23,13 +23,6 @@ defmodule IeeeTamuPortalWeb.Router do
 
     get "/openapi", RenderSpec, []
 
-    # authenticated API V1 routes
-    scope "/v1/auth", V1 do
-      pipe_through [:api_auth]
-      resources "/ping", PingController, only: [:index]
-    end
-
-    # unauthenticated API V1 routes
     scope "/v1", V1 do
       resources "/ping", PingController, only: [:show], singleton: true
     end
