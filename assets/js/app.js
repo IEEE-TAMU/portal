@@ -62,6 +62,50 @@ Hooks.AutoUpcase = {
     func()
   }
 }
+Hooks.CopyToClipboard = {
+  mounted() {
+    this.el.addEventListener("click", (e) => {
+      const code = this.el.getAttribute("phx-value-code")
+      navigator.clipboard.writeText(code).then(() => {
+        // Toggle visibility of clipboard and check icons
+        const clipboardIcon = this.el.querySelector('[class*="hero-clipboard"]')
+        const checkIcon = this.el.querySelector('[class*="hero-check"]')
+        
+        if (clipboardIcon && checkIcon) {
+          clipboardIcon.classList.add('hidden')
+          checkIcon.classList.remove('hidden')
+          
+          setTimeout(() => {
+            clipboardIcon.classList.remove('hidden')
+            checkIcon.classList.add('hidden')
+          }, 1000)
+        }
+      }).catch(() => {
+        // Fallback for browsers that don't support clipboard API
+        const textArea = document.createElement("textarea")
+        textArea.value = code
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand("copy")
+        document.body.removeChild(textArea)
+        
+        // Still show the visual feedback even with fallback
+        const clipboardIcon = this.el.querySelector('[class*="hero-clipboard"]')
+        const checkIcon = this.el.querySelector('[class*="hero-check"]')
+        
+        if (clipboardIcon && checkIcon) {
+          clipboardIcon.classList.add('hidden')
+          checkIcon.classList.remove('hidden')
+          
+          setTimeout(() => {
+            clipboardIcon.classList.remove('hidden')
+            checkIcon.classList.add('hidden')
+          }, 1000)
+        }
+      })
+    })
+  }
+}
 
 let Uploaders = {};
 Uploaders.S3 = function (entries, onViewError) {

@@ -74,8 +74,6 @@ defmodule IeeeTamuPortalWeb.Router do
       live "/members/info", MemberInfoLive, :edit
     end
 
-    get "/members/registration", MemberRegistrationController, :show
-
     live_session :ensure_info_submitted,
       on_mount: [
         {IeeeTamuPortalWeb.Auth.MemberAuth, :ensure_authenticated},
@@ -83,6 +81,7 @@ defmodule IeeeTamuPortalWeb.Router do
         {IeeeTamuPortalWeb.Auth.MemberAuth, :ensure_info_submitted}
       ] do
       live "/members/resume", MemberResumeLive, :edit
+      live "/members/registration", MemberMembershipRegistrationLive, :show
     end
   end
 

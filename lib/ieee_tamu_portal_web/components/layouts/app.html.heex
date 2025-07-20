@@ -16,7 +16,7 @@
             navigate={~p"/members/resume"}
             icon="hero-document-arrow-up"
           />
-          <.navbar_button name="Member Info" href={~p"/members/info"} icon="hero-user" />
+          <.navbar_button name="Member Info" navigate={~p"/members/info"} icon="hero-user" />
         <% end %>
       </div>
       <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900 text-[0.8125rem]">
@@ -24,7 +24,11 @@
           <p class="max-sm:hidden">
             {@current_member.email}
           </p>
-          <.navbar_button name="Settings" href={~p"/members/settings"} icon="hero-cog-6-tooth" />
+          <.navbar_button
+            name="Settings"
+            navigate={~p"/members/settings"}
+            icon="hero-cog-6-tooth"
+          />
           <.navbar_button
             name="Log out"
             href={~p"/members/log_out"}
