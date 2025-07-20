@@ -103,11 +103,15 @@ defmodule IeeeTamuPortalWeb.Router do
   # admin routes using basic auth
   scope "/admin", IeeeTamuPortalWeb do
     pipe_through [:browser, :admin_auth]
-
-    live "/", AdminLive, :index
-    live "/members", AdminMembersLive, :index
-    live "/settings", AdminSettingsLive, :index
-    live "/api-keys", AdminApiKeysLive, :index
     get "/download-resumes", AdminResumeZipController, :download
+
+    live_session :admin_auth,
+      # on_mount: [{IeeeTamuPortalWeb.Auth.AdminAuth, :admin_auth}],
+      layout: {IeeeTamuPortalWeb.Layouts, :admin} do
+      live "/", AdminLive, :index
+      live "/members", AdminMembersLive, :index
+      live "/settings", AdminSettingsLive, :index
+      live "/api-keys", AdminApiKeysLive, :index
+    end
   end
 end

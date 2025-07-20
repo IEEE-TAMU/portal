@@ -14,7 +14,7 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
       |> assign(:form, to_form(Api.change_api_key(%ApiKey{})))
       |> assign(:new_token, nil)
 
-    {:ok, socket, layout: {IeeeTamuPortalWeb.Layouts, :admin}}
+    {:ok, socket}
   end
 
   defp list_api_keys do

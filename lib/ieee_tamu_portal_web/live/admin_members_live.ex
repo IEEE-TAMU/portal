@@ -36,7 +36,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
       |> assign(:member_info_form, nil)
       |> assign(:view_only_mode, false)
 
-    {:ok, socket, layout: {IeeeTamuPortalWeb.Layouts, :admin}}
+    {:ok, socket}
   end
 
   # Helper functions to determine payment status from preloaded registrations

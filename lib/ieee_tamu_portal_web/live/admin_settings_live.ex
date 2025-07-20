@@ -7,7 +7,7 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
   def mount(_params, _session, socket) do
     settings = Repo.all(Setting)
 
-    {:ok, assign(socket, settings: settings), layout: {IeeeTamuPortalWeb.Layouts, :admin}}
+    {:ok, assign(socket, settings: settings)}
   end
 
   @impl true
