@@ -1,6 +1,48 @@
 defmodule IeeeTamuPortal.Accounts do
   @moduledoc """
   The Accounts context.
+
+  This module provides functions for managing member accounts in the IEEE TAMU Portal.
+  It handles member registration, authentication, email updates, password changes,
+  and member data retrieval. The context includes functionality for:
+
+  - Member registration and profile management
+  - Authentication and password verification
+  - Email verification and updates
+  - Member data queries and aggregations
+  - Resume management integration
+
+  ## Member Authentication
+
+  The module provides secure authentication through email/password combinations
+  and includes password hashing, session token management, and email confirmation.
+
+  ## Data Access Patterns
+
+  Functions follow consistent naming patterns:
+  - `get_*` functions retrieve single records and may raise if not found
+  - `list_*` functions return collections of records
+  - `create_*`, `update_*`, `delete_*` functions perform write operations
+  - `change_*` functions return changesets for form handling
+
+  ## Examples
+
+      # Register a new member
+      {:ok, member} = Accounts.register_member(%{
+        first_name: "John",
+        last_name: "Doe",
+        email: "john@example.com",
+        password: "secure_password"
+      })
+
+      # Authenticate existing member
+      {:ok, member} = Accounts.get_member_by_email_and_password(
+        "john@example.com",
+        "secure_password"
+      )
+
+      # Get member count
+      total_members = Accounts.count_members()
   """
 
   alias IeeeTamuPortal.Repo

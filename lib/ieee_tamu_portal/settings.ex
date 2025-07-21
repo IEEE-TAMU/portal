@@ -22,6 +22,8 @@ defmodule IeeeTamuPortal.Settings do
   alias IeeeTamuPortal.Repo
   alias IeeeTamuPortal.Settings.Setting
 
+  # Gets a setting by its key.
+  # Returns the setting struct if found, nil otherwise.
   defp get_setting(key) do
     Repo.get_by(Setting, key: key)
   end
@@ -120,6 +122,25 @@ defmodule IeeeTamuPortal.Settings do
     Repo.delete(setting)
   end
 
+  @doc """
+  Gets the current registration year as an integer.
+
+  This is a convenience function that fetches the "registration_year" setting
+  and converts its value to an integer. This setting is used throughout the
+  application to determine which academic year registrations apply to.
+
+  Raises an error if the "registration_year" setting is not found, as this
+  is considered a critical application setting.
+
+  ## Examples
+
+      iex> get_registration_year!()
+      2024
+
+  ## Raises
+
+    * `RuntimeError` - when the "registration_year" setting is not found
+  """
   def get_registration_year! do
     case get_setting("registration_year") do
       nil -> raise "Membership year setting not found"

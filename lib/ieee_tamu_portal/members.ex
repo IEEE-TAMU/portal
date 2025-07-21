@@ -1,6 +1,33 @@
 defmodule IeeeTamuPortal.Members do
   @moduledoc """
   The Members context.
+
+  This module provides functions for managing member-related data including
+  personal information, resumes, payments, and registrations. It serves as the
+  business logic layer for all member operations in the IEEE TAMU Portal.
+
+  ## Member Information
+
+  Member info contains personal details like name, UIN, major, graduation year,
+  and other demographic information required for IEEE membership.
+
+  ## Resumes
+
+  Members can upload PDF resumes that are stored in S3 and made available
+  for recruitment purposes.
+
+  ## Registrations and Payments
+
+  Each academic year, members must register and pay dues. The system tracks
+  registrations per year and associated payments or payment overrides.
+
+  ## Examples
+
+      iex> Members.get_info_by_member_id(123)
+      %Info{first_name: "John", last_name: "Doe", ...}
+
+      iex> Members.create_registration(member, %{year: 2024})
+      {:ok, %Registration{}}
   """
 
   import Ecto.Query, warn: false
@@ -11,12 +38,18 @@ defmodule IeeeTamuPortal.Members do
   ## Database getters
 
   @doc """
-  Gets a member info by member id.
+  Gets member info by member ID.
+
+  Returns the member info struct if found, nil otherwise.
+
+  ## Parameters
+
+    * `member_id` - The integer ID of the member
 
   ## Examples
 
       iex> get_info_by_member_id(123)
-      %Info{}
+      %Info{first_name: "John", last_name: "Doe", ...}
 
       iex> get_info_by_member_id(456)
       nil
@@ -26,6 +59,23 @@ defmodule IeeeTamuPortal.Members do
     Repo.get_by(Info, member_id: member_id)
   end
 
+  @doc """
+  Gets member info by UIN (University Identification Number).
+
+  UINs are unique identifiers for Texas A&M students.
+
+  ## Parameters
+
+    * `uin` - The integer UIN of the student
+
+  ## Examples
+
+      iex> get_info_by_uin(123004567)
+      %Info{uin: 123004567, first_name: "John", ...}
+
+      iex> get_info_by_uin(999999999)
+      nil
+  """
   def get_info_by_uin(uin) when is_integer(uin) do
     Repo.get_by(Info, uin: uin)
   end
@@ -55,12 +105,23 @@ defmodule IeeeTamuPortal.Members do
   ## Changesets
 
   @doc """
-  Returns an `%Ecto.Changeset{}` for changing the member info.
+  Returns an `%Ecto.Changeset{}` for tracking member info changes.
+
+  This changeset is used for form validation and updating member information
+  including personal details, academic information, and contact data.
+
+  ## Parameters
+
+    * `info` - The member info struct (can be new or existing)
+    * `attrs` - A map of attributes to validate (optional, defaults to empty map)
 
   ## Examples
 
       iex> change_member_info(info)
       %Ecto.Changeset{data: %Info{}}
+
+      iex> change_member_info(info, %{first_name: "John"})
+      %Ecto.Changeset{data: %Info{}, changes: %{first_name: "John"}}
 
   """
   def change_member_info(info, attrs \\ %{}) do
@@ -69,14 +130,19 @@ defmodule IeeeTamuPortal.Members do
   end
 
   @doc """
-  Updates the member info.
+  Updates the member info with the given attributes.
+
+  ## Parameters
+
+    * `info` - The member info struct to update
+    * `attrs` - A map of attributes to update
 
   ## Examples
 
-      iex> update_member_info(info, attrs)
-      {:ok, %Info{}}
+      iex> update_member_info(info, %{first_name: "Jane"})
+      {:ok, %Info{first_name: "Jane"}}
 
-      iex> update_member_info(info, %{})
+      iex> update_member_info(info, %{uin: "invalid"})
       {:error, %Ecto.Changeset{}}
 
   """
@@ -86,6 +152,23 @@ defmodule IeeeTamuPortal.Members do
     |> Repo.update()
   end
 
+  @doc """
+  Creates member info for a new member.
+
+  ## Parameters
+
+    * `member` - The member struct to create info for
+    * `attrs` - A map of info attributes
+
+  ## Examples
+
+      iex> create_member_info(member, %{first_name: "John", last_name: "Doe"})
+      {:ok, %Info{}}
+
+      iex> create_member_info(member, %{})
+      {:error, %Ecto.Changeset{}}
+
+  """
   def create_member_info(member, attrs) do
     %Info{member_id: member.id}
     |> Info.changeset(attrs)
