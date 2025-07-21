@@ -209,7 +209,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
 
     member = Enum.find(socket.assigns.members, &(&1.id == member_id))
 
-    {:ok, updated_member} = Accounts.Member.delete_resume(member)
+    {:ok, updated_member} = Members.delete_member_resume(member)
 
     # Update members list
     updated_members =
@@ -271,73 +271,57 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
     member = Enum.find(socket.assigns.members, &(&1.id == member_id))
     current_year = Settings.get_registration_year!()
 
-    # Find or create registration for current year
-    case Members.Registration.get_or_create_registration_for_member(member, current_year) do
-      {:ok, registration} ->
-        # Toggle the payment override
-        new_override_value = !registration.payment_override
+    case Members.toggle_payment_override(member, current_year) do
+      {:ok, updated_registration} ->
+        # Update the member's payment status and override status in the socket
+        updated_members =
+          Enum.map(socket.assigns.members, fn m ->
+            if m.id == member_id do
+              # Update the preloaded registration data, preserving the payment association
+              updated_registrations =
+                case m.registrations do
+                  [] ->
+                    [updated_registration]
 
-        case IeeeTamuPortal.Repo.update(
-               Members.Registration.changeset(registration, %{
-                 payment_override: new_override_value
-               })
-             ) do
-          {:ok, updated_registration} ->
-            # Update the member's payment status and override status in the socket
-            updated_members =
-              Enum.map(socket.assigns.members, fn m ->
-                if m.id == member_id do
-                  # Update the preloaded registration data, preserving the payment association
-                  updated_registrations =
-                    case m.registrations do
-                      [] ->
-                        [updated_registration]
+                  [old_reg] ->
+                    # Preserve the payment association from the original registration
+                    updated_reg_with_payment = %{
+                      updated_registration
+                      | payment: old_reg.payment
+                    }
 
-                      [old_reg] ->
-                        # Preserve the payment association from the original registration
-                        updated_reg_with_payment = %{
-                          updated_registration
-                          | payment: old_reg.payment
-                        }
+                    [updated_reg_with_payment]
 
-                        [updated_reg_with_payment]
-
-                      # This shouldn't happen with our query
-                      multiple ->
-                        multiple
-                    end
-
-                  updated_member = %{m | registrations: updated_registrations}
-
-                  # Calculate payment status from updated data
-                  has_paid = has_paid_for_year?(updated_member, current_year)
-                  has_override = has_payment_override_for_year?(updated_member, current_year)
-
-                  updated_member
-                  |> Map.put(:has_paid, has_paid)
-                  |> Map.put(:has_override, has_override)
-                else
-                  m
+                  # This shouldn't happen with our query
+                  multiple ->
+                    multiple
                 end
-              end)
 
-            action = if new_override_value, do: "enabled", else: "disabled"
+              updated_member = %{m | registrations: updated_registrations}
 
-            {:noreply,
-             socket
-             |> assign(:members, updated_members)
-             |> put_flash(:info, "Payment override #{action} for #{member.email}")}
+              # Calculate payment status from updated data
+              has_paid = has_paid_for_year?(updated_member, current_year)
+              has_override = has_payment_override_for_year?(updated_member, current_year)
 
-          {:error, _changeset} ->
-            {:noreply,
-             socket
-             |> put_flash(:error, "Failed to update payment override for #{member.email}")}
-        end
+              updated_member
+              |> Map.put(:has_paid, has_paid)
+              |> Map.put(:has_override, has_override)
+            else
+              m
+            end
+          end)
 
-      {:error, _} ->
+        action = if updated_registration.payment_override, do: "enabled", else: "disabled"
+
         {:noreply,
          socket
-         |> put_flash(:error, "Failed to find or create registration for #{member.email}")}
+         |> assign(:members, updated_members)
+         |> put_flash(:info, "Payment override #{action} for #{member.email}")}
+
+      {:error, _changeset} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to update payment override for #{member.email}")}
     end
   end
 

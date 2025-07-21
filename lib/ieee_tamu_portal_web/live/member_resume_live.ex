@@ -1,14 +1,12 @@
 defmodule IeeeTamuPortalWeb.MemberResumeLive do
   use IeeeTamuPortalWeb, :live_view
 
-  alias IeeeTamuPortal.{Accounts, Repo}
+  alias IeeeTamuPortal.Accounts
   alias IeeeTamuPortal.Members.Resume
 
   @impl true
   def mount(_params, _session, socket) do
-    member =
-      socket.assigns.current_member
-      |> Repo.preload(:resume)
+    member = Accounts.preload_member_resume(socket.assigns.current_member)
 
     # if member resume exists, sign a GET request for the resume
     resume_url =

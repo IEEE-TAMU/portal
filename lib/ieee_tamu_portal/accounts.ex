@@ -402,4 +402,9 @@ defmodule IeeeTamuPortal.Accounts do
     member
     |> Repo.preload(:info)
   end
+
+  def preload_member_resume(member) do
+    member
+    |> Repo.preload(:resume)
+  end
 end

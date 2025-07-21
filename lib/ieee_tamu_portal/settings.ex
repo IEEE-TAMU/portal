@@ -41,6 +41,45 @@ defmodule IeeeTamuPortal.Settings do
   end
 
   @doc """
+  Gets a setting by its ID.
+
+  Raises `Ecto.NoResultsError` if the setting does not exist.
+
+  ## Examples
+
+      iex> get_setting!(123)
+      %Setting{id: 123, key: "registration_year", value: "2024"}
+
+      iex> get_setting!(999)
+      ** (Ecto.NoResultsError)
+  """
+  def get_setting!(id) do
+    Repo.get!(Setting, id)
+  end
+
+  @doc """
+  Creates a new setting with the given attributes.
+
+  ## Parameters
+
+    * `attrs` - A map of attributes for the new setting, typically including
+      `:key`, `:value`, and optionally `:description`
+
+  ## Examples
+
+      iex> create_setting(%{key: "feature_flag", value: "enabled", description: "Feature toggle"})
+      {:ok, %Setting{}}
+
+      iex> create_setting(%{key: ""})
+      {:error, %Ecto.Changeset{}}
+  """
+  def create_setting(attrs) do
+    %Setting{}
+    |> Setting.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
   Updates a setting with the given attributes.
 
   ## Parameters
@@ -60,6 +99,25 @@ defmodule IeeeTamuPortal.Settings do
     setting
     |> Setting.changeset(attrs)
     |> Repo.update()
+  end
+
+  @doc """
+  Deletes a setting.
+
+  ## Parameters
+
+    * `setting` - The setting struct to delete
+
+  ## Examples
+
+      iex> delete_setting(setting)
+      {:ok, %Setting{}}
+
+      iex> delete_setting(invalid_setting)
+      {:error, %Ecto.Changeset{}}
+  """
+  def delete_setting(setting) do
+    Repo.delete(setting)
   end
 
   def get_registration_year! do

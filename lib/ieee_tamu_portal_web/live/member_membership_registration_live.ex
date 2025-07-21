@@ -1,32 +1,30 @@
 defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
   use IeeeTamuPortalWeb, :live_view
 
-  alias IeeeTamuPortal.{Repo, Settings.Setting, Members.Registration}
-  import Ecto.Query
+  alias IeeeTamuPortal.{Settings, Members}
 
   @impl true
   def mount(_params, _session, socket) do
     current_member = socket.assigns.current_member
 
     # Get current registration year from settings
-    registration_year_setting = Repo.get_by!(Setting, key: "registration_year")
-    current_year = registration_year_setting.value
+    current_year = Settings.get_registration_year!()
 
     # Look for existing registration for this member in the current year
-    existing_registration = get_current_registration(current_member.id, current_year)
+    existing_registration = Members.get_registration(current_member.id, current_year)
 
     {registration, status} =
       case existing_registration do
         nil ->
           # No registration exists, create one
-          registration = create_registration_for_member(current_member)
+          {:ok, registration} = Members.create_registration(current_member, %{year: current_year})
           {registration, :new}
 
         registration ->
           # Registration exists, check if payment is complete
-          registration_with_payment = Repo.preload(registration, :payment)
+          registration_with_payment = Members.get_registration_with_payment(registration)
 
-          if Registration.payment_complete?(registration_with_payment) do
+          if Members.Registration.payment_complete?(registration_with_payment) do
             {registration_with_payment, :paid}
           else
             {registration_with_payment, :pending}
@@ -226,22 +224,5 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
       </div>
     </div>
     """
-  end
-
-  defp get_current_registration(member_id, year) do
-    year_int = String.to_integer(year)
-
-    from(r in Registration,
-      where: r.member_id == ^member_id and r.year == ^year_int,
-      order_by: [desc: r.inserted_at],
-      limit: 1
-    )
-    |> Repo.one()
-  end
-
-  defp create_registration_for_member(member) do
-    %Registration{}
-    |> Registration.create_changeset(%{member_id: member.id}, member)
-    |> Repo.insert!()
   end
 end

@@ -1,20 +1,20 @@
 defmodule IeeeTamuPortalWeb.AdminSettingsLive do
   use IeeeTamuPortalWeb, :live_view
 
-  alias IeeeTamuPortal.{Repo, Settings.Setting}
+  alias IeeeTamuPortal.Settings
 
   @impl true
   def mount(_params, _session, socket) do
-    settings = Repo.all(Setting)
+    settings = Settings.all_settings()
 
     {:ok, assign(socket, settings: settings)}
   end
 
   @impl true
   def handle_event("update_setting", %{"setting" => setting_params}, socket) do
-    setting = Repo.get!(Setting, setting_params["id"])
+    setting = Settings.get_setting!(setting_params["id"])
 
-    case Setting.changeset(setting, setting_params) |> Repo.update() do
+    case Settings.update_setting(setting, setting_params) do
       {:ok, updated_setting} ->
         # Update the settings list with the new value
         updated_settings =
@@ -35,7 +35,7 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
 
   @impl true
   def handle_event("create_setting", %{"setting" => setting_params}, socket) do
-    case %Setting{} |> Setting.changeset(setting_params) |> Repo.insert() do
+    case Settings.create_setting(setting_params) do
       {:ok, new_setting} ->
         updated_settings = [new_setting | socket.assigns.settings]
 
@@ -52,9 +52,9 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
 
   @impl true
   def handle_event("delete_setting", %{"id" => id}, socket) do
-    setting = Repo.get!(Setting, id)
+    setting = Settings.get_setting!(id)
 
-    case Repo.delete(setting) do
+    case Settings.delete_setting(setting) do
       {:ok, _} ->
         updated_settings = Enum.reject(socket.assigns.settings, &(&1.id == String.to_integer(id)))
 
