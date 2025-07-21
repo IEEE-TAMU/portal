@@ -9,16 +9,12 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
     socket =
       socket
       |> assign(:page_title, "API Keys")
-      |> assign(:api_keys, list_api_keys())
+      |> assign(:api_keys, Api.list_api_keys())
       |> assign(:show_form, false)
       |> assign(:form, to_form(Api.change_api_key(%ApiKey{})))
       |> assign(:new_token, nil)
 
     {:ok, socket}
-  end
-
-  defp list_api_keys do
-    Api.list_api_keys()
   end
 
   @impl true
@@ -50,10 +46,12 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
   @impl true
   def handle_event("save", %{"api_key" => api_key_params}, socket) do
     case Api.create_admin_api_key(api_key_params) do
-      {:ok, {plain_token, _api_key}} ->
+      {:ok, {plain_token, api_key}} ->
+        api_keys = [api_key | socket.assigns.api_keys]
+
         socket =
           socket
-          |> assign(:api_keys, list_api_keys())
+          |> assign(:api_keys, api_keys)
           |> assign(:new_token, plain_token)
           |> assign(:form, to_form(Api.change_api_key(%ApiKey{})))
           |> put_flash(:info, "API key created successfully!")
@@ -70,10 +68,16 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
     api_key = Api.get_api_key!(id)
 
     case Api.update_api_key(api_key, %{is_active: !api_key.is_active}) do
-      {:ok, _api_key} ->
+      {:ok, api_key} ->
+        # Update the API keys list with the modified key
+        api_keys =
+          Enum.map(socket.assigns.api_keys, fn ak ->
+            if ak.id == api_key.id, do: api_key, else: ak
+          end)
+
         socket =
           socket
-          |> assign(:api_keys, list_api_keys())
+          |> assign(:api_keys, api_keys)
           |> put_flash(:info, "API key updated successfully!")
 
         {:noreply, socket}
@@ -88,10 +92,13 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
     api_key = Api.get_api_key!(id)
 
     case Api.delete_api_key(api_key) do
-      {:ok, _api_key} ->
+      {:ok, api_key} ->
+        # Remove the deleted API key from the list
+        api_keys = Enum.reject(socket.assigns.api_keys, &(&1.id == api_key.id))
+
         socket =
           socket
-          |> assign(:api_keys, list_api_keys())
+          |> assign(:api_keys, api_keys)
           |> put_flash(:info, "API key deleted successfully!")
 
         {:noreply, socket}
