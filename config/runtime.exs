@@ -120,6 +120,8 @@ if config_env() == :prod and System.get_env("NIX_BUILD_ENV") not in ~w(true 1) d
     adapter: Swoosh.Adapters.SMTP,
     relay: mail_host,
     ssl: false,
+    tls: :never,
+    auth: :never,
     port: String.to_integer(mail_port)
 
   config :swoosh, :api_client, false

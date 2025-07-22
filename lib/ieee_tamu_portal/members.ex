@@ -346,7 +346,7 @@ defmodule IeeeTamuPortal.Members do
       {:ok, %Registration{}}
   """
   def create_registration(member, attrs \\ %{}) do
-    %Registration{}
+    Ecto.build_assoc(member, :registrations)
     |> Registration.create_changeset(attrs, member)
     |> Repo.insert()
   end
