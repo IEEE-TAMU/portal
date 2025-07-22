@@ -17,7 +17,7 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLiveTest do
         conn
         |> log_in_member(member_fixture())
         |> live(~p"/members/register")
-        |> follow_redirect(conn, "/members/resume")
+        |> follow_redirect(conn, "/members/registration")
 
       assert {:ok, _conn} = result
     end
@@ -45,7 +45,7 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLiveTest do
       render_submit(form)
       conn = follow_trigger_action(form, conn)
 
-      assert redirected_to(conn) == ~p"/members/resume"
+      assert redirected_to(conn) == ~p"/members/registration"
 
       assert get_session(conn, :member_token)
 
