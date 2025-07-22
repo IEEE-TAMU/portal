@@ -17,7 +17,7 @@ defmodule IeeeTamuPortal.Application do
       {Phoenix.PubSub, name: IeeeTamuPortal.PubSub},
       # Start a worker by calling: IeeeTamuPortal.Worker.start_link(arg)
       # {IeeeTamuPortal.Worker, arg},
-      {IeeeTamuPortal.S3Delete, name: IeeeTamuPortal.S3Delete},
+      IeeeTamuPortal.S3Delete,
       IeeeTamuPortal.ResumeZipService,
       IeeeTamuPortal.Members.AgeUpdater,
       # Start to serve requests, typically the last entry

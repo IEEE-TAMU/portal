@@ -4,8 +4,8 @@ defmodule IeeeTamuPortal.S3Delete do
   alias IeeeTamuPortalWeb.Upload.SimpleS3Upload
 
   # Client
-  def start_link(opts) do
-    GenServer.start_link(__MODULE__, :ok, opts)
+  def start_link(opts \\ []) do
+    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   def delete_object(pid, uri) do
@@ -14,7 +14,7 @@ defmodule IeeeTamuPortal.S3Delete do
 
   # Server
   @impl true
-  def init(:ok) do
+  def init(_opts) do
     {:ok, %{}}
   end
 
