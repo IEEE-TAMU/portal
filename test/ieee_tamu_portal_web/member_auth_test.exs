@@ -1,9 +1,9 @@
-defmodule IeeeTamuPortalWeb.MemberAuthTest do
+defmodule IeeeTamuPortalWeb.Auth.MemberAuthTest do
   use IeeeTamuPortalWeb.ConnCase
 
   alias Phoenix.LiveView
   alias IeeeTamuPortal.Accounts
-  alias IeeeTamuPortalWeb.MemberAuth
+  alias IeeeTamuPortalWeb.Auth.MemberAuth
   import IeeeTamuPortal.AccountsFixtures
 
   @remember_me_cookie "_ieee_tamu_portal_web_member_remember_me"

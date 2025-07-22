@@ -86,11 +86,11 @@ defmodule IeeeTamuPortalWeb.Router do
   end
 
   # routes available to everyone
-  scope "/" do
+  scope "/", IeeeTamuPortalWeb do
     pipe_through [:browser]
 
-    get "/swaggerui", OpenApiSpex.Plug.SwaggerUI, path: "/api/openapi"
-    delete "/members/log_out", IeeeTamuPortalWeb.MemberSessionController, :delete
+    get "/swaggerui", Api.SwaggerUI, path: "/api/openapi"
+    delete "/members/log_out", MemberSessionController, :delete
 
     live_session :current_member,
       on_mount: [{IeeeTamuPortalWeb.Auth.MemberAuth, :mount_current_member}] do

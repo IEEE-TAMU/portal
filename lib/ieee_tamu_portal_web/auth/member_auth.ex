@@ -135,13 +135,13 @@ defmodule IeeeTamuPortalWeb.Auth.MemberAuth do
       defmodule IeeeTamuPortalWeb.PageLive do
         use IeeeTamuPortalWeb, :live_view
 
-        on_mount {IeeeTamuPortalWeb.MemberAuth, :mount_current_member}
+        on_mount {IeeeTamuPortalWeb.Auth.MemberAuth, :mount_current_member}
         ...
       end
 
   Or use the `live_session` of your router to invoke the on_mount callback:
 
-      live_session :authenticated, on_mount: [{IeeeTamuPortalWeb.MemberAuth, :ensure_authenticated}] do
+      live_session :authenticated, on_mount: [{IeeeTamuPortalWeb.Auth.MemberAuth, :ensure_authenticated}] do
         live "/profile", ProfileLive, :index
       end
   """
