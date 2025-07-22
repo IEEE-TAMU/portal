@@ -19,6 +19,7 @@ defmodule IeeeTamuPortal.Application do
       # {IeeeTamuPortal.Worker, arg},
       {IeeeTamuPortal.S3Delete, name: IeeeTamuPortal.S3Delete},
       IeeeTamuPortal.ResumeZipService,
+      IeeeTamuPortal.Members.AgeUpdater,
       # Start to serve requests, typically the last entry
       IeeeTamuPortalWeb.Endpoint
     ]
