@@ -8,7 +8,9 @@ defmodule IeeeTamuPortalWeb.ApiController do
 
       Module.register_attribute(__MODULE__, :auth_responses, accumulate: true)
 
-      if unquote(key_required) or unquote(admin_only) do
+      import IeeeTamuPortalWeb.Auth.ApiAuth, only: [api_auth: 2, admin_only: 2]
+
+      if unquote(key_required or admin_only) do
         use IeeeTamuPortalWeb.Auth.ApiAuth, admin_only: unquote(admin_only)
       end
     end

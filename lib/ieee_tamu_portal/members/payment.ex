@@ -25,4 +25,11 @@ defmodule IeeeTamuPortal.Members.Payment do
     |> validate_number(:amount, greater_than: 0)
     |> unique_constraint(:confirmation_code)
   end
+
+  def registration_changeset(payment, attrs) do
+    payment
+    |> cast(attrs, [:registration_id])
+    |> validate_required([:registration_id])
+    |> foreign_key_constraint(:registration_id)
+  end
 end

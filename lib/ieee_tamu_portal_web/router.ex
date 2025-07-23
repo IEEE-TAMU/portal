@@ -15,6 +15,7 @@ defmodule IeeeTamuPortalWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug Plug.Parsers, parsers: [{:json, json_decoder: Jason}]
     plug OpenApiSpex.Plug.PutApiSpec, module: IeeeTamuPortalWeb.Api.Spec
   end
 
@@ -25,6 +26,7 @@ defmodule IeeeTamuPortalWeb.Router do
 
     scope "/v1", V1 do
       resources "/ping", PingController, only: [:show], singleton: true
+      resources "/payments", PaymentController, only: [:index, :show, :create]
     end
   end
 

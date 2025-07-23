@@ -412,4 +412,61 @@ defmodule IeeeTamuPortal.Members do
       update_registration(registration, %{payment_override: new_override_value})
     end
   end
+
+  def get_payments_by_api_key(api_key) do
+    case api_key.context do
+      :admin ->
+        {:ok, Repo.all(Payment)}
+
+        # :member ->
+        #   {:ok,
+        #    from(p in Payment,
+        #      join: r in Registration,
+        #      on: p.registration_id == r.id,
+        #      where: r.member_id == ^api_key.member_id,
+        #      select: p
+        #    )
+        #    |> Repo.all()}
+    end
+  end
+
+  def get_payment_by_id_and_api_key(id, api_key) do
+    case api_key.context do
+      :admin ->
+        case Repo.get(Payment, id) do
+          nil -> {:error, :not_found}
+          payment -> {:ok, payment}
+        end
+
+        # :member ->
+        #   from(p in Payment,
+        #     join: r in Registration,
+        #     on: p.registration_id == r.id,
+        #     where: r.member_id == ^api_key.member_id and p.id == ^id
+        #   )
+        #   |> Repo.one()
+        #   |> case do
+        #     nil -> {:error, :not_found}
+        #     payment -> {:ok, payment}
+        #   end
+    end
+  end
+
+  def associate_payment_with_registration(payment) do
+    case payment.confirmation_code do
+      nil ->
+        {:error, :no_confirmation_code}
+
+      confirmation_code ->
+        case Repo.get_by(Registration, confirmation_code: confirmation_code) do
+          nil ->
+            {:error, :registration_not_found}
+
+          registration ->
+            payment
+            |> Payment.registration_changeset(%{registration_id: registration.id})
+            |> Repo.update()
+        end
+    end
+  end
 end

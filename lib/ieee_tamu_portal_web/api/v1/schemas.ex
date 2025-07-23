@@ -45,59 +45,85 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
     })
   end
 
-  # defmodule User do
-  #   require OpenApiSpex
+  defmodule Payment do
+    require OpenApiSpex
 
-  #   OpenApiSpex.schema(%{
-  #     # The title is optional. It defaults to the last section of the module name.
-  #     # So the derived title for MyApp.User is "User".
-  #     title: "User",
-  #     description: "A user of the app",
-  #     type: :object,
-  #     properties: %{
-  #       id: %Schema{type: :integer, description: "User ID"},
-  #       name: %Schema{type: :string, description: "User name", pattern: ~r/[a-zA-Z][a-zA-Z0-9_]+/},
-  #       email: %Schema{type: :string, description: "Email address", format: :email},
-  #       birthday: %Schema{type: :string, description: "Birth date", format: :date},
-  #       inserted_at: %Schema{
-  #         type: :string,
-  #         description: "Creation timestamp",
-  #         format: :"date-time"
-  #       },
-  #       updated_at: %Schema{type: :string, description: "Update timestamp", format: :"date-time"}
-  #     },
-  #     required: [:name, :email],
-  #     example: %{
-  #       "id" => 123,
-  #       "name" => "Joe User",
-  #       "email" => "joe@gmail.com",
-  #       "birthday" => "1970-01-01T12:34:55Z",
-  #       "inserted_at" => "2017-09-12T12:34:55Z",
-  #       "updated_at" => "2017-09-13T10:11:12Z"
-  #     }
-  #   })
-  # end
+    OpenApiSpex.schema(%{
+      type: :object,
+      properties: %{
+        name: %Schema{type: :string, description: "Name of the payer"},
+        amount: %Schema{type: :number, format: :decimal, description: "Payment amount"},
+        confirmation_code: %Schema{
+          type: :string,
+          description: "Unique confirmation code for the payment",
+          example: "USER123"
+        },
+        tshirt_size: %Schema{
+          type: :string,
+          enum: ~w(S M L XL XXL)a,
+          description: "T-shirt size for the member"
+        },
+        contact_email: %Schema{
+          type: :string,
+          format: :email,
+          description: "Contact email for the payment"
+        },
+        registration_id: %Schema{
+          type: :integer,
+          description: "ID of the associated membership"
+        },
+        id: %Schema{
+          type: :integer,
+          description: "Unique identifier for the payment"
+        }
+      },
+      required: [:name, :amount, :confirmation_code, :tshirt_size, :contact_email],
+      example: %{
+        id: 3,
+        name: "John Doe",
+        amount: 50.00,
+        confirmation_code: "JDOE123",
+        tshirt_size: "M",
+        contact_email: "jdoe@tamu.edu",
+        registration_id: 12345
+      }
+    })
 
-  # defmodule UserResponse do
-  #   require OpenApiSpex
+    def from_struct(struct) do
+      %{
+        id: struct.id,
+        name: struct.name,
+        amount: struct.amount,
+        confirmation_code: struct.confirmation_code,
+        tshirt_size: struct.tshirt_size,
+        contact_email: struct.contact_email,
+        registration_id: struct.registration_id
+      }
+    end
+  end
 
-  #   OpenApiSpex.schema(%{
-  #     title: "UserResponse",
-  #     description: "Response schema for single user",
-  #     type: :object,
-  #     properties: %{
-  #       data: User
-  #     },
-  #     example: %{
-  #       "data" => %{
-  #         "id" => 123,
-  #         "name" => "Joe User",
-  #         "email" => "joe@gmail.com",
-  #         "birthday" => "1970-01-01T12:34:55Z",
-  #         "inserted_at" => "2017-09-12T12:34:55Z",
-  #         "updated_at" => "2017-09-13T10:11:12Z"
-  #       }
-  #     }
-  #   })
-  # end
+  defmodule PaymentResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      type: :array,
+      items: Payment,
+      description: "List of payment details for the authenticated user"
+    })
+  end
+
+  defmodule PaymentNotFoundResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      type: :object,
+      properties: %{
+        error: %Schema{
+          type: :string,
+          example: "Payment not found"
+        }
+      },
+      required: [:error]
+    })
+  end
 end
