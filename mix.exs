@@ -62,7 +62,9 @@ defmodule IeeeTamuPortal.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:open_api_spex, "~> 3.21"},
-      {:deps_nix, "~> 2.0", only: :dev}
+      {:deps_nix, "~> 2.0", only: :dev},
+      {:req, "~> 0.4"},
+      {:assent, "~> 0.3.1"}
     ]
   end
 
