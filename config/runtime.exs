@@ -172,4 +172,16 @@ if config_env() == :prod and System.get_env("NIX_BUILD_ENV") not in ~w(true 1) d
     password:
       System.get_env("ADMIN_PASSWORD") ||
         raise("environment variable ADMIN_PASSWORD is missing.")
+
+  # Discord configuration
+  config :ieee_tamu_portal, :discord_oauth,
+    client_id:
+      System.get_env("DISCORD_CLIENT_ID") ||
+        raise("environment variable DISCORD_CLIENT_ID is missing."),
+    client_secret:
+      System.get_env("DISCORD_CLIENT_SECRET") ||
+        raise("environment variable DISCORD_CLIENT_SECRET is missing."),
+    redirect_uri:
+      System.get_env("DISCORD_REDIRECT_URI") ||
+        raise("environment variable DISCORD_REDIRECT_URI is missing.")
 end

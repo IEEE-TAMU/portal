@@ -47,7 +47,12 @@ defmodule IeeeTamuPortal.Accounts do
 
   alias IeeeTamuPortal.Repo
 
-  alias IeeeTamuPortal.Accounts.{Member, MemberToken, MemberNotifier}
+  alias IeeeTamuPortal.Accounts.{
+    Member,
+    MemberToken,
+    MemberNotifier,
+    AuthMethod
+  }
 
   ## Database getters
 
@@ -448,5 +453,96 @@ defmodule IeeeTamuPortal.Accounts do
   def preload_member_resume(member) do
     member
     |> Repo.preload(:resume)
+  end
+
+  ## Auth Methods
+
+  @doc """
+  Links an authentication method to a member.
+
+  ## Examples
+
+      iex> link_auth_method(member, %{provider: :discord, sub: "123456"})
+      {:ok, %AuthMethod{}}
+
+      iex> link_auth_method(member, %{provider: :discord})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def link_auth_method(%Member{} = member, attrs) do
+    Ecto.build_assoc(member, :secondary_auth_methods)
+    |> AuthMethod.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Gets an authentication method by member and provider.
+
+  ## Examples
+
+      iex> get_auth_method(member, :discord)
+      %AuthMethod{}
+
+      iex> get_auth_method(member, :discord)
+      nil
+
+  """
+  def get_auth_method(%Member{} = member, provider) do
+    Repo.get_by(AuthMethod, member_id: member.id, provider: provider)
+  end
+
+  # @doc """
+  # Lists all authentication methods for a member.
+
+  # ## Examples
+
+  #     iex> list_auth_methods(member)
+  #     [%AuthMethod{}, ...]
+
+  # """
+  # def list_auth_methods(%Member{} = member) do
+  #   import Ecto.Query
+  #
+  #   from(am in AuthMethod,
+  #     where: am.member_id == ^member.id,
+  #     order_by: am.provider
+  #   )
+  #   |> Repo.all()
+  # end
+
+  @doc """
+  Removes an authentication method from a member.
+
+  ## Examples
+
+      iex> unlink_auth_method(member, :discord)
+      {:ok, %AuthMethod{}}
+
+      iex> unlink_auth_method(member, :nonexistent)
+      {:error, :not_found}
+
+  """
+  def unlink_auth_method(%Member{} = member, provider) do
+    case get_auth_method(member, provider) do
+      nil ->
+        {:error, :not_found}
+
+      auth_method ->
+        Repo.delete(auth_method)
+    end
+  end
+
+  @doc """
+  Preloads authentication methods for a member.
+
+  ## Examples
+
+      iex> preload_member_auth_methods(member)
+      %Member{secondary_auth_methods: [%AuthMethod{}, ...]}
+
+  """
+  def preload_member_auth_methods(member) do
+    member
+    |> Repo.preload(:secondary_auth_methods)
   end
 end

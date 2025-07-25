@@ -67,6 +67,10 @@ defmodule IeeeTamuPortalWeb.Router do
   scope "/", IeeeTamuPortalWeb do
     pipe_through [:browser, :require_authenticated_member]
 
+    # Auth routes for authenticated members
+    get "/auth/:provider", OAuthController, :authorize
+    get "/auth/:provider/callback", OAuthController, :callback
+
     live_session :require_authenticated_member,
       on_mount: [
         {IeeeTamuPortalWeb.Auth.MemberAuth, :ensure_authenticated},
