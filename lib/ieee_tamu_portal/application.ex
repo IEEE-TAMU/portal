@@ -20,6 +20,7 @@ defmodule IeeeTamuPortal.Application do
       IeeeTamuPortal.S3Delete,
       IeeeTamuPortal.ResumeZipService,
       IeeeTamuPortal.Members.AgeUpdater,
+      IeeeTamuPortal.Discord.RoleSyncService,
       # Start to serve requests, typically the last entry
       IeeeTamuPortalWeb.Endpoint
     ]

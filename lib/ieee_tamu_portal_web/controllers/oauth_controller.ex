@@ -60,6 +60,9 @@ defmodule IeeeTamuPortalWeb.OAuthController do
 
     case Accounts.link_auth_method(current_member, member_auth_attrs) do
       {:ok, _auth_method} ->
+        # Trigger Discord role synchronization after successful linking
+        IeeeTamuPortal.Discord.RoleSyncService.sync_member(current_member)
+
         conn
         |> put_flash(:info, "External account linked successfully!")
         |> redirect(to: ~p"/members/settings")

@@ -15,17 +15,19 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
       |> assign(:current_email, member.email)
       |> assign(:password_form, to_form(password_changeset))
       |> assign(:trigger_submit, false)
-      |> assign(:auth_methods, member.secondary_auth_methods)
 
     {:ok, socket}
   end
 
   defp discord_linked?(assigns) do
-    Enum.any?(assigns.auth_methods, &(&1.provider == :discord))
+    auth_methods = assigns.current_member.secondary_auth_methods || []
+    Enum.any?(auth_methods, &(&1.provider == :discord))
   end
 
   defp get_discord_username(assigns) do
-    case Enum.find(assigns.auth_methods, &(&1.provider == :discord)) do
+    auth_methods = assigns.current_member.secondary_auth_methods || []
+
+    case Enum.find(auth_methods, &(&1.provider == :discord)) do
       nil -> ""
       auth_method -> auth_method.preferred_username || auth_method.email || "Unknown"
     end
@@ -68,13 +70,21 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
     member = socket.assigns.current_member
 
     case Accounts.unlink_auth_method(member, :discord) do
-      {:ok, _auth_method} ->
-        updated_member = Accounts.preload_member_auth_methods(member)
+      {:ok, auth_method} ->
+        # do not use preload since it lazily does not remove the discord auth method from current_member without a DB query
+        updated_member =
+          member
+          |> Map.update!(:secondary_auth_methods, fn auth_methods ->
+            Enum.reject(auth_methods, &(&1.provider == :discord))
+          end)
+
+        # Remove the Member role from the Discord account that was just unlinked
+        discord_user_id = auth_method.sub
+        IeeeTamuPortal.Discord.Client.remove_role(discord_user_id, "Member")
 
         socket =
           socket
           |> assign(:current_member, updated_member)
-          |> assign(:auth_methods, updated_member.secondary_auth_methods)
           |> put_flash(:info, "Discord account unlinked successfully!")
 
         {:noreply, socket}

@@ -184,4 +184,9 @@ if config_env() == :prod and System.get_env("NIX_BUILD_ENV") not in ~w(true 1) d
     redirect_uri:
       System.get_env("DISCORD_REDIRECT_URI") ||
         raise("environment variable DISCORD_REDIRECT_URI is missing.")
+
+  config :ieee_tamu_portal,
+         :discord_bot_url,
+         System.get_env("DISCORD_BOT_URL") ||
+           raise("environment variable DISCORD_BOT_URL is missing.")
 end

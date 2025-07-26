@@ -409,7 +409,16 @@ defmodule IeeeTamuPortal.Members do
   def toggle_payment_override(member, year) do
     with {:ok, registration} <- get_or_create_registration(member, year) do
       new_override_value = !registration.payment_override
-      update_registration(registration, %{payment_override: new_override_value})
+
+      case update_registration(registration, %{payment_override: new_override_value}) do
+        {:ok, updated_registration} ->
+          # Trigger Discord role synchronization when payment status changes
+          IeeeTamuPortal.Discord.RoleSyncService.sync_member(member)
+          {:ok, updated_registration}
+
+        {:error, changeset} ->
+          {:error, changeset}
+      end
     end
   end
 
@@ -463,9 +472,18 @@ defmodule IeeeTamuPortal.Members do
             {:error, :registration_not_found}
 
           registration ->
-            payment
-            |> Payment.registration_changeset(%{registration_id: registration.id})
-            |> Repo.update()
+            case payment
+                 |> Payment.registration_changeset(%{registration_id: registration.id})
+                 |> Repo.update() do
+              {:ok, updated_payment} ->
+                # Get the member for Discord role sync
+                member = Repo.get!(IeeeTamuPortal.Accounts.Member, registration.member_id)
+                IeeeTamuPortal.Discord.RoleSyncService.sync_member(member)
+                {:ok, updated_payment}
+
+              {:error, changeset} ->
+                {:error, changeset}
+            end
         end
     end
   end
