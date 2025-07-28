@@ -500,15 +500,15 @@ defmodule IeeeTamuPortal.Accounts do
   #     [%AuthMethod{}, ...]
 
   # """
-  # def list_auth_methods(%Member{} = member) do
-  #   import Ecto.Query
-  #
-  #   from(am in AuthMethod,
-  #     where: am.member_id == ^member.id,
-  #     order_by: am.provider
-  #   )
-  #   |> Repo.all()
-  # end
+  def list_auth_methods(%Member{} = member) do
+    import Ecto.Query
+
+    from(am in AuthMethod,
+      where: am.member_id == ^member.id,
+      order_by: am.provider
+    )
+    |> Repo.all()
+  end
 
   @doc """
   Removes an authentication method from a member.
@@ -530,6 +530,30 @@ defmodule IeeeTamuPortal.Accounts do
       auth_method ->
         Repo.delete(auth_method)
     end
+  end
+
+  @doc """
+  Gets a member by Discord sub (user ID).
+
+  Returns the member if found, nil otherwise.
+
+  ## Examples
+
+      iex> get_member_by_discord_sub("123456789")
+      %Member{}
+
+      iex> get_member_by_discord_sub("nonexistent")
+      nil
+  """
+  def get_member_by_discord_sub(discord_sub) do
+    import Ecto.Query
+
+    from(m in Member,
+      join: auth in AuthMethod,
+      on: auth.member_id == m.id,
+      where: auth.provider == :discord and auth.sub == ^discord_sub
+    )
+    |> Repo.one()
   end
 
   @doc """

@@ -5,7 +5,7 @@ defmodule IeeeTamuPortalWeb.OAuthController do
   alias Assent.Strategy.Discord
 
   @doc """
-  Initiates Discord OAuth flow
+  Initiates Discord OAuth flow for both login and linking
   """
   def authorize(conn, %{"provider" => "discord"}) do
     discord_config()
@@ -17,9 +17,15 @@ defmodule IeeeTamuPortalWeb.OAuthController do
         |> redirect(external: url)
 
       {:error, _error} ->
+        # Different error handling based on whether user is authenticated
+        redirect_location = if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
+        error_message = if conn.assigns[:current_member],
+                          do: "Failed to initiate Discord authentication. Please try again.",
+                          else: "Failed to initiate Discord login. Please try again."
+
         conn
-        |> put_flash(:error, "Failed to initiate Discord authentication. Please try again.")
-        |> redirect(to: ~p"/members/settings")
+        |> put_flash(:error, error_message)
+        |> redirect(to: redirect_location)
     end
   end
 
@@ -28,9 +34,15 @@ defmodule IeeeTamuPortalWeb.OAuthController do
   """
 
   def callback(conn, %{"provider" => "discord", "error" => _error}) do
+    # Different error handling based on whether user is authenticated
+    redirect_location = if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
+    error_message = if conn.assigns[:current_member],
+                      do: "Discord authentication was cancelled or failed.",
+                      else: "Discord login was cancelled or failed."
+
     conn
-    |> put_flash(:error, "Discord authentication was cancelled or failed.")
-    |> redirect(to: ~p"/members/settings")
+    |> put_flash(:error, error_message)
+    |> redirect(to: redirect_location)
   end
 
   def callback(conn, %{"provider" => "discord"} = params) do
@@ -41,22 +53,33 @@ defmodule IeeeTamuPortalWeb.OAuthController do
     |> Keyword.put(:session_params, session_params)
     |> Discord.callback(params)
     |> case do
-      {:ok, user_info} ->
-        handle_successful_auth(conn, user_info, :discord)
+      {:ok, info} ->
+        # Check if user is authenticated to determine behavior
+        if conn.assigns[:current_member] do
+          handle_discord_linking(conn, info)
+        else
+          handle_discord_login(conn, info)
+        end
 
       {:error, _error} ->
+        # Different error handling based on whether user is authenticated
+        redirect_location = if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
+        error_message = if conn.assigns[:current_member],
+                          do: "Discord authentication failed. Please try again.",
+                          else: "Discord login failed. Please try again."
+
         conn
-        |> put_flash(:error, "Discord authentication failed. Please try again.")
-        |> redirect(to: ~p"/members/settings")
+        |> put_flash(:error, error_message)
+        |> redirect(to: redirect_location)
     end
   end
 
-  defp handle_successful_auth(conn, %{user: user_info}, provider) do
+  defp handle_discord_linking(conn, %{user: user_info}) do
     current_member = conn.assigns.current_member
 
     member_auth_attrs =
       Map.take(user_info, ~w[sub preferred_username email email_verified])
-      |> Map.put("provider", provider)
+      |> Map.put("provider", :discord)
 
     case Accounts.link_auth_method(current_member, member_auth_attrs) do
       {:ok, _auth_method} ->
@@ -85,6 +108,22 @@ defmodule IeeeTamuPortalWeb.OAuthController do
         conn
         |> put_flash(:error, "Failed to link external account. Please try again.")
         |> redirect(to: ~p"/members/settings")
+    end
+  end
+
+  defp handle_discord_login(conn, %{user: user_info}) do
+    discord_sub = user_info["sub"]
+
+    case Accounts.get_member_by_discord_sub(discord_sub) do
+      nil ->
+        conn
+        |> put_flash(:error, "No account found linked to this Discord account. Please create an account first and link your Discord account in settings.")
+        |> redirect(to: ~p"/members/login")
+
+      member ->
+        conn
+        |> put_flash(:info, "Successfully logged in with Discord!")
+        |> IeeeTamuPortalWeb.Auth.MemberAuth.log_in_member(member)
     end
   end
 
