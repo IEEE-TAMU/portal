@@ -180,10 +180,7 @@ if config_env() == :prod and System.get_env("NIX_BUILD_ENV") not in ~w(true 1) d
         raise("environment variable DISCORD_CLIENT_ID is missing."),
     client_secret:
       System.get_env("DISCORD_CLIENT_SECRET") ||
-        raise("environment variable DISCORD_CLIENT_SECRET is missing."),
-    redirect_uri:
-      System.get_env("DISCORD_REDIRECT_URI") ||
-        raise("environment variable DISCORD_REDIRECT_URI is missing.")
+        raise("environment variable DISCORD_CLIENT_SECRET is missing.")
 
   config :ieee_tamu_portal,
          :discord_bot_url,

@@ -94,7 +94,7 @@ defmodule IeeeTamuPortalWeb.OAuthController do
     [
       client_id: config[:client_id],
       client_secret: config[:client_secret],
-      redirect_uri: config[:redirect_uri]
+      redirect_uri: url(~p"/auth/discord/callback")
       # authorization_params: [scope: "identify"] # do not need email scope for linking
     ]
   end
