@@ -197,7 +197,7 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
               </.link>
             </div>
           <% end %>
-          
+
           <%= if google_linked?(assigns) do %>
             <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg mt-4">
               <div class="flex items-center space-x-3">
