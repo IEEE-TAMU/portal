@@ -170,7 +170,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
                     <label class="block text-sm font-medium text-gray-700">Amount Paid</label>
                     <input
                       type="text"
-                      value={"$#{@registration.payment.amount}"}
+                      value={"$#{Decimal.to_string(@registration.payment.amount)}"}
                       readonly
                       class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"
                     />
@@ -178,11 +178,11 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
 
                   <div>
                     <label class="block text-sm font-medium text-gray-700">
-                      Payment Confirmation
+                      Flywire Order ID
                     </label>
                     <input
                       type="text"
-                      value={@registration.payment.confirmation_code}
+                      value={@registration.payment.order_id}
                       readonly
                       class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"
                     />
@@ -199,10 +199,10 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
                   </div>
 
                   <div>
-                    <label class="block text-sm font-medium text-gray-700">Contact Email</label>
+                    <label class="block text-sm font-medium text-gray-700">Member Name</label>
                     <input
                       type="text"
-                      value={@registration.payment.contact_email}
+                      value={@registration.payment.name}
                       readonly
                       class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"
                     />

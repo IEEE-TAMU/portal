@@ -55,7 +55,7 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
         amount: %Schema{type: :number, format: :decimal, description: "Payment amount"},
         confirmation_code: %Schema{
           type: :string,
-          description: "Unique confirmation code for the payment",
+          description: "Confirmation code for the payment",
           example: "USER123"
         },
         tshirt_size: %Schema{
@@ -63,40 +63,33 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
           enum: ~w(S M L XL XXL)a,
           description: "T-shirt size for the member"
         },
-        contact_email: %Schema{
-          type: :string,
-          format: :email,
-          description: "Contact email for the payment"
-        },
         registration_id: %Schema{
           type: :integer,
           description: "ID of the associated membership"
         },
-        id: %Schema{
-          type: :integer,
-          description: "Unique identifier for the payment"
+        order_id: %Schema{
+          type: :string,
+          description: "Flywire order ID that serves as the unique identifier for the payment"
         }
       },
-      required: [:name, :amount, :confirmation_code, :tshirt_size, :contact_email],
+      required: [:name, :amount, :tshirt_size, :order_id],
       example: %{
-        id: 3,
+        order_id: "202507311846543792838986",
         name: "John Doe",
-        amount: 50.00,
-        confirmation_code: "JDOE123",
+        amount: 0.00,
+        confirmation_code: "JDOE153402",
         tshirt_size: "M",
-        contact_email: "jdoe@tamu.edu",
         registration_id: 12345
       }
     })
 
     def from_struct(struct) do
       %{
-        id: struct.id,
+        order_id: struct.order_id,
         name: struct.name,
         amount: struct.amount,
         confirmation_code: struct.confirmation_code,
         tshirt_size: struct.tshirt_size,
-        contact_email: struct.contact_email,
         registration_id: struct.registration_id
       }
     end

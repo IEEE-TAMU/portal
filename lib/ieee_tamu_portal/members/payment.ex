@@ -2,12 +2,14 @@ defmodule IeeeTamuPortal.Members.Payment do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @primary_key false
+
   schema "payments" do
+    field :order_id, :string, primary_key: true
     field :name, :string
     field :amount, :decimal
     field :confirmation_code, :string
     field :tshirt_size, Ecto.Enum, values: ~w(S M L XL XXL)a
-    field :contact_email, :string
 
     belongs_to :registration, IeeeTamuPortal.Members.Registration
 
@@ -17,13 +19,10 @@ defmodule IeeeTamuPortal.Members.Payment do
   @doc false
   def changeset(payment, attrs) do
     payment
-    |> cast(attrs, [:amount, :confirmation_code, :tshirt_size, :contact_email, :name])
-    |> validate_required([:amount, :tshirt_size, :contact_email, :name])
-    |> validate_format(:contact_email, ~r/^[^\s]+@[^\s]+\.[^\s]+$/,
-      message: "must be a valid email"
-    )
-    |> validate_number(:amount, greater_than: 0)
-    |> unique_constraint(:confirmation_code)
+    |> cast(attrs, [:order_id, :amount, :confirmation_code, :tshirt_size, :name])
+    |> validate_required([:order_id, :amount, :tshirt_size, :name])
+    |> validate_number(:amount, greater_than_or_equal_to: 0)
+    |> unique_constraint(:order_id)
   end
 
   def registration_changeset(payment, attrs) do
