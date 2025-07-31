@@ -30,8 +30,8 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentController do
   end
 
   operation :show,
-    summary: "Get payment details by ID",
-    description: "Fetches the payment details for the authenticated user by id.",
+    summary: "Get payment details by Order ID",
+    description: "Fetches the payment details for the authenticated user by Flywire order ID.",
     parameters: [
       %OpenApiSpex.Parameter{
         in: :path,
@@ -46,10 +46,10 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentController do
         not_found: {"Payment not found", "application/json", Schemas.PaymentNotFoundResponse}
       ] ++ List.flatten(@auth_responses)
 
-  def show(conn, %{"id" => id}) do
+  def show(conn, %{"id" => order_id}) do
     api_key = conn.assigns[:api_key]
 
-    case Members.get_payment_by_id_and_api_key(id, api_key) do
+    case Members.get_payment_by_order_id_and_api_key(order_id, api_key) do
       {:ok, payment} ->
         json(conn, Schemas.Payment.from_struct(payment))
 

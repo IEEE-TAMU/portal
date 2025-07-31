@@ -79,7 +79,7 @@ defmodule IeeeTamuPortal.Members.Registration do
     from(r in __MODULE__,
       left_join: p in Payment,
       on: r.id == p.registration_id,
-      where: r.year == ^year and (r.payment_override == true or not is_nil(p.id))
+      where: r.year == ^year and (r.payment_override == true or not is_nil(p.order_id))
     )
     |> Repo.aggregate(:count, :id)
   end
@@ -98,7 +98,7 @@ defmodule IeeeTamuPortal.Members.Registration do
         on: r.id == p.registration_id,
         where:
           r.member_id == ^member_id and r.year == ^year and
-            (r.payment_override == true or not is_nil(p.id))
+            (r.payment_override == true or not is_nil(p.order_id))
       )
 
     Repo.exists?(query)

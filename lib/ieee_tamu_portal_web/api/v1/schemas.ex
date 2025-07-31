@@ -67,14 +67,14 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
           type: :integer,
           description: "ID of the associated membership"
         },
-        order_id: %Schema{
+        id: %Schema{
           type: :string,
           description: "Flywire order ID that serves as the unique identifier for the payment"
         }
       },
-      required: [:name, :amount, :tshirt_size, :order_id],
+      required: [:name, :amount, :tshirt_size, :id],
       example: %{
-        order_id: "202507311846543792838986",
+        id: "202507311846543792838986",
         name: "John Doe",
         amount: 0.00,
         confirmation_code: "JDOE153402",
@@ -85,7 +85,7 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
 
     def from_struct(struct) do
       %{
-        order_id: struct.order_id,
+        id: struct.order_id,
         name: struct.name,
         amount: struct.amount,
         confirmation_code: struct.confirmation_code,
