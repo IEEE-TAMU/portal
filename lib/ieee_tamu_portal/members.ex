@@ -245,7 +245,7 @@ defmodule IeeeTamuPortal.Members do
       nil
 
   """
-  def get_payment(order_id), do: Repo.get(Payment, order_id)
+  def get_payment(id), do: Repo.get(Payment, id)
 
   @doc """
   Gets a payment by confirmation code.
@@ -440,10 +440,10 @@ defmodule IeeeTamuPortal.Members do
   end
 
 
-  def get_payment_by_order_id_and_api_key(order_id, api_key) do
+  def get_payment_by_id_and_api_key(id, api_key) do
     case api_key.context do
       :admin ->
-        case Repo.get(Payment, order_id) do
+        case Repo.get(Payment, id) do
           nil -> {:error, :not_found}
           payment -> {:ok, payment}
         end
@@ -452,7 +452,7 @@ defmodule IeeeTamuPortal.Members do
         #   from(p in Payment,
         #     join: r in Registration,
         #     on: p.registration_id == r.id,
-        #     where: r.member_id == ^api_key.member_id and p.order_id == ^order_id
+        #     where: r.member_id == ^api_key.member_id and p.id == ^id
         #   )
         #   |> Repo.one()
         #   |> case do

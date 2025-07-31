@@ -85,7 +85,7 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
 
     def from_struct(struct) do
       %{
-        id: struct.order_id,
+        id: struct.id,
         name: struct.name,
         amount: struct.amount,
         confirmation_code: struct.confirmation_code,

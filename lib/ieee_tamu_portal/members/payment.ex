@@ -5,7 +5,7 @@ defmodule IeeeTamuPortal.Members.Payment do
   @primary_key false
 
   schema "payments" do
-    field :order_id, :string, primary_key: true
+    field :id, :string, primary_key: true, source: :order_id
     field :name, :string
     field :amount, :decimal
     field :confirmation_code, :string
@@ -19,10 +19,10 @@ defmodule IeeeTamuPortal.Members.Payment do
   @doc false
   def changeset(payment, attrs) do
     payment
-    |> cast(attrs, [:order_id, :amount, :confirmation_code, :tshirt_size, :name])
-    |> validate_required([:order_id, :amount, :tshirt_size, :name])
+    |> cast(attrs, [:id, :amount, :confirmation_code, :tshirt_size, :name])
+    |> validate_required([:id, :amount, :tshirt_size, :name])
     |> validate_number(:amount, greater_than_or_equal_to: 0)
-    |> unique_constraint(:order_id)
+    |> unique_constraint(:id)
   end
 
   def registration_changeset(payment, attrs) do
