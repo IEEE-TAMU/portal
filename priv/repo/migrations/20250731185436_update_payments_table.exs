@@ -7,7 +7,7 @@ defmodule IeeeTamuPortal.Repo.Migrations.UpdatePaymentsTable do
     alter table(:payments) do
       modify :amount, :decimal, precision: 10, scale: 2
     end
-    
+
     # Remove the contact_email column
     alter table(:payments) do
       remove :contact_email

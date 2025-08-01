@@ -439,7 +439,6 @@ defmodule IeeeTamuPortal.Members do
     end
   end
 
-
   def get_payment_by_id_and_api_key(id, api_key) do
     case api_key.context do
       :admin ->
