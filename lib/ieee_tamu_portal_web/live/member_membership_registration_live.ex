@@ -11,24 +11,22 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
     current_year = Settings.get_registration_year!()
 
     # Look for existing registration for this member in the current year
-    existing_registration = Members.get_registration(current_member.id, current_year)
-
-    {registration, status} =
-      case existing_registration do
+    registration =
+      case Members.get_registration(current_member.id, current_year) do
         nil ->
-          # No registration exists, create one
           {:ok, registration} = Members.create_registration(current_member, %{year: current_year})
-          {registration, :new}
+          registration
 
         registration ->
-          # Registration exists, check if payment is complete
-          registration_with_payment = Members.get_registration_with_payment(registration)
+          registration
+      end
+      |> Members.get_registration_with_payment()
 
-          if Members.Registration.payment_complete?(registration_with_payment) do
-            {registration_with_payment, :paid}
-          else
-            {registration_with_payment, :pending}
-          end
+    status =
+      if Members.Registration.payment_complete?(registration) do
+        :paid
+      else
+        :pending
       end
 
     socket =
@@ -61,66 +59,36 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
         </div>
 
         <%= case @status do %>
-          <% :new -> %>
-            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-              <div class="flex items-center">
-                <.icon name="hero-check-circle" class="w-5 h-5 text-green-600 mr-2" />
-                <h3 class="text-green-800 font-medium">Registration Created Successfully!</h3>
-              </div>
-              <p class="text-green-700 mt-2">
-                Your registration has been created. Please save your confirmation code for payment processing.
-              </p>
-            </div>
-
-            <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Registration Details</h3>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Confirmation Code</label>
-                <div class="mt-1 relative">
-                  <input
-                    type="text"
-                    value={@registration.confirmation_code}
-                    readonly
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 font-mono text-lg"
-                  />
-                  <button
-                    type="button"
-                    phx-click="copy_confirmation_code"
-                    phx-value-code={@registration.confirmation_code}
-                    phx-hook="CopyToClipboard"
-                    id="copy-button"
-                    class="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
-                    title="Copy to clipboard"
-                  >
-                    <.icon name="hero-clipboard" class="w-4 h-4" />
-                    <.icon name="hero-check" class="w-4 h-4 hidden text-green-600" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div class="flex items-start">
-                <.icon name="hero-exclamation-triangle" class="w-5 h-5 text-yellow-600 mr-2 mt-0.5" />
-                <div>
-                  <h3 class="text-yellow-800 font-medium">Payment Required</h3>
-                  <p class="text-yellow-700 mt-1">
-                    Your registration is pending payment. Please use the confirmation code above when making your payment.
-                    Once payment is processed, your registration will be complete.
-                  </p>
-                </div>
-              </div>
-            </div>
           <% :pending -> %>
             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
               <div class="flex items-center">
                 <.icon name="hero-clock" class="w-5 h-5 text-yellow-600 mr-2" />
                 <h3 class="text-yellow-800 font-medium">Payment Pending</h3>
               </div>
-              <p class="text-yellow-700 mt-2">
-                Your registration is awaiting payment processing.
-              </p>
+              <div class="text-yellow-700 mt-2">
+                <p>
+                  Your registration is awaiting payment processing.
+                </p>
+                <br />
+                <p>
+                  If you have current membership with IEEE, make sure your IEEE member number is saved in the
+                  <.link
+                    navigate={~p"/members/info#info_ieee_membership_number"}
+                    class="text-yellow-800 hover:underline"
+                  >
+                    info page <.icon name="hero-arrow-top-right-on-square" class="w-4 h-5" />.
+                  </.link>
+                  Once you've done so, reach out to an officer in the discord so they can mark your registration as paid.
+                </p>
+                <br />
+                <p>
+                  If you only want to sign up for branch membership, you can do so<.link
+                    href="https://tamu.estore.flywire.com/institute-of-electrical-and-electronics-engineers/membership-dues"
+                    class="text-yellow-800 hover:underline"
+                  >
+                    here <.icon name="hero-arrow-top-right-on-square" class="w-4 h-5" />.</.link> (make sure to enter the confirmation code below in the order form)
+                </p>
+              </div>
             </div>
 
             <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
