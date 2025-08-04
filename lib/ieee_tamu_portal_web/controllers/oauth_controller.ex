@@ -3,9 +3,10 @@ defmodule IeeeTamuPortalWeb.OAuthController do
 
   alias IeeeTamuPortal.Accounts
   alias Assent.Strategy.Discord
+  alias Assent.Strategy.Google
 
   @doc """
-  Initiates Discord OAuth flow
+  Initiates OAuth flow for the specified provider (discord or google)
   """
   def authorize(conn, %{"provider" => "discord"}) do
     discord_config()
@@ -19,6 +20,22 @@ defmodule IeeeTamuPortalWeb.OAuthController do
       {:error, _error} ->
         conn
         |> put_flash(:error, "Failed to initiate Discord authentication. Please try again.")
+        |> redirect(to: ~p"/members/settings")
+    end
+  end
+
+  def authorize(conn, %{"provider" => "google"}) do
+    google_config()
+    |> Google.authorize_url()
+    |> case do
+      {:ok, %{url: url, session_params: session_params}} ->
+        conn
+        |> put_session(:oauth_session_params, session_params)
+        |> redirect(external: url)
+
+      {:error, _error} ->
+        conn
+        |> put_flash(:error, "Failed to initiate Google authentication. Please try again.")
         |> redirect(to: ~p"/members/settings")
     end
   end
@@ -51,6 +68,43 @@ defmodule IeeeTamuPortalWeb.OAuthController do
     end
   end
 
+  def callback(conn, %{"provider" => "google", "error" => _error}) do
+    conn
+    |> put_flash(:error, "Google authentication was cancelled or failed.")
+    |> redirect(to: ~p"/members/settings")
+  end
+
+  def callback(conn, %{"provider" => "google"} = params) do
+    session_params = get_session(conn, :oauth_session_params) || %{}
+    conn = delete_session(conn, :oauth_session_params)
+
+    google_config()
+    |> Keyword.put(:session_params, session_params)
+    |> Google.callback(params)
+    |> case do
+      {:ok, user_info} ->
+        handle_google_auth(conn, user_info)
+
+      {:error, _error} ->
+        conn
+        |> put_flash(:error, "Google authentication failed. Please try again.")
+        |> redirect(to: ~p"/members/settings")
+    end
+  end
+
+  defp handle_google_auth(conn, %{user: user_info}) do
+    # Check if the email ends with @tamu.edu
+    email = user_info["email"] || ""
+    
+    unless String.ends_with?(email, "@tamu.edu") do
+      conn
+      |> put_flash(:error, "You must use a @tamu.edu Google account to link your account.")
+      |> redirect(to: ~p"/members/settings")
+    else
+      handle_successful_auth(conn, %{user: user_info}, :google)
+    end
+  end
+
   defp handle_successful_auth(conn, %{user: user_info}, provider) do
     current_member = conn.assigns.current_member
 
@@ -60,8 +114,10 @@ defmodule IeeeTamuPortalWeb.OAuthController do
 
     case Accounts.link_auth_method(current_member, member_auth_attrs) do
       {:ok, _auth_method} ->
-        # Trigger Discord role synchronization after successful linking
-        IeeeTamuPortal.Discord.RoleSyncService.sync_member(current_member)
+        # Trigger Discord role synchronization after successful Discord linking
+        if provider == :discord do
+          IeeeTamuPortal.Discord.RoleSyncService.sync_member(current_member)
+        end
 
         conn
         |> put_flash(:info, "External account linked successfully!")
@@ -96,6 +152,16 @@ defmodule IeeeTamuPortalWeb.OAuthController do
       client_secret: config[:client_secret],
       redirect_uri: url(~p"/auth/discord/callback")
       # authorization_params: [scope: "identify"] # do not need email scope for linking
+    ]
+  end
+
+  defp google_config do
+    config = Application.get_env(:ieee_tamu_portal, :google_oauth)
+
+    [
+      client_id: config[:client_id],
+      client_secret: config[:client_secret],
+      redirect_uri: url(~p"/auth/google/callback")
     ]
   end
 end

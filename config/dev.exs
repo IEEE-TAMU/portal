@@ -115,6 +115,11 @@ config :ieee_tamu_portal, :discord_oauth,
   client_id: System.get_env("DISCORD_CLIENT_ID", "your_discord_client_id"),
   client_secret: System.get_env("DISCORD_CLIENT_SECRET", "your_discord_client_secret")
 
+# Google OAuth configuration for development
+config :ieee_tamu_portal, :google_oauth,
+  client_id: System.get_env("GOOGLE_CLIENT_ID", "your_google_client_id"),
+  client_secret: System.get_env("GOOGLE_CLIENT_SECRET", "your_google_client_secret")
+
 # Discord Bot API configuration for development
 config :ieee_tamu_portal,
        :discord_bot_url,

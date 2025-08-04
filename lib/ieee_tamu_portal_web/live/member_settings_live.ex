@@ -24,12 +24,26 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
     Enum.any?(auth_methods, &(&1.provider == :discord))
   end
 
+  defp google_linked?(assigns) do
+    auth_methods = assigns.current_member.secondary_auth_methods || []
+    Enum.any?(auth_methods, &(&1.provider == :google))
+  end
+
   defp get_discord_username(assigns) do
     auth_methods = assigns.current_member.secondary_auth_methods || []
 
     case Enum.find(auth_methods, &(&1.provider == :discord)) do
       nil -> ""
       auth_method -> auth_method.preferred_username || auth_method.email || "Unknown"
+    end
+  end
+
+  defp get_google_email(assigns) do
+    auth_methods = assigns.current_member.secondary_auth_methods || []
+
+    case Enum.find(auth_methods, &(&1.provider == :google)) do
+      nil -> ""
+      auth_method -> auth_method.email || "Unknown"
     end
   end
 
@@ -98,6 +112,34 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
   end
 
   @impl true
+  def handle_event("unlink_google", _params, socket) do
+    member = socket.assigns.current_member
+
+    case Accounts.unlink_auth_method(member, :google) do
+      {:ok, _auth_method} ->
+        # do not use preload since it lazily does not remove the google auth method from current_member without a DB query
+        updated_member =
+          member
+          |> Map.update!(:secondary_auth_methods, fn auth_methods ->
+            Enum.reject(auth_methods, &(&1.provider == :google))
+          end)
+
+        socket =
+          socket
+          |> assign(:current_member, updated_member)
+          |> put_flash(:info, "Google account unlinked successfully!")
+
+        {:noreply, socket}
+
+      {:error, :not_found} ->
+        {:noreply, put_flash(socket, :error, "Google account not found.")}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Failed to unlink Google account.")}
+    end
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <.header class="text-center">
@@ -150,6 +192,58 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
               <.link
                 href={~p"/auth/discord"}
                 class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Connect
+              </.link>
+            </div>
+          <% end %>
+          
+          <%= if google_linked?(assigns) do %>
+            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg mt-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-red-600 rounded flex items-center justify-center">
+                  <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-900">Google</p>
+                  <p class="text-sm text-gray-500">
+                    Connected as {get_google_email(assigns)}
+                  </p>
+                </div>
+              </div>
+              <.button
+                type="button"
+                phx-click="unlink_google"
+                class="bg-red-600 hover:bg-red-700"
+                data-confirm="Are you sure you want to unlink your Google account?"
+              >
+                Unlink
+              </.button>
+            </div>
+          <% else %>
+            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg mt-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-gray-400 rounded flex items-center justify-center">
+                  <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-900">Google</p>
+                  <p class="text-sm text-gray-500">Not connected (Must use @tamu.edu account)</p>
+                </div>
+              </div>
+              <.link
+                href={~p"/auth/google"}
+                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
               >
                 Connect
               </.link>

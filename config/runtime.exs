@@ -182,6 +182,15 @@ if config_env() == :prod and System.get_env("NIX_BUILD_ENV") not in ~w(true 1) d
       System.get_env("DISCORD_CLIENT_SECRET") ||
         raise("environment variable DISCORD_CLIENT_SECRET is missing.")
 
+  # Google OAuth configuration
+  config :ieee_tamu_portal, :google_oauth,
+    client_id:
+      System.get_env("GOOGLE_CLIENT_ID") ||
+        raise("environment variable GOOGLE_CLIENT_ID is missing."),
+    client_secret:
+      System.get_env("GOOGLE_CLIENT_SECRET") ||
+        raise("environment variable GOOGLE_CLIENT_SECRET is missing.")
+
   config :ieee_tamu_portal,
          :discord_bot_url,
          System.get_env("DISCORD_BOT_URL") ||

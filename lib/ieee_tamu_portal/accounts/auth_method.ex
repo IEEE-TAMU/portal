@@ -4,7 +4,7 @@ defmodule IeeeTamuPortal.Accounts.AuthMethod do
 
   @primary_key false
   schema "secondary_auth_methods" do
-    field :provider, Ecto.Enum, values: [:discord], primary_key: true
+    field :provider, Ecto.Enum, values: [:discord, :google], primary_key: true
     field :sub, :string
     field :preferred_username, :string
     field :email, :string
