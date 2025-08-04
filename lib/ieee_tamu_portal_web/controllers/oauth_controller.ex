@@ -19,10 +19,13 @@ defmodule IeeeTamuPortalWeb.OAuthController do
 
       {:error, _error} ->
         # Different error handling based on whether user is authenticated
-        redirect_location = if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
-        error_message = if conn.assigns[:current_member],
-                          do: "Failed to initiate Discord authentication. Please try again.",
-                          else: "Failed to initiate Discord login. Please try again."
+        redirect_location =
+          if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
+
+        error_message =
+          if conn.assigns[:current_member],
+            do: "Failed to initiate Discord authentication. Please try again.",
+            else: "Failed to initiate Discord login. Please try again."
 
         conn
         |> put_flash(:error, error_message)
@@ -40,9 +43,18 @@ defmodule IeeeTamuPortalWeb.OAuthController do
         |> redirect(external: url)
 
       {:error, _error} ->
+        # Different error handling based on whether user is authenticated
+        redirect_location =
+          if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
+
+        error_message =
+          if conn.assigns[:current_member],
+            do: "Failed to initiate Google authentication. Please try again.",
+            else: "Failed to initiate Google login. Please try again."
+
         conn
-        |> put_flash(:error, "Failed to initiate Google authentication. Please try again.")
-        |> redirect(to: ~p"/members/settings")
+        |> put_flash(:error, error_message)
+        |> redirect(to: redirect_location)
     end
   end
 
@@ -52,10 +64,13 @@ defmodule IeeeTamuPortalWeb.OAuthController do
 
   def callback(conn, %{"provider" => "discord", "error" => _error}) do
     # Different error handling based on whether user is authenticated
-    redirect_location = if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
-    error_message = if conn.assigns[:current_member],
-                      do: "Discord authentication was cancelled or failed.",
-                      else: "Discord login was cancelled or failed."
+    redirect_location =
+      if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
+
+    error_message =
+      if conn.assigns[:current_member],
+        do: "Discord authentication was cancelled or failed.",
+        else: "Discord login was cancelled or failed."
 
     conn
     |> put_flash(:error, error_message)
@@ -73,17 +88,20 @@ defmodule IeeeTamuPortalWeb.OAuthController do
       {:ok, info} ->
         # Check if user is authenticated to determine behavior
         if conn.assigns[:current_member] do
-          handle_discord_linking(conn, info)
+          handle_successful_auth(conn, info, :discord)
         else
           handle_discord_login(conn, info)
         end
 
       {:error, _error} ->
         # Different error handling based on whether user is authenticated
-        redirect_location = if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
-        error_message = if conn.assigns[:current_member],
-                          do: "Discord authentication failed. Please try again.",
-                          else: "Discord login failed. Please try again."
+        redirect_location =
+          if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
+
+        error_message =
+          if conn.assigns[:current_member],
+            do: "Discord authentication failed. Please try again.",
+            else: "Discord login failed. Please try again."
 
         conn
         |> put_flash(:error, error_message)
@@ -92,9 +110,18 @@ defmodule IeeeTamuPortalWeb.OAuthController do
   end
 
   def callback(conn, %{"provider" => "google", "error" => _error}) do
+    # Different error handling based on whether user is authenticated
+    redirect_location =
+      if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
+
+    error_message =
+      if conn.assigns[:current_member],
+        do: "Google authentication was cancelled or failed.",
+        else: "Google login was cancelled or failed."
+
     conn
-    |> put_flash(:error, "Google authentication was cancelled or failed.")
-    |> redirect(to: ~p"/members/settings")
+    |> put_flash(:error, error_message)
+    |> redirect(to: redirect_location)
   end
 
   def callback(conn, %{"provider" => "google"} = params) do
@@ -105,20 +132,34 @@ defmodule IeeeTamuPortalWeb.OAuthController do
     |> Keyword.put(:session_params, session_params)
     |> Google.callback(params)
     |> case do
-      {:ok, user_info} ->
-        handle_google_auth(conn, user_info)
+      {:ok, info} ->
+        # Check if user is authenticated to determine behavior
+        if conn.assigns[:current_member] do
+          handle_google_linking(conn, info)
+        else
+          handle_google_login(conn, info)
+        end
 
       {:error, _error} ->
+        # Different error handling based on whether user is authenticated
+        redirect_location =
+          if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
+
+        error_message =
+          if conn.assigns[:current_member],
+            do: "Google authentication failed. Please try again.",
+            else: "Google login failed. Please try again."
+
         conn
-        |> put_flash(:error, "Google authentication failed. Please try again.")
-        |> redirect(to: ~p"/members/settings")
+        |> put_flash(:error, error_message)
+        |> redirect(to: redirect_location)
     end
   end
 
-  defp handle_google_auth(conn, %{user: user_info}) do
+  defp handle_google_linking(conn, %{user: user_info}) do
     # Check if the email ends with @tamu.edu
     email = user_info["email"] || ""
-    
+
     unless String.ends_with?(email, "@tamu.edu") do
       conn
       |> put_flash(:error, "You must use a @tamu.edu Google account to link your account.")
@@ -170,16 +211,114 @@ defmodule IeeeTamuPortalWeb.OAuthController do
   defp handle_discord_login(conn, %{user: user_info}) do
     discord_sub = user_info["sub"]
 
-    case Accounts.get_member_by_discord_sub(discord_sub) do
+    case Accounts.get_member_by_auth_sub(:discord, discord_sub) do
       nil ->
         conn
-        |> put_flash(:error, "No account found linked to this Discord account. Please create an account first and link your Discord account in settings.")
+        |> put_flash(
+          :error,
+          "No account found linked to this Discord account. Please create an account first and link your Discord account in settings."
+        )
         |> redirect(to: ~p"/members/login")
 
       member ->
         conn
         |> put_flash(:info, "Successfully logged in with Discord!")
         |> IeeeTamuPortalWeb.Auth.MemberAuth.log_in_member(member)
+    end
+  end
+
+  defp handle_google_login(conn, %{user: user_info}) do
+    # Check if the email ends with @tamu.edu
+    email = user_info["email"] || ""
+
+    if !String.ends_with?(email, "@tamu.edu") do
+      conn
+      |> put_flash(:error, "You must use a @tamu.edu Google account to log in.")
+      |> redirect(to: ~p"/members/login")
+    else
+      google_sub = user_info["sub"]
+
+      case Accounts.get_member_by_auth_sub(:google, google_sub) do
+        nil ->
+          # No existing member found, create a new one
+          case create_member_from_google(user_info) do
+            {:ok, member} ->
+              conn
+              |> put_flash(
+                :info,
+                "Welcome! Your account has been automatically created and you are now logged in."
+              )
+              |> IeeeTamuPortalWeb.Auth.MemberAuth.log_in_member(member)
+
+            {:error, :already_exists} ->
+              conn
+              |> put_flash(
+                :error,
+                "Failed to create account - an account with that email already exists but is not linked to this google account."
+              )
+              |> redirect(to: ~p"/members/login")
+
+            {:error, _changeset} ->
+              conn
+              |> put_flash(
+                :error,
+                "Failed to create account. Please try again or register manually."
+              )
+              |> redirect(to: ~p"/members/login")
+          end
+
+        member ->
+          conn
+          |> put_flash(:info, "Successfully logged in with Google!")
+          |> IeeeTamuPortalWeb.Auth.MemberAuth.log_in_member(member)
+      end
+    end
+  end
+
+  defp create_member_from_google(user_info) do
+    alias IeeeTamuPortal.Repo
+    alias IeeeTamuPortal.Accounts.Member
+
+    email = user_info["email"]
+    google_sub = user_info["sub"]
+
+    # Generate a secure random password (user won't need it since they'll use Google OAuth)
+    random_password = :crypto.strong_rand_bytes(32) |> Base.encode64()
+
+    Ecto.Multi.new()
+    |> Ecto.Multi.run(:member, fn _repo, _changes ->
+      Accounts.register_member(%{
+        email: email,
+        password: random_password
+      })
+    end)
+    |> Ecto.Multi.run(:confirmed_member, fn _repo, %{member: member} ->
+      confirmed_member =
+        member
+        |> Member.confirm_changeset()
+        |> Repo.update()
+
+      case confirmed_member do
+        {:ok, member} -> {:ok, member}
+        error -> error
+      end
+    end)
+    |> Ecto.Multi.run(:auth_method, fn _repo, %{confirmed_member: member} ->
+      Accounts.link_auth_method(member, %{
+        provider: :google,
+        sub: google_sub,
+        email: email,
+        email_verified: user_info["email_verified"] || true
+      })
+    end)
+    |> Repo.transaction()
+    |> case do
+      # created new member
+      {:ok, %{confirmed_member: member}} -> {:ok, member}
+      # member already exists
+      {:error, :member, _changeset, _changes_so_far} -> {:error, :already_exists}
+      # other error
+      {:error, _failed_operation, changeset, _changes_so_far} -> {:error, changeset}
     end
   end
 

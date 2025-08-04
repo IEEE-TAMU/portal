@@ -533,25 +533,28 @@ defmodule IeeeTamuPortal.Accounts do
   end
 
   @doc """
-  Gets a member by Discord sub (user ID).
+  Gets a member by their OAuth provider sub (subject identifier).
 
   Returns the member if found, nil otherwise.
 
   ## Examples
 
-      iex> get_member_by_discord_sub("123456789")
+      iex> get_member_by_auth_sub(:discord, "123456789")
       %Member{}
 
-      iex> get_member_by_discord_sub("nonexistent")
+      iex> get_member_by_auth_sub(:google, "123456789")
+      %Member{}
+
+      iex> get_member_by_auth_sub(:discord, "nonexistent")
       nil
   """
-  def get_member_by_discord_sub(discord_sub) do
+  def get_member_by_auth_sub(provider, sub) do
     import Ecto.Query
 
     from(m in Member,
       join: auth in AuthMethod,
       on: auth.member_id == m.id,
-      where: auth.provider == :discord and auth.sub == ^discord_sub
+      where: auth.provider == ^provider and auth.sub == ^sub
     )
     |> Repo.one()
   end
