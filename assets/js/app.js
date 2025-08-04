@@ -25,7 +25,7 @@ import topbar from "../vendor/topbar"
 let Hooks = {}
 Hooks.Flash = {
   mounted() {
-    const time = 3000;
+    const time = 5000;
     let hide = () => liveSocket.execJS(this.el, this.el.getAttribute("phx-click"))
     this.timer = setTimeout(() => hide(), time)
     this.el.addEventListener("phx:hide-start", () => clearTimeout(this.timer))
