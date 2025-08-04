@@ -2,6 +2,11 @@ defmodule IeeeTamuPortal.Accounts.Member do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @derive {
+    Flop.Schema,
+    filterable: [:confirmed_at, :email, :inserted_at, :updated_at],
+    sortable: [:id, :email, :confirmed_at, :inserted_at, :updated_at]
+  }
   schema "members" do
     field :email, :string
     field :password, :string, virtual: true, redact: true
@@ -16,6 +21,13 @@ defmodule IeeeTamuPortal.Accounts.Member do
     has_many :registrations, IeeeTamuPortal.Members.Registration
     has_many :api_keys, IeeeTamuPortal.Api.ApiKey
     has_many :secondary_auth_methods, IeeeTamuPortal.Accounts.AuthMethod
+  end
+
+  def list_members(params) do
+    import Ecto.Query
+
+    query = from m in __MODULE__, preload: [registrations: :payment]
+    Flop.validate_and_run!(query, params, for: __MODULE__, replace_invalid_params: true)
   end
 
   @doc """

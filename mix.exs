@@ -65,7 +65,8 @@ defmodule IeeeTamuPortal.MixProject do
       {:deps_nix, "~> 2.0", only: :dev},
       {:req, "~> 0.4"},
       {:assent, "~> 0.3.1"},
-      {:zstream, "~> 0.6.7"}
+      {:zstream, "~> 0.6.7"},
+      {:flop_phoenix, "~> 0.25.3"}
     ]
   end
 
