@@ -191,7 +191,7 @@ defmodule IeeeTamuPortalWeb.Auth.MemberAuth do
         socket
         |> Phoenix.LiveView.put_flash(
           :error,
-          "You must submit your information to access this page."
+          "You must submit your information to access the rest of the site."
         )
         |> Phoenix.LiveView.redirect(to: ~p"/members/info")
 
