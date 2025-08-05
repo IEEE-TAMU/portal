@@ -111,6 +111,34 @@ defmodule IeeeTamuPortal.Accounts do
   end
 
   @doc """
+  Lists members with registrations and payment status for admin views.
+
+  Returns members enhanced with payment status information for easier
+  admin dashboard display.
+
+  ## Parameters
+
+    * `year` - The registration year to check payment status for
+
+  ## Examples
+
+      iex> list_members_for_admin(2024)
+      [%Member{has_paid: true, has_override: false, ...}, ...]
+
+  """
+  def list_members_for_admin(year) do
+    alias IeeeTamuPortal.Members
+
+    list_members_with_registrations(year)
+    |> Enum.map(fn member ->
+      # Add payment status using Members context functions
+      member
+      |> Map.put(:has_paid, Members.has_paid?(member))
+      |> Map.put(:has_override, Members.has_payment_override?(member))
+    end)
+  end
+
+  @doc """
   Gets a member by email.
 
   ## Examples

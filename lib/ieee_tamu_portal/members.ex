@@ -511,4 +511,80 @@ defmodule IeeeTamuPortal.Members do
         end
     end
   end
+
+  ## Payment Status Functions
+
+  @doc """
+  Gets the payment status for a member.
+
+  Returns one of :paid, :override, or :unpaid.
+
+  ## Parameters
+
+    * `member` - The member struct with preloaded registrations
+
+  ## Examples
+
+      iex> get_payment_status(member)
+      :paid
+
+      iex> get_payment_status(member_with_override)
+      :override
+
+      iex> get_payment_status(member_without_payment)
+      :unpaid
+  """
+  def get_payment_status(member) do
+    case member.registrations do
+      [] ->
+        :unpaid
+
+      [registration] ->
+        cond do
+          registration.payment_override -> :override
+          # Check if payment is actually loaded and not nil
+          match?(%Ecto.Association.NotLoaded{}, registration.payment) -> :unpaid
+          registration.payment != nil -> :paid
+          true -> :unpaid
+        end
+    end
+  end
+
+  @doc """
+  Checks if a member has paid for the current year.
+
+  ## Parameters
+
+    * `member` - The member struct with preloaded registrations
+
+  ## Examples
+
+      iex> has_paid?(member)
+      true
+
+      iex> has_paid?(unpaid_member)
+      false
+  """
+  def has_paid?(member) do
+    get_payment_status(member) in [:paid, :override]
+  end
+
+  @doc """
+  Checks if a member has a payment override.
+
+  ## Parameters
+
+    * `member` - The member struct with preloaded registrations
+
+  ## Examples
+
+      iex> has_payment_override?(member)
+      true
+
+      iex> has_payment_override?(regular_member)
+      false
+  """
+  def has_payment_override?(member) do
+    get_payment_status(member) == :override
+  end
 end

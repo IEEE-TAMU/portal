@@ -26,7 +26,7 @@ defmodule IeeeTamuPortal.Accounts.Member do
   def list_members(params) do
     import Ecto.Query
 
-    query = from m in __MODULE__, preload: [registrations: :payment]
+    query = from m in __MODULE__, preload: [:resume, registrations: :payment]
     Flop.validate_and_run!(query, params, for: __MODULE__, replace_invalid_params: true)
   end
 

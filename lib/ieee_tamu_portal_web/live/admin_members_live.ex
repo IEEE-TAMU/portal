@@ -358,9 +358,13 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Registered
                     </th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <th
+                      scope="col"
+                      class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 w-48"
+                    >
                       Payment Status
                     </th>
+
                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Resume
                     </th>
@@ -393,7 +397,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                       <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {Calendar.strftime(member.inserted_at, "%B %d, %Y")}
                       </td>
-                      <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 w-48">
                         <%= if member.has_paid do %>
                           <%= if member.has_override do %>
                             <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 border border-yellow-300">
