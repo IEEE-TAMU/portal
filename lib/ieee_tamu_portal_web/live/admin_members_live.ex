@@ -253,12 +253,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
       
     <!-- Filter Form -->
       <div class="mt-6 bg-white shadow rounded-lg p-4">
-        <.form
-          for={to_form(@meta)}
-          class="space-y-4"
-          phx-change="filter"
-          phx-submit="filter"
-        >
+        <.form for={to_form(@meta)} class="space-y-4" phx-change="filter" phx-submit="filter">
           <div class="flex items-end justify-between gap-3">
             <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
               <Flop.Phoenix.filter_fields
@@ -279,28 +274,15 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                   ]
                 ]}
               >
-                <.input
-                  field={i.field}
-                  label={i.label}
-                  type={i.type}
-                  phx-debounce="500"
-                  {i.rest}
-                />
+                <.input field={i.field} label={i.label} type={i.type} phx-debounce="500" {i.rest} />
               </Flop.Phoenix.filter_fields>
             </div>
 
             <div class="flex space-x-2">
-              <.button
-                type="submit"
-                class="bg-indigo-600 hover:bg-indigo-700"
-              >
+              <.button type="submit" class="bg-indigo-600 hover:bg-indigo-700">
                 Filter
               </.button>
-              <.button
-                type="button"
-                phx-click="clear_filters"
-                class="bg-gray-500 hover:bg-gray-600"
-              >
+              <.button type="button" phx-click="clear_filters" class="bg-gray-500 hover:bg-gray-600">
                 Clear
               </.button>
             </div>

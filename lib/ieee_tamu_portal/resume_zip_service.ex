@@ -3,7 +3,7 @@ defmodule IeeeTamuPortal.ResumeZipService do
   Service for streaming zip files of member resumes directly to the client.
 
   This service uses Zstream to create zip files on-the-fly without storing
-  any temporary files on disk, providing memory-efficient streaming of 
+  any temporary files on disk, providing memory-efficient streaming of
   resume downloads directly from S3 to the client.
   """
 

@@ -411,7 +411,19 @@ IO.puts("\n🚀 Generating 100 random users...")
           # Sometimes add a preferred name (30% chance)
           member_info_attrs =
             if rem(i, 10) < 3 do
-              preferred_names = ["Alex", "Sam", "Jordan", "Casey", "Riley", "Morgan", "Taylor", "Jamie", "Avery", "Quinn"]
+              preferred_names = [
+                "Alex",
+                "Sam",
+                "Jordan",
+                "Casey",
+                "Riley",
+                "Morgan",
+                "Taylor",
+                "Jamie",
+                "Avery",
+                "Quinn"
+              ]
+
               preferred_name = Enum.random(preferred_names)
               Map.put(member_info_attrs, :preferred_name, preferred_name)
             else
