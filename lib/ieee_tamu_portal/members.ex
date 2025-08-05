@@ -102,6 +102,30 @@ defmodule IeeeTamuPortal.Members do
     Repo.get_by(Resume, member_id: member_id)
   end
 
+  @doc """
+  Gets a member with flexible preloading options using a single query.
+
+  ## Parameters
+
+    * `member_id` - The ID of the member to fetch
+    * `preloads` - List of associations to preload (defaults to [:info, :resume])
+
+  ## Examples
+
+      iex> get_member_with_preloads(123)
+      %Member{info: %Info{}, resume: %Resume{}}
+      
+      iex> get_member_with_preloads(123, [:info, :registrations])
+      %Member{info: %Info{}, registrations: [%Registration{}]}
+  """
+  def get_member_with_preloads(member_id, preloads \\ [:info, :resume]) do
+    from(m in IeeeTamuPortal.Accounts.Member,
+      where: m.id == ^member_id,
+      preload: ^preloads
+    )
+    |> Repo.one()
+  end
+
   ## Changesets
 
   @doc """

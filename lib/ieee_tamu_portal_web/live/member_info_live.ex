@@ -2,6 +2,7 @@ defmodule IeeeTamuPortalWeb.MemberInfoLive do
   use IeeeTamuPortalWeb, :live_view
 
   alias IeeeTamuPortal.{Accounts, Members}
+  alias IeeeTamuPortal.Services.MembershipService
 
   @impl true
   def mount(_params, _session, socket) do
@@ -37,12 +38,7 @@ defmodule IeeeTamuPortalWeb.MemberInfoLive do
     %{"info" => info_params} = params
     member = socket.assigns.current_member
 
-    update_or_create_info = fn
-      %Members.Info{} = info -> Members.update_member_info(info, info_params)
-      nil -> Members.create_member_info(member, info_params)
-    end
-
-    case update_or_create_info.(member.info) do
+    case MembershipService.update_or_create_member_info(member, info_params) do
       {:ok, info} ->
         member = %Accounts.Member{member | info: info}
 
