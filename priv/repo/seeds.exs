@@ -361,8 +361,8 @@ end
 # Generate 100 random users
 IO.puts("\n🚀 Generating 100 random users...")
 
-{created_count, failed_count} =
-  Enum.reduce(1..100, {0, 0}, fn i, {created, failed} ->
+{created_count, failed_count, unconfirmed_count, confirmed_no_info_count} =
+  Enum.reduce(1..100, {0, 0, 0, 0}, fn i, {created, failed, unconfirmed, confirmed_no_info} ->
     first_name = SeedHelpers.random_first_name()
     last_name = SeedHelpers.random_last_name()
     email = SeedHelpers.generate_email(first_name, last_name)
@@ -372,59 +372,87 @@ IO.puts("\n🚀 Generating 100 random users...")
            password: "password123"
          }) do
       {:ok, member} ->
-        # Confirm the member account
-        confirmed_member =
-          IeeeTamuPortal.Repo.update!(IeeeTamuPortal.Accounts.Member.confirm_changeset(member))
+        # Randomly decide whether to confirm this member (50% chance)
+        should_confirm = rem(i, 2) == 0
 
-        # Create member info with random data
-        is_international = SeedHelpers.random_international_student()
-        selected_major = SeedHelpers.random_major()
+        {final_member, status} =
+          if should_confirm do
+            # Confirm the member account
+            confirmed_member =
+              IeeeTamuPortal.Repo.update!(
+                IeeeTamuPortal.Accounts.Member.confirm_changeset(member)
+              )
 
-        member_info_attrs = %{
-          first_name: first_name,
-          last_name: last_name,
-          tshirt_size: SeedHelpers.random_tshirt_size(),
-          gender: SeedHelpers.random_gender(),
-          uin: SeedHelpers.random_uin(),
-          major: selected_major,
-          graduation_year: SeedHelpers.random_graduation_year(),
-          international_student: is_international
-        }
-
-        # Add international_country if student is international
-        member_info_attrs =
-          if is_international do
-            Map.put(member_info_attrs, :international_country, SeedHelpers.random_country())
+            {confirmed_member, :confirmed}
           else
-            member_info_attrs
+            # Leave unconfirmed
+            {member, :unconfirmed}
           end
 
-        # Add major_other if major is :Other
-        member_info_attrs =
-          if selected_major == :Other do
-            Map.put(member_info_attrs, :major_other, SeedHelpers.random_major_other())
-          else
-            member_info_attrs
-          end
+        # If confirmed, randomly decide whether to add member info (50% chance)
+        should_add_info = should_confirm && rem(i, 4) < 2
 
-        case Members.create_member_info(confirmed_member, member_info_attrs) do
-          {:ok, _info} ->
-            if rem(i, 10) == 0 do
-              IO.puts("  ✓ Created #{i}/100 users...")
+        if should_add_info do
+          # Create member info with random data
+          is_international = SeedHelpers.random_international_student()
+          selected_major = SeedHelpers.random_major()
+
+          member_info_attrs = %{
+            first_name: first_name,
+            last_name: last_name,
+            tshirt_size: SeedHelpers.random_tshirt_size(),
+            gender: SeedHelpers.random_gender(),
+            uin: SeedHelpers.random_uin(),
+            major: selected_major,
+            graduation_year: SeedHelpers.random_graduation_year(),
+            international_student: is_international
+          }
+
+          # Add international_country if student is international
+          member_info_attrs =
+            if is_international do
+              Map.put(member_info_attrs, :international_country, SeedHelpers.random_country())
+            else
+              member_info_attrs
             end
 
-            {created + 1, failed}
+          # Add major_other if major is :Other
+          member_info_attrs =
+            if selected_major == :Other do
+              Map.put(member_info_attrs, :major_other, SeedHelpers.random_major_other())
+            else
+              member_info_attrs
+            end
 
-          {:error, changeset} ->
-            IO.puts("  ✗ Failed to create member info for #{first_name} #{last_name}")
-            IO.puts("    Email: #{email}")
-            IO.puts("    Errors:")
+          case Members.create_member_info(final_member, member_info_attrs) do
+            {:ok, _info} ->
+              if rem(i, 10) == 0 do
+                IO.puts("  ✓ Created #{i}/100 users...")
+              end
 
-            Enum.each(changeset.errors, fn {field, {message, _}} ->
-              IO.puts("      #{field}: #{message}")
-            end)
+              {created + 1, failed, unconfirmed, confirmed_no_info}
 
-            {created, failed + 1}
+            {:error, changeset} ->
+              IO.puts("  ✗ Failed to create member info for #{first_name} #{last_name}")
+              IO.puts("    Email: #{email}")
+              IO.puts("    Errors:")
+
+              Enum.each(changeset.errors, fn {field, {message, _}} ->
+                IO.puts("      #{field}: #{message}")
+              end)
+
+              {created, failed + 1, unconfirmed, confirmed_no_info}
+          end
+        else
+          # User created but either unconfirmed or confirmed without info
+          if rem(i, 10) == 0 do
+            IO.puts("  ✓ Created #{i}/100 users...")
+          end
+
+          case status do
+            :unconfirmed -> {created, failed, unconfirmed + 1, confirmed_no_info}
+            :confirmed -> {created, failed, unconfirmed, confirmed_no_info + 1}
+          end
         end
 
       {:error, changeset} ->
@@ -435,11 +463,13 @@ IO.puts("\n🚀 Generating 100 random users...")
           IO.puts("      #{field}: #{message}")
         end)
 
-        {created, failed + 1}
+        {created, failed + 1, unconfirmed, confirmed_no_info}
     end
   end)
 
 IO.puts("\n📊 Summary:")
-IO.puts("  ✓ Successfully created: #{created_count} users")
+IO.puts("  ✓ Successfully created with full info: #{created_count} users")
+IO.puts("  📝 Confirmed but no member info: #{confirmed_no_info_count} users")
+IO.puts("  ⏳ Unconfirmed accounts: #{unconfirmed_count} users")
 IO.puts("  ✗ Failed to create: #{failed_count} users")
 IO.puts("  📧 All users have password: 'password123'")
