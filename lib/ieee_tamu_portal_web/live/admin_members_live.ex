@@ -5,27 +5,8 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    # Get current registration year
-    current_year = Settings.get_registration_year!()
-
-    # Fetch all members with their registrations in a single query to avoid N+1
-    members = Accounts.list_members_with_registrations(current_year)
-
-    # Add payment status using preloaded data
-    members_with_payment_status =
-      Enum.map(members, fn member ->
-        # Check payment status using preloaded registrations
-        has_paid = has_paid_for_year?(member, current_year)
-        has_override = has_payment_override_for_year?(member, current_year)
-
-        member
-        |> Map.put(:has_paid, has_paid)
-        |> Map.put(:has_override, has_override)
-      end)
-
     socket =
       socket
-      |> assign(:members, members_with_payment_status)
       |> assign(:page_title, "Members - Admin")
       |> assign(:show_resume_modal, false)
       |> assign(:current_resume_url, nil)
@@ -39,79 +20,237 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
     {:ok, socket}
   end
 
-  # Helper functions to determine payment status from preloaded registrations
-  defp has_paid_for_year?(member, _year) do
-    case member.registrations do
-      [] -> false
-      [registration] -> registration.payment_override || registration.payment != nil
-      _ -> false
-    end
+  @impl Phoenix.LiveView
+  def handle_params(params, _, socket) do
+    {members, meta} = IeeeTamuPortal.Accounts.Member.list_members(params)
+    dbg(filter_params: params)
+    {:noreply, assign(socket, members: members, meta: meta, filter_params: params)}
   end
 
-  defp has_payment_override_for_year?(member, _year) do
-    case member.registrations do
-      [] -> false
-      [registration] -> registration.payment_override
-      _ -> false
+  @impl true
+  def handle_event("filter", %{"filters" => filter_params} = params, socket) do
+    # The params now contain the full form data including filters
+    {:noreply, push_patch(socket, to: ~p"/admin/members?#{%{"filters" => filter_params}}")}
+  end
+
+  @impl true
+  def handle_event("clear_filters", _params, socket) do
+    {:noreply, push_patch(socket, to: ~p"/admin/members")}
+  end
+
+  @impl true
+  def handle_event("toggle_payment_override", %{"member-id" => member_id}, socket) do
+    member_id = String.to_integer(member_id)
+    member = Enum.find(socket.assigns.members, &(&1.id == member_id))
+    current_year = Settings.get_registration_year!()
+
+    case Members.toggle_payment_override(member, current_year) do
+      {:ok, updated_registration} ->
+        # Get current params from the URL to maintain filters
+        params = Map.get(socket.assigns, :filter_params, %{})
+        dbg(params)
+        # Refresh the members list to get updated data
+        {members, meta} = IeeeTamuPortal.Accounts.Member.list_members(params)
+
+        action = if updated_registration.payment_override, do: "enabled", else: "disabled"
+
+        {:noreply,
+         socket
+         |> Phoenix.LiveView.put_flash(:info, "Payment override #{action} for #{member.email}")
+         |> assign(:members, members)
+         |> assign(:meta, meta)
+        }
+
+      {:error, _changeset} ->
+        {:noreply,
+         socket
+         |> Phoenix.LiveView.put_flash(
+           :error,
+           "Failed to toggle payment override for #{member.email}"
+         )}
     end
   end
 
   @impl true
-  def handle_event(
-        "show_resume",
-        %{"email" => email, "member_id" => member_id},
-        socket
-      ) do
+  def handle_event("mark_as_paid", %{"member-id" => member_id}, socket) do
     member_id = String.to_integer(member_id)
     member = Enum.find(socket.assigns.members, &(&1.id == member_id))
 
-    # Generate signed URL for the resume
-    {:ok, signed_url} =
-      Members.Resume.signed_url(member.resume,
-        method: "GET",
-        response_content_type: "application/pdf"
-      )
+    case mark_member_as_paid(member) do
+      {:ok, updated_member} ->
+        # Update the member in the members list
+        updated_members =
+          Enum.map(socket.assigns.members, fn m ->
+            if m.id == member_id do
+              updated_member
+            else
+              m
+            end
+          end)
 
-    {:noreply,
-     socket
-     |> assign(:show_resume_modal, true)
-     |> assign(:current_resume_url, signed_url)
-     |> assign(:current_member_email, email)
-     |> assign(:current_resume_member_id, member_id)}
+        socket =
+          socket
+          |> Phoenix.LiveView.put_flash(:info, "Payment marked as paid for #{member.email}")
+          |> assign(:members, updated_members)
+
+        {:noreply, socket}
+
+      {:error, _changeset} ->
+        socket =
+          socket
+          |> Phoenix.LiveView.put_flash(
+            :error,
+            "Failed to update payment status for #{member.email}"
+          )
+
+        {:noreply, socket}
+    end
   end
 
   @impl true
-  def handle_event("close_resume_modal", _params, socket) do
-    {:noreply,
-     socket
-     |> assign(:show_resume_modal, false)
-     |> assign(:current_resume_url, nil)
-     |> assign(:current_member_email, nil)
-     |> assign(:current_resume_member_id, nil)}
-  end
+  def handle_event("toggle_payment_override", %{"member-id" => member_id}, socket) do
+    member_id = String.to_integer(member_id)
+    member = Enum.find(socket.assigns.members, &(&1.id == member_id))
 
-  @impl true
-  def handle_event("prevent_close", _params, socket) do
-    {:noreply, socket}
+    case mark_member_as_paid(member) do
+      {:ok, updated_member} ->
+        # Update the member in the members list
+        updated_members =
+          Enum.map(socket.assigns.members, fn m ->
+            if m.id == member_id do
+              updated_member
+            else
+              m
+            end
+          end)
+
+        # Determine the action for the flash message
+        action =
+          case get_payment_status(updated_member) do
+            :override -> "enabled"
+            :unpaid -> "disabled"
+            :paid -> "disabled"
+          end
+
+        socket =
+          socket
+          |> Phoenix.LiveView.put_flash(:info, "Payment override #{action} for #{member.email}")
+          |> assign(:members, updated_members)
+
+        {:noreply, socket}
+
+      {:error, _changeset} ->
+        socket =
+          socket
+          |> Phoenix.LiveView.put_flash(
+            :error,
+            "Failed to toggle payment override for #{member.email}"
+          )
+
+        {:noreply, socket}
+    end
   end
 
   @impl true
   def handle_event("show_member", %{"member_id" => member_id}, socket) do
     member_id = String.to_integer(member_id)
-    member = Enum.find(socket.assigns.members, &(&1.id == member_id))
 
-    # Preload member info
-    member = Accounts.preload_member_info(member)
+    # Use Members context to load member with info
+    case Members.get_member_with_preloads(member_id, [:info]) do
+      nil ->
+        {:noreply, put_flash(socket, :error, "Member not found")}
 
-    # Create info form
-    info_form = Members.change_member_info(member.info) |> to_form()
+      member ->
+        # Create info form
+        info_form = Members.change_member_info(member.info) |> to_form()
 
+        {:noreply,
+         socket
+         |> assign(:show_member_modal, true)
+         |> assign(:current_member, member)
+         |> assign(:member_info_form, info_form)
+         |> assign(:view_only_mode, false)}
+    end
+  end
+
+  @impl true
+  def handle_event("view_member", %{"member_id" => member_id}, socket) do
+    member_id = String.to_integer(member_id)
+
+    # Use Members context to load member with info
+    case Members.get_member_with_preloads(member_id, [:info]) do
+      nil ->
+        {:noreply, put_flash(socket, :error, "Member not found")}
+
+      member ->
+        # Create info form
+        info_form = Members.change_member_info(member.info) |> to_form()
+
+        {:noreply,
+         socket
+         |> assign(:show_member_modal, true)
+         |> assign(:current_member, member)
+         |> assign(:member_info_form, info_form)
+         |> assign(:view_only_mode, true)}
+    end
+  end
+
+  @impl true
+  def handle_event("close_member_modal", _params, socket) do
     {:noreply,
      socket
-     |> assign(:show_member_modal, true)
-     |> assign(:current_member, member)
-     |> assign(:member_info_form, info_form)
+     |> assign(:show_member_modal, false)
+     |> assign(:current_member, nil)
+     |> assign(:member_info_form, nil)
      |> assign(:view_only_mode, false)}
+  end
+
+  @impl true
+  def handle_event("validate_member_info", params, socket) do
+    %{"info" => info_params} = params
+    member = socket.assigns.current_member
+
+    info_form =
+      member.info
+      |> Members.change_member_info(info_params)
+      |> Map.put(:action, :validate)
+      |> to_form()
+
+    {:noreply, assign(socket, member_info_form: info_form)}
+  end
+
+  @impl true
+  def handle_event("update_member_info", params, socket) do
+    %{"info" => info_params} = params
+    member = socket.assigns.current_member
+
+    update_or_create_info = fn
+      %Members.Info{} = info -> Members.update_member_info(info, info_params)
+      nil -> Members.create_member_info(member, info_params)
+    end
+
+    case update_or_create_info.(member.info) do
+      {:ok, info} ->
+        updated_member = %Accounts.Member{member | info: info}
+
+        # Get current params from the URL to maintain filters
+        params = Map.get(socket.assigns.meta, :params, %{})
+        # Refresh the members list to keep Flop pagination intact
+        {members, meta} = IeeeTamuPortal.Accounts.Member.list_members(params)
+
+        info_form = Members.change_member_info(info) |> to_form()
+
+        {:noreply,
+         socket
+         |> Phoenix.LiveView.put_flash(:info, "Member information updated successfully.")
+         |> assign(:current_member, updated_member)
+         |> assign(:member_info_form, info_form)
+         |> assign(:members, members)
+         |> assign(:meta, meta)}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, member_info_form: to_form(changeset))}
+    end
   end
 
   @impl true
@@ -171,18 +310,10 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
       {:ok, info} ->
         updated_member = %Accounts.Member{member | info: info}
 
-        # Update the member in the members list
-        updated_members =
-          Enum.map(socket.assigns.members, fn m ->
-            if m.id == member.id do
-              # Copy over the payment status fields that we track
-              updated_member
-              |> Map.put(:has_paid, m.has_paid)
-              |> Map.put(:has_override, m.has_override)
-            else
-              m
-            end
-          end)
+        # Get current params from the URL to maintain filters
+        params = Map.get(socket.assigns.meta, :params, %{})
+        # Update the member in the members list - refresh the list to keep Flop pagination intact
+        {members, meta} = IeeeTamuPortal.Accounts.Member.list_members(params)
 
         info_form = Members.change_member_info(info) |> to_form()
 
@@ -191,7 +322,8 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
           |> Phoenix.LiveView.put_flash(:info, "Member information updated successfully.")
           |> assign(:current_member, updated_member)
           |> assign(:member_info_form, info_form)
-          |> assign(:members, updated_members)
+          |> assign(:members, members)
+          |> assign(:meta, meta)
 
         {:noreply, socket}
 
@@ -201,47 +333,97 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   end
 
   @impl true
+  def handle_event(
+        "show_resume",
+        %{"email" => email, "member_id" => member_id},
+        socket
+      ) do
+    member_id = String.to_integer(member_id)
+    member = Enum.find(socket.assigns.members, &(&1.id == member_id))
+
+    case member.resume do
+      nil ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "No resume found for #{email}")}
+
+      resume ->
+        # Generate signed URL for the resume
+        {:ok, signed_url} =
+          Members.Resume.signed_url(resume,
+            method: "GET",
+            response_content_type: "application/pdf"
+          )
+
+        {:noreply,
+         socket
+         |> assign(:show_resume_modal, true)
+         |> assign(:current_resume_url, signed_url)
+         |> assign(:current_member_email, email)
+         |> assign(:current_resume_member_id, member_id)}
+    end
+  end
+
+  @impl true
+  def handle_event("close_resume_modal", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_resume_modal, false)
+     |> assign(:current_resume_url, nil)
+     |> assign(:current_member_email, nil)
+     |> assign(:current_resume_member_id, nil)}
+  end
+
+  @impl true
+  def handle_event("prevent_close", _params, socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event("delete_member_resume", _params, socket) do
     # Check if we're in resume modal or member modal context
     member_id =
       socket.assigns[:current_resume_member_id] ||
         (socket.assigns[:current_member] && socket.assigns[:current_member].id)
 
-    member = Enum.find(socket.assigns.members, &(&1.id == member_id))
+    # Use Members context to get member with resume and delete it
+    case Members.get_member_with_preloads(member_id, [:resume]) do
+      nil ->
+        {:noreply, put_flash(socket, :error, "Member not found")}
 
-    {:ok, updated_member} = Members.delete_member_resume(member)
+      member ->
+        case Members.delete_member_resume(member) do
+          {:ok, _updated_member} ->
+            # Get current params from the URL to maintain filters
+            params = Map.get(socket.assigns.meta, :params, %{})
+            # Refresh the members list
+            {members, meta} = IeeeTamuPortal.Accounts.Member.list_members(params)
 
-    # Update members list
-    updated_members =
-      Enum.map(socket.assigns.members, fn m ->
-        if m.id == member_id do
-          # Update the member with no resume and preserve payment status
-          updated_member
-          |> Map.put(:has_paid, m.has_paid)
-          |> Map.put(:has_override, m.has_override)
-        else
-          m
+            socket =
+              socket
+              |> Phoenix.LiveView.put_flash(:info, "Resume deleted successfully.")
+              |> assign(:members, members)
+              |> assign(:meta, meta)
+              |> assign(:show_resume_modal, false)
+              |> assign(:current_resume_url, nil)
+              |> assign(:current_member_email, nil)
+              |> assign(:current_resume_member_id, nil)
+
+            # If we're also in member modal, update current_member
+            socket =
+              if socket.assigns[:current_member] && socket.assigns.current_member.id == member_id do
+                updated_member = Members.get_member_with_preloads(member_id, [:info])
+                assign(socket, :current_member, updated_member)
+              else
+                socket
+              end
+
+            {:noreply, socket}
+
+          {:error, _reason} ->
+            {:noreply, put_flash(socket, :error, "Failed to delete resume")}
         end
-      end)
-
-    socket =
-      socket
-      |> Phoenix.LiveView.put_flash(:info, "Resume deleted successfully.")
-      |> assign(:members, updated_members)
-      |> assign(:show_resume_modal, false)
-      |> assign(:current_resume_url, nil)
-      |> assign(:current_member_email, nil)
-      |> assign(:current_resume_member_id, nil)
-
-    # If we're also in member modal, update current_member
-    socket =
-      if socket.assigns[:current_member] && socket.assigns.current_member.id == member_id do
-        assign(socket, :current_member, updated_member)
-      else
-        socket
-      end
-
-    {:noreply, socket}
+    end
   end
 
   @impl true
@@ -266,62 +448,65 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   end
 
   @impl true
-  def handle_event("toggle_payment_override", %{"member_id" => member_id}, socket) do
+  def handle_event("resend_confirmation", %{"member_id" => member_id}, socket) do
     member_id = String.to_integer(member_id)
     member = Enum.find(socket.assigns.members, &(&1.id == member_id))
+
+    case Accounts.deliver_member_confirmation_instructions(
+           member,
+           &url(~p"/members/confirm/#{&1}")
+         ) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Confirmation email sent successfully to #{member.email}")}
+
+      {:error, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to send confirmation email to #{member.email}")}
+    end
+  end
+
+  # Helper function to mark member as paid
+  defp mark_member_as_paid(member) do
+    alias IeeeTamuPortal.{Members, Settings}
+
     current_year = Settings.get_registration_year!()
 
     case Members.toggle_payment_override(member, current_year) do
       {:ok, updated_registration} ->
-        # Update the member's payment status and override status in the socket
-        updated_members =
-          Enum.map(socket.assigns.members, fn m ->
-            if m.id == member_id do
-              # Update the preloaded registration data, preserving the payment association
-              updated_registrations =
-                case m.registrations do
-                  [] ->
-                    [updated_registration]
+        # Update the member with the new registration data
+        updated_registrations =
+          case member.registrations do
+            [] -> [updated_registration]
+            [_old_reg] -> [updated_registration]
+            # shouldn't happen with our query
+            multiple -> multiple
+          end
 
-                  [old_reg] ->
-                    # Preserve the payment association from the original registration
-                    updated_reg_with_payment = %{
-                      updated_registration
-                      | payment: old_reg.payment
-                    }
+        updated_member = %{member | registrations: updated_registrations}
+        {:ok, updated_member}
 
-                    [updated_reg_with_payment]
+      error ->
+        error
+    end
+  end
 
-                  # This shouldn't happen with our query
-                  multiple ->
-                    multiple
-                end
+  # Helper function to get payment status from registrations
+  defp get_payment_status(member) do
+    case member.registrations do
+      [] ->
+        :unpaid
 
-              updated_member = %{m | registrations: updated_registrations}
-
-              # Calculate payment status from updated data
-              has_paid = has_paid_for_year?(updated_member, current_year)
-              has_override = has_payment_override_for_year?(updated_member, current_year)
-
-              updated_member
-              |> Map.put(:has_paid, has_paid)
-              |> Map.put(:has_override, has_override)
-            else
-              m
-            end
-          end)
-
-        action = if updated_registration.payment_override, do: "enabled", else: "disabled"
-
-        {:noreply,
-         socket
-         |> assign(:members, updated_members)
-         |> put_flash(:info, "Payment override #{action} for #{member.email}")}
-
-      {:error, _changeset} ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Failed to update payment override for #{member.email}")}
+      [registration] ->
+        cond do
+          registration.payment_override -> :override
+          # Check if payment is actually loaded and not nil
+          match?(%Ecto.Association.NotLoaded{}, registration.payment) -> :unpaid
+          registration.payment != nil -> :paid
+          true -> :unpaid
+        end
     end
   end
 
@@ -338,145 +523,307 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
         </div>
       </div>
 
+    <!-- Filter Form -->
+      <div class="mt-6 bg-white shadow rounded-lg p-4">
+        <.form
+          for={to_form(@meta)}
+          class="space-y-4"
+          phx-change="filter"
+          phx-submit="filter"
+        >
+          <div class="flex items-end justify-between gap-3">
+            <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Flop.Phoenix.filter_fields
+                :let={i}
+                form={to_form(@meta)}
+                fields={[
+                  email: [
+                    label: "Filter by Email",
+                    type: "text",
+                    placeholder: "Enter email to search...",
+                    op: :like
+                  ],
+                  full_name: [
+                    label: "Filter by Name",
+                    type: "text",
+                    placeholder: "Enter first or last name to search...",
+                    op: :like
+                  ]
+                ]}
+              >
+                <.input
+                  field={i.field}
+                  label={i.label}
+                  type={i.type}
+                  phx-debounce="500"
+                  {i.rest}
+                />
+              </Flop.Phoenix.filter_fields>
+            </div>
+
+            <div class="flex space-x-2">
+              <.button
+                type="submit"
+                class="bg-indigo-600 hover:bg-indigo-700"
+              >
+                Filter
+              </.button>
+              <.button
+                type="button"
+                phx-click="clear_filters"
+                class="bg-gray-500 hover:bg-gray-600"
+              >
+                Clear
+              </.button>
+            </div>
+          </div>
+        </.form>
+      </div>
+
+      <div class="mt-6">
+        <div class="flex items-center justify-center">
+          <Flop.Phoenix.pagination
+            meta={@meta}
+            path={~p"/admin/members"}
+            page_link_attrs={[
+              class:
+                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            ]}
+            current_page_link_attrs={[
+              class:
+                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-indigo-600 rounded-md"
+            ]}
+            page_list_attrs={[class: "flex space-x-1"]}
+            disabled_link_attrs={[
+              class:
+                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 bg-white border border-gray-300 cursor-default rounded-md"
+            ]}
+            class="flex items-center space-x-2"
+          >
+            <:previous attrs={[
+              class:
+                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            ]}>
+              Previous
+            </:previous>
+            <:next attrs={[
+              class:
+                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            ]}>
+              Next
+            </:next>
+          </Flop.Phoenix.pagination>
+        </div>
+      </div>
+
       <div class="mt-8 flow-root">
         <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
             <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-              <table class="min-w-full divide-y divide-gray-300">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th
-                      scope="col"
-                      class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
-                    >
-                      Email
-                    </th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Confirmed
-                    </th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Registered
-                    </th>
-                    <th
-                      scope="col"
-                      class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 w-48"
-                    >
-                      Payment Status
-                    </th>
+              <Flop.Phoenix.table
+                items={@members}
+                meta={@meta}
+                path={~p"/admin/members"}
+                id="members-table"
+                opts={[
+                  table_attrs: [class: "min-w-full divide-y divide-gray-300"],
+                  thead_attrs: [class: "bg-gray-50"],
+                  tbody_attrs: [class: "divide-y divide-gray-200 bg-white"],
+                  thead_th_attrs: [
+                    class: "px-3 py-3.5 text-left text-sm font-semibold text-gray-900",
+                    scope: "col"
+                  ],
+                  tbody_td_attrs: [class: "whitespace-nowrap px-3 py-4 text-sm text-gray-500"],
+                  tbody_tr_attrs: [class: "hover:bg-gray-50"],
+                  no_results_content: nil,
+                  symbol_asc: "↑",
+                  symbol_desc: "↓",
+                  symbol_unsorted: "↕",
+                  symbol_attrs: [class: "ml-1 text-gray-400"]
+                ]}
+              >
+                <:col
+                  :let={member}
+                  label="Name/Email"
+                  field={:email}
+                  thead_th_attrs={[
+                    class: "py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6",
+                    scope: "col"
+                  ]}
+                  tbody_td_attrs={[
+                    class:
+                      "whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6"
+                  ]}
+                >
+                  <%= if member.info && member.info.first_name && member.info.last_name do %>
+                    {member.info.first_name} {member.info.last_name}
+                    <div class="text-xs text-gray-500">{member.email}</div>
+                  <% else %>
+                    {member.email}
+                  <% end %>
+                </:col>
 
-                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Resume
-                    </th>
-                    <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                      <span class="sr-only">Actions</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 bg-white">
-                  <%= for member <- @members do %>
-                    <tr
+                <:col
+                  :let={member}
+                  label="Status"
+                  field={:confirmed_at}
+                  tbody_td_attrs={[class: "whitespace-nowrap px-3 py-4 text-sm text-gray-500"]}
+                >
+                  <%= if member.confirmed_at do %>
+                    <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                      Confirmed
+                    </span>
+                  <% else %>
+                    <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                      Unconfirmed
+                    </span>
+                  <% end %>
+                </:col>
+
+                <:col
+                  :let={member}
+                  label="Payment"
+                  tbody_td_attrs={[class: "whitespace-nowrap px-3 py-4 text-sm text-gray-500 w-32"]}
+                >
+                  <%= case Members.get_payment_status(member) do %>
+                    <% :paid -> %>
+                      <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                        Paid
+                      </span>
+                    <% :override -> %>
+                      <button
+                        phx-click="toggle_payment_override"
+                        phx-value-member-id={member.id}
+                        class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 hover:bg-blue-200 cursor-pointer transition-colors"
+                        title="Click to remove override"
+                      >
+                        Override
+                      </button>
+                    <% :unpaid -> %>
+                      <button
+                        phx-click="toggle_payment_override"
+                        phx-value-member-id={member.id}
+                        class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 hover:bg-red-200 cursor-pointer transition-colors"
+                        title="Click to mark as paid"
+                      >
+                        Unpaid
+                      </button>
+                  <% end %>
+                </:col>
+
+                <:col
+                  :let={member}
+                  label="Joined"
+                  field={:inserted_at}
+                  tbody_td_attrs={[class: "whitespace-nowrap px-3 py-4 text-sm text-gray-500"]}
+                >
+                  {Calendar.strftime(member.inserted_at, "%b %d, %Y")}
+                </:col>
+
+                <:col
+                  :let={member}
+                  label="Resume"
+                  tbody_td_attrs={[class: "whitespace-nowrap px-3 py-4 text-sm text-gray-500"]}
+                >
+                  <%= if member.resume do %>
+                    <button
+                      phx-click="show_resume"
+                      phx-value-email={member.email}
+                      phx-value-member_id={member.id}
+                      class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 hover:bg-blue-200 cursor-pointer transition-colors"
+                    >
+                      View Resume
+                    </button>
+                  <% else %>
+                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                      Not Uploaded
+                    </span>
+                  <% end %>
+                </:col>
+
+                <:col
+                  :let={member}
+                  label="Actions"
+                  tbody_td_attrs={[
+                    class:
+                      "relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6"
+                  ]}
+                >
+                  <div class="flex justify-end space-x-2">
+                    <button
                       phx-click="view_member"
                       phx-value-member_id={member.id}
-                      class="hover:bg-gray-50 cursor-pointer"
+                      class="text-indigo-600 hover:text-indigo-900 text-xs"
                     >
-                      <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                        {member.email}
-                      </td>
-                      <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        <%= if member.confirmed_at do %>
-                          <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                            Confirmed
-                          </span>
-                        <% else %>
-                          <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
-                            Unconfirmed
-                          </span>
-                        <% end %>
-                      </td>
-                      <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {Calendar.strftime(member.inserted_at, "%B %d, %Y")}
-                      </td>
-                      <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 w-48">
-                        <%= if member.has_paid do %>
-                          <%= if member.has_override do %>
-                            <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 border border-yellow-300">
-                              Paid (Override)
-                            </span>
-                          <% else %>
-                            <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                              Paid
-                            </span>
-                          <% end %>
-                        <% else %>
-                          <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
-                            Not Paid
-                          </span>
-                        <% end %>
-                        <%= if member.has_override or not member.has_paid do %>
-                          <div class="mt-1">
-                            <%= if member.has_override do %>
-                              <button
-                                phx-click="toggle_payment_override"
-                                phx-value-member_id={member.id}
-                                class="text-xs text-blue-600 hover:text-blue-800 underline"
-                              >
-                                Remove Override
-                              </button>
-                            <% else %>
-                              <button
-                                phx-click="toggle_payment_override"
-                                phx-value-member_id={member.id}
-                                class="text-xs text-blue-600 hover:text-blue-800 underline"
-                              >
-                                Override Payment
-                              </button>
-                            <% end %>
-                          </div>
-                        <% end %>
-                      </td>
-                      <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        <%= if member.resume do %>
-                          <button
-                            phx-click="show_resume"
-                            phx-value-email={member.email}
-                            phx-value-member_id={member.id}
-                            class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 hover:bg-blue-200 cursor-pointer"
-                          >
-                            View Resume
-                          </button>
-                        <% else %>
-                          <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
-                            Not Uploaded
-                          </span>
-                        <% end %>
-                      </td>
-                      <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <%= if !member.confirmed_at do %>
-                          <button
-                            phx-click="resend_confirmation"
-                            phx-value-member_id={member.id}
-                            class="text-orange-600 hover:text-orange-900"
-                          >
-                            Resend Confirmation
-                          </button>
-                        <% end %>
-                      </td>
-                    </tr>
-                  <% end %>
-                </tbody>
-              </table>
+                      View
+                    </button>
+                    <button
+                      phx-click="show_member"
+                      phx-value-member_id={member.id}
+                      class="text-indigo-600 hover:text-indigo-900 text-xs"
+                    >
+                      Edit
+                    </button>
+                    <%= if !member.confirmed_at do %>
+                      <button
+                        phx-click="resend_confirmation"
+                        phx-value-member_id={member.id}
+                        class="text-orange-600 hover:text-orange-900 text-xs"
+                      >
+                        Resend
+                      </button>
+                    <% end %>
+                  </div>
+                </:col>
+              </Flop.Phoenix.table>
 
               <%= if Enum.empty?(@members) do %>
                 <div class="text-center py-12 bg-white">
                   <.icon name="hero-users" class="mx-auto h-12 w-12 text-gray-400" />
                   <h3 class="mt-2 text-sm font-semibold text-gray-900">No members</h3>
                   <p class="mt-1 text-sm text-gray-500">
-                    No members have registered yet.
+                    No members match your search criteria.`
                   </p>
                 </div>
               <% end %>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <div class="flex items-center justify-center">
+          <Flop.Phoenix.pagination
+            meta={@meta}
+            path={~p"/admin/members"}
+            page_link_attrs={[
+              class:
+                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            ]}
+            current_page_link_attrs={[
+              class:
+                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-indigo-600 rounded-md"
+            ]}
+            page_list_attrs={[class: "flex space-x-1"]}
+            disabled_link_attrs={[
+              class:
+                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 bg-white border border-gray-300 cursor-default rounded-md"
+            ]}
+            class="flex items-center space-x-2"
+          >
+            <:previous attrs={[
+              class:
+                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            ]}>
+              Previous
+            </:previous>
+            <:next attrs={[
+              class:
+                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            ]}>
+              Next
+            </:next>
+          </Flop.Phoenix.pagination>
         </div>
       </div>
 
