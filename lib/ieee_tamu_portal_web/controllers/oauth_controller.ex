@@ -21,7 +21,8 @@ defmodule IeeeTamuPortalWeb.OAuthController do
         # Different error handling based on whether user is authenticated
         {redirect_location, error_message} =
           if conn.assigns[:current_member] do
-            {~p"/members/settings", "Failed to initiate Discord authentication. Please try again."}
+            {~p"/members/settings",
+             "Failed to initiate Discord authentication. Please try again."}
           else
             {~p"/members/login", "Failed to initiate Discord login. Please try again."}
           end

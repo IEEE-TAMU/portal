@@ -1,224 +1,126 @@
 defmodule IeeeTamuPortal.ResumeZipService do
   @moduledoc """
-  GenServer for creating zip files of member resumes in a resource-efficient way.
+  Service for streaming zip files of member resumes directly to the client.
 
-  This service handles:
-  - Fetching all members with resumes
-  - Signing S3 URLs for each resume
-  - Streaming resume files from S3
-  - Creating a zip file without loading everything into memory
-  - Cleanup of temporary files
+  This service uses Zstream to create zip files on-the-fly without storing
+  any temporary files on disk, providing memory-efficient streaming of 
+  resume downloads directly from S3 to the client.
   """
-  use GenServer
 
   alias IeeeTamuPortal.Accounts
   alias IeeeTamuPortal.Members.Resume
 
-  @temp_dir "/tmp/resume_zips"
-
-  defstruct [:zip_path, :members_with_resumes, :status, :requester_pid, :created_at]
-
-  # Client API
-
-  def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
-  end
-
   @doc """
-  Creates a zip file containing all member resumes.
-  Returns {:ok, zip_path} or {:error, reason}
+  Creates a streaming zip response containing all member resumes.
+  Returns a Stream that can be used directly in Phoenix responses.
   """
-  def create_zip(requester_pid \\ self()) do
-    GenServer.call(__MODULE__, {:create_zip, requester_pid}, :timer.minutes(5))
-  end
+  def stream_zip() do
+    case get_members_with_resumes() do
+      [] ->
+        {:error, :no_resumes_found}
 
-  @doc """
-  Gets the status of the current zip operation
-  """
-  def get_status do
-    GenServer.call(__MODULE__, :get_status)
-  end
+      members ->
+        zip_stream =
+          members
+          |> Stream.map(&create_zip_entry/1)
+          |> Stream.filter(&(&1 != nil))
+          |> Zstream.zip()
 
-  @doc """
-  Cleans up a zip file after download
-  """
-  def cleanup_zip(zip_path) do
-    GenServer.cast(__MODULE__, {:cleanup_zip, zip_path})
-  end
-
-  # Server callbacks
-
-  def init(_opts) do
-    # Ensure temp directory exists
-    File.mkdir_p(@temp_dir)
-
-    # Schedule cleanup of old files every hour
-    Process.send_after(self(), :cleanup_old_files, :timer.hours(1))
-
-    {:ok, %__MODULE__{status: :idle}}
-  end
-
-  def handle_call({:create_zip, requester_pid}, _from, state) do
-    case state.status do
-      :idle ->
-        # Start the zip creation process
-        task = Task.async(fn -> create_zip_file(requester_pid) end)
-
-        new_state = %{
-          state
-          | status: :creating,
-            requester_pid: requester_pid,
-            created_at: DateTime.utc_now()
-        }
-
-        # Wait for the task to complete
-        case Task.await(task, :timer.minutes(5)) do
-          {:ok, zip_path} ->
-            final_state = %{new_state | zip_path: zip_path, status: :ready}
-            {:reply, {:ok, zip_path}, final_state}
-
-          {:error, reason} ->
-            final_state = %{new_state | status: :error}
-            {:reply, {:error, reason}, final_state}
-        end
-
-      :creating ->
-        {:reply, {:error, :already_creating}, state}
-
-      :ready ->
-        {:reply, {:ok, state.zip_path}, state}
-
-      :error ->
-        {:reply, {:error, :previous_error}, state}
+        {:ok, zip_stream}
     end
   end
 
-  def handle_call(:get_status, _from, state) do
-    {:reply, state.status, state}
-  end
-
-  def handle_cast({:cleanup_zip, zip_path}, state) do
-    if File.exists?(zip_path) do
-      File.rm(zip_path)
-    end
-
-    new_state = %{state | status: :idle, zip_path: nil, requester_pid: nil}
-    {:noreply, new_state}
-  end
-
-  def handle_info(:cleanup_old_files, state) do
-    # Clean up files older than 1 hour
-    cleanup_old_files()
-
-    # Schedule next cleanup
-    Process.send_after(self(), :cleanup_old_files, :timer.hours(1))
-
-    {:noreply, state}
+  @doc """
+  Gets the count of members with resumes for display purposes.
+  """
+  def count_resumes() do
+    get_members_with_resumes() |> length()
   end
 
   # Private functions
 
-  defp create_zip_file(_requester_pid) do
-    try do
-      # Get all members with resumes
-      members = Accounts.list_members()
-      members_with_resumes = Enum.filter(members, & &1.resume)
-
-      if Enum.empty?(members_with_resumes) do
-        {:error, :no_resumes_found}
-      else
-        # Create unique zip file name
-        timestamp = DateTime.utc_now() |> DateTime.to_unix()
-        zip_filename = "member_resumes_#{timestamp}.zip"
-        zip_path = Path.join(@temp_dir, zip_filename)
-
-        # Create zip file with streaming
-        create_zip_with_streaming(members_with_resumes, zip_path)
-
-        {:ok, zip_path}
-      end
-    rescue
-      error ->
-        {:error, error}
-    end
+  defp get_members_with_resumes do
+    Accounts.list_members()
+    |> Enum.filter(& &1.resume)
+    |> IeeeTamuPortal.Repo.preload([:info])
   end
 
-  defp create_zip_with_streaming(members, zip_path) do
-    # Prepare file entries for zip creation
-    file_entries =
-      Enum.map(members, fn member ->
-        case process_member_resume(member) do
-          {:ok, filename, content} ->
-            {String.to_charlist(filename), content}
-
-          {:error, reason} ->
-            # Log error but continue with other resumes
-            IO.puts("Failed to process resume for #{member.email}: #{inspect(reason)}")
-            nil
-        end
-      end)
-      # Remove nil entries
-      |> Enum.filter(& &1)
-
-    # Create zip file
-    case :zip.create(String.to_charlist(zip_path), file_entries) do
-      {:ok, _} -> :ok
-      {:error, reason} -> raise "Failed to create zip: #{inspect(reason)}"
-    end
-  end
-
-  defp process_member_resume(member) do
+  defp create_zip_entry(member) do
     try do
-      # Sign the S3 URL
-      {:ok, signed_url} =
-        Resume.signed_url(member.resume, method: "GET", response_content_type: "application/pdf")
-
-      # Download the resume content using :httpc
-      case :httpc.request(:get, {String.to_charlist(signed_url), []}, [{:timeout, 30_000}], [
-             {:body_format, :binary}
-           ]) do
-        {:ok, {{_, 200, _}, _headers, body}} ->
-          # Create safe filename
-          safe_email = String.replace(member.email, ~r/[^a-zA-Z0-9._-]/, "_")
-          filename = "#{safe_email}_resume.pdf"
-
-          {:ok, filename, body}
-
-        {:ok, {{_, status, _}, _headers, _body}} ->
-          {:error, "HTTP #{status}"}
+      case fetch_resume_content(member) do
+        {:ok, content} ->
+          filename = create_safe_filename(member)
+          Zstream.entry(filename, [content])
 
         {:error, reason} ->
-          {:error, reason}
+          # Log error but continue with other resumes
+          require Logger
+          Logger.warning("Failed to fetch resume for #{member.email}: #{inspect(reason)}")
+          nil
       end
     rescue
       error ->
-        {:error, error}
+        require Logger
+        Logger.error("Exception processing resume for #{member.email}: #{inspect(error)}")
+        nil
     end
   end
 
-  defp cleanup_old_files do
-    case File.ls(@temp_dir) do
-      {:ok, files} ->
-        cutoff_time = DateTime.utc_now() |> DateTime.add(-1, :hour)
-
-        Enum.each(files, fn file ->
-          file_path = Path.join(@temp_dir, file)
-
-          case File.stat(file_path) do
-            {:ok, %File.Stat{mtime: mtime}} ->
-              file_datetime = NaiveDateTime.from_erl!(mtime) |> DateTime.from_naive!("Etc/UTC")
-
-              if DateTime.before?(file_datetime, cutoff_time) do
-                File.rm(file_path)
-              end
-
-            _ ->
-              :ok
-          end
-        end)
-
-      _ ->
-        :ok
+  defp fetch_resume_content(member) do
+    with {:ok, signed_url} <-
+           Resume.signed_url(member.resume,
+             method: "GET",
+             response_content_type: "application/pdf"
+           ),
+         {:ok, response} <- make_http_request(signed_url) do
+      {:ok, response}
+    else
+      {:error, reason} -> {:error, reason}
+      error -> {:error, error}
     end
+  end
+
+  defp make_http_request(url) do
+    case Req.get(url, receive_timeout: 30_000) do
+      {:ok, %{status: 200, body: body}} ->
+        {:ok, body}
+
+      {:ok, %{status: status}} ->
+        {:error, "HTTP #{status}"}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp create_safe_filename(member) do
+    case member.info do
+      nil ->
+        # Fallback to email prefix if no info available
+        email_prefix = String.split(member.email, "@") |> List.first()
+        safe_prefix = String.replace(email_prefix, ~r/[^a-zA-Z0-9._-]/, "_")
+        "#{safe_prefix}.pdf"
+
+      info ->
+        # Use first_name and last_name if available
+        first_name = sanitize_filename_part(info.first_name)
+        last_name = sanitize_filename_part(info.last_name)
+
+        if first_name && last_name do
+          "#{String.downcase(first_name)}_#{String.downcase(last_name)}.pdf"
+        else
+          # Fallback to email prefix
+          email_prefix = String.split(member.email, "@") |> List.first()
+          safe_prefix = String.replace(email_prefix, ~r/[^a-zA-Z0-9._-]/, "_")
+          "#{safe_prefix}.pdf"
+        end
+    end
+  end
+
+  defp sanitize_filename_part(nil), do: nil
+
+  defp sanitize_filename_part(name) when is_binary(name) do
+    sanitized = String.replace(name, ~r/[^a-zA-Z0-9._-]/, "_")
+    if String.trim(sanitized) == "", do: nil, else: sanitized
   end
 end
