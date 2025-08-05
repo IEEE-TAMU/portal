@@ -23,12 +23,11 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   @impl Phoenix.LiveView
   def handle_params(params, _, socket) do
     {members, meta} = IeeeTamuPortal.Accounts.Member.list_members(params)
-    dbg(filter_params: params)
     {:noreply, assign(socket, members: members, meta: meta, filter_params: params)}
   end
 
   @impl true
-  def handle_event("filter", %{"filters" => filter_params} = params, socket) do
+  def handle_event("filter", %{"filters" => filter_params}, socket) do
     # The params now contain the full form data including filters
     {:noreply, push_patch(socket, to: ~p"/admin/members?#{%{"filters" => filter_params}}")}
   end
@@ -39,7 +38,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   end
 
   @impl true
-  def handle_event("toggle_payment_override", %{"member-id" => member_id}, socket) do
+  def handle_event("toggle_payment_override", %{"member_id" => member_id}, socket) do
     member_id = String.to_integer(member_id)
     member = Enum.find(socket.assigns.members, &(&1.id == member_id))
     current_year = Settings.get_registration_year!()
@@ -48,7 +47,6 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
       {:ok, updated_registration} ->
         # Get current params from the URL to maintain filters
         params = Map.get(socket.assigns, :filter_params, %{})
-        dbg(params)
         # Refresh the members list to get updated data
         {members, meta} = IeeeTamuPortal.Accounts.Member.list_members(params)
 
@@ -58,8 +56,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
          socket
          |> Phoenix.LiveView.put_flash(:info, "Payment override #{action} for #{member.email}")
          |> assign(:members, members)
-         |> assign(:meta, meta)
-        }
+         |> assign(:meta, meta)}
 
       {:error, _changeset} ->
         {:noreply,
@@ -140,6 +137,108 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   end
 
   @impl true
+  def handle_event("view_member", %{"member_id" => member_id}, socket) do
+    member_id = String.to_integer(member_id)
+
+    # Use Members context to load member with info
+    case Members.get_member_with_preloads(member_id, [:info]) do
+      nil ->
+        {:noreply, put_flash(socket, :error, "Member not found")}
+
+      member ->
+        # Create info form
+        info_form = Members.change_member_info(member.info) |> to_form()
+
+        {:noreply,
+         socket
+         |> assign(:show_member_modal, true)
+         |> assign(:current_member, member)
+         |> assign(:member_info_form, info_form)
+         |> assign(:view_only_mode, true)}
+    end
+  end
+
+  @impl true
+  def handle_event("show_member", %{"member_id" => member_id}, socket) do
+    member_id = String.to_integer(member_id)
+
+    # Use Members context to load member with info
+    case Members.get_member_with_preloads(member_id, [:info]) do
+      nil ->
+        {:noreply, put_flash(socket, :error, "Member not found")}
+
+      member ->
+        # Create info form
+        info_form = Members.change_member_info(member.info) |> to_form()
+
+        {:noreply,
+         socket
+         |> assign(:show_member_modal, true)
+         |> assign(:current_member, member)
+         |> assign(:member_info_form, info_form)
+         |> assign(:view_only_mode, false)}
+    end
+  end
+
+  @impl true
+  def handle_event("close_member_modal", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_member_modal, false)
+     |> assign(:current_member, nil)
+     |> assign(:member_info_form, nil)
+     |> assign(:view_only_mode, false)}
+  end
+
+  @impl true
+  def handle_event("validate_member_info", params, socket) do
+    %{"info" => info_params} = params
+    member = socket.assigns.current_member
+
+    info_form =
+      member.info
+      |> Members.change_member_info(info_params)
+      |> Map.put(:action, :validate)
+      |> to_form()
+
+    {:noreply, assign(socket, member_info_form: info_form)}
+  end
+
+  @impl true
+  def handle_event("update_member_info", params, socket) do
+    %{"info" => info_params} = params
+    member = socket.assigns.current_member
+
+    update_or_create_info = fn
+      %Members.Info{} = info -> Members.update_member_info(info, info_params)
+      nil -> Members.create_member_info(member, info_params)
+    end
+
+    case update_or_create_info.(member.info) do
+      {:ok, info} ->
+        updated_member = %Accounts.Member{member | info: info}
+
+        # Get current params from the URL to maintain filters
+        params = Map.get(socket.assigns, :filter_params, %{})
+        # Refresh the members list to keep Flop pagination intact
+        {members, meta} = IeeeTamuPortal.Accounts.Member.list_members(params)
+
+        info_form = Members.change_member_info(info) |> to_form()
+
+        {:noreply,
+         socket
+         |> Phoenix.LiveView.put_flash(:info, "Member information updated successfully.")
+         |> assign(:current_member, updated_member)
+         |> assign(:member_info_form, info_form)
+         |> assign(:members, members)
+         |> assign(:meta, meta)}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, member_info_form: to_form(changeset))}
+    end
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="px-4 sm:px-6 lg:px-8">
@@ -151,7 +250,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
           </p>
         </div>
       </div>
-
+      
     <!-- Filter Form -->
       <div class="mt-6 bg-white shadow rounded-lg p-4">
         <.form
@@ -175,7 +274,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                   full_name: [
                     label: "Filter by Name",
                     type: "text",
-                    placeholder: "Enter first or last name to search...",
+                    placeholder: "Enter preferred name, first name, or last name to search...",
                     op: :like
                   ]
                 ]}
@@ -285,7 +384,11 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                   ]}
                 >
                   <%= if member.info && member.info.first_name && member.info.last_name do %>
-                    {member.info.first_name} {member.info.last_name}
+                    <%= if member.info.preferred_name && String.trim(member.info.preferred_name) != "" do %>
+                      {member.info.preferred_name} {member.info.last_name}
+                    <% else %>
+                      {member.info.first_name} {member.info.last_name}
+                    <% end %>
                     <div class="text-xs text-gray-500">{member.email}</div>
                   <% else %>
                     {member.email}
@@ -322,7 +425,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                     <% :override -> %>
                       <button
                         phx-click="toggle_payment_override"
-                        phx-value-member-id={member.id}
+                        phx-value-member_id={member.id}
                         class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 hover:bg-blue-200 cursor-pointer transition-colors"
                         title="Click to remove override"
                       >
@@ -331,7 +434,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                     <% :unpaid -> %>
                       <button
                         phx-click="toggle_payment_override"
-                        phx-value-member-id={member.id}
+                        phx-value-member_id={member.id}
                         class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 hover:bg-red-200 cursor-pointer transition-colors"
                         title="Click to mark as paid"
                       >

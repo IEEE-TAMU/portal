@@ -16,10 +16,15 @@ defmodule IeeeTamuPortal.Accounts.Member do
         binding: :info,
         field: :last_name,
         ecto_type: :string
+      ],
+      preferred_name: [
+        binding: :info,
+        field: :preferred_name,
+        ecto_type: :string
       ]
     ],
     adapter_opts: [
-      compound_fields: [full_name: [:first_name, :last_name]]
+      compound_fields: [full_name: [:preferred_name, :first_name, :last_name]]
     ]
   }
   schema "members" do

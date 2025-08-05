@@ -408,6 +408,16 @@ IO.puts("\n🚀 Generating 100 random users...")
             international_student: is_international
           }
 
+          # Sometimes add a preferred name (30% chance)
+          member_info_attrs =
+            if rem(i, 10) < 3 do
+              preferred_names = ["Alex", "Sam", "Jordan", "Casey", "Riley", "Morgan", "Taylor", "Jamie", "Avery", "Quinn"]
+              preferred_name = Enum.random(preferred_names)
+              Map.put(member_info_attrs, :preferred_name, preferred_name)
+            else
+              member_info_attrs
+            end
+
           # Add international_country if student is international
           member_info_attrs =
             if is_international do

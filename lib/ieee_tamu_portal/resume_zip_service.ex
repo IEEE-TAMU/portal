@@ -102,12 +102,18 @@ defmodule IeeeTamuPortal.ResumeZipService do
         "#{safe_prefix}.pdf"
 
       info ->
-        # Use first_name and last_name if available
-        first_name = sanitize_filename_part(info.first_name)
+        # Use preferred_name if available, otherwise use first_name
+        display_name =
+          if info.preferred_name && String.trim(info.preferred_name) != "" do
+            sanitize_filename_part(info.preferred_name)
+          else
+            sanitize_filename_part(info.first_name)
+          end
+
         last_name = sanitize_filename_part(info.last_name)
 
-        if first_name && last_name do
-          "#{String.downcase(first_name)}_#{String.downcase(last_name)}.pdf"
+        if display_name && last_name do
+          "#{String.downcase(display_name)}_#{String.downcase(last_name)}.pdf"
         else
           # Fallback to email prefix
           email_prefix = String.split(member.email, "@") |> List.first()

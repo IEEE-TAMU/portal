@@ -155,7 +155,7 @@ defmodule IeeeTamuPortalWeb.OAuthController do
     # Check if the email ends with @tamu.edu
     email = user_info["email"] || ""
 
-    unless String.ends_with?(email, "@tamu.edu") do
+    if !String.ends_with?(email, "@tamu.edu") do
       conn
       |> put_flash(:error, "You must use a @tamu.edu Google account to link your account.")
       |> redirect(to: ~p"/members/settings")
