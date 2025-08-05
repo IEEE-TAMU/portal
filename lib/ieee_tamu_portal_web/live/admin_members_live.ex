@@ -2,7 +2,6 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   use IeeeTamuPortalWeb, :live_view
 
   alias IeeeTamuPortal.{Accounts, Members, Settings}
-  alias IeeeTamuPortal.Services.{MembershipService, FileStorageService}
 
   @impl true
   def mount(_params, _session, socket) do

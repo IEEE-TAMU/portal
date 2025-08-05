@@ -28,9 +28,15 @@ defmodule IeeeTamuPortalWeb.TestTableLive do
   end
 
   @impl true
-  def handle_event("filter", %{"meta" => meta_params}, socket) do
-    # Use Flop's built-in parameter handling
-    {:noreply, push_patch(socket, to: ~p"/admin/test_table?#{meta_params}")}
+  def handle_event("filter", params, socket) do
+    # Handle both meta params and filter params from Flop
+    query_params =
+      case params do
+        %{"meta" => meta_params} -> meta_params
+        other_params -> other_params
+      end
+
+    {:noreply, push_patch(socket, to: ~p"/admin/test_table?#{query_params}")}
   end
 
   @impl true
@@ -92,17 +98,6 @@ defmodule IeeeTamuPortalWeb.TestTableLive do
            "Failed to toggle payment override for #{member.email}"
          )}
     end
-  end
-
-  @impl true
-  def handle_event("filter", %{"meta" => meta_params}, socket) do
-    # Use Flop's built-in parameter handling
-    {:noreply, push_patch(socket, to: ~p"/admin/test_table?#{meta_params}")}
-  end
-
-  @impl true
-  def handle_event("clear_filters", _params, socket) do
-    {:noreply, push_patch(socket, to: ~p"/admin/test_table")}
   end
 
   @impl true
@@ -558,9 +553,11 @@ defmodule IeeeTamuPortalWeb.TestTableLive do
           for={to_form(@meta)}
           as={:meta}
           class="space-y-4"
+          phx-change="filter"
+          phx-submit="filter"
         >
           <div class="flex items-end justify-between gap-3">
-            <div class="flex-1">
+            <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
               <Flop.Phoenix.filter_fields
                 :let={i}
                 form={to_form(@meta)}
@@ -569,6 +566,12 @@ defmodule IeeeTamuPortalWeb.TestTableLive do
                     label: "Filter by Email",
                     type: "text",
                     placeholder: "Enter email to search...",
+                    op: :like
+                  ],
+                  full_name: [
+                    label: "Filter by Name",
+                    type: "text",
+                    placeholder: "Enter first or last name to search...",
                     op: :like
                   ]
                 ]}
@@ -581,7 +584,14 @@ defmodule IeeeTamuPortalWeb.TestTableLive do
                 />
               </Flop.Phoenix.filter_fields>
             </div>
-            <div>
+
+            <div class="flex space-x-2">
+              <.button
+                type="submit"
+                class="bg-indigo-600 hover:bg-indigo-700"
+              >
+                Filter
+              </.button>
               <.button
                 type="button"
                 phx-click="clear_filters"
@@ -654,7 +664,7 @@ defmodule IeeeTamuPortalWeb.TestTableLive do
               >
                 <:col
                   :let={member}
-                  label="Email"
+                  label="Name/Email"
                   field={:email}
                   thead_th_attrs={[
                     class: "py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6",
@@ -665,8 +675,14 @@ defmodule IeeeTamuPortalWeb.TestTableLive do
                       "whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6"
                   ]}
                 >
-                  {member.email}
+                  <%= if member.info && member.info.first_name && member.info.last_name do %>
+                    {member.info.first_name} {member.info.last_name}
+                    <div class="text-xs text-gray-500">{member.email}</div>
+                  <% else %>
+                    {member.email}
+                  <% end %>
                 </:col>
+                
                 <:col
                   :let={member}
                   label="Status"

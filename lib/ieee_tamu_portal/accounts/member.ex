@@ -4,8 +4,23 @@ defmodule IeeeTamuPortal.Accounts.Member do
 
   @derive {
     Flop.Schema,
-    filterable: [:confirmed_at, :email, :inserted_at, :updated_at],
-    sortable: [:id, :email, :confirmed_at, :inserted_at, :updated_at]
+    filterable: [:confirmed_at, :email, :inserted_at, :updated_at, :full_name],
+    sortable: [:id, :email, :confirmed_at, :inserted_at, :updated_at],
+    join_fields: [
+      first_name: [
+        binding: :info,
+        field: :first_name,
+        ecto_type: :string
+      ],
+      last_name: [
+        binding: :info,
+        field: :last_name,
+        ecto_type: :string
+      ]
+    ],
+    adapter_opts: [
+      compound_fields: [full_name: [:first_name, :last_name]]
+    ]
   }
   schema "members" do
     field :email, :string
@@ -26,7 +41,12 @@ defmodule IeeeTamuPortal.Accounts.Member do
   def list_members(params) do
     import Ecto.Query
 
-    query = from m in __MODULE__, preload: [:resume, registrations: :payment]
+    query =
+      from m in __MODULE__,
+        left_join: info in assoc(m, :info),
+        as: :info,
+        preload: [:info, :resume, registrations: :payment]
+
     Flop.validate_and_run!(query, params, for: __MODULE__, replace_invalid_params: true)
   end
 
