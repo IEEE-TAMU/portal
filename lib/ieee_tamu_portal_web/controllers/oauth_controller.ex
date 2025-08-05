@@ -19,13 +19,12 @@ defmodule IeeeTamuPortalWeb.OAuthController do
 
       {:error, _error} ->
         # Different error handling based on whether user is authenticated
-        redirect_location =
-          if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
-
-        error_message =
-          if conn.assigns[:current_member],
-            do: "Failed to initiate Discord authentication. Please try again.",
-            else: "Failed to initiate Discord login. Please try again."
+        {redirect_location, error_message} =
+          if conn.assigns[:current_member] do
+            {~p"/members/settings", "Failed to initiate Discord authentication. Please try again."}
+          else
+            {~p"/members/login", "Failed to initiate Discord login. Please try again."}
+          end
 
         conn
         |> put_flash(:error, error_message)
@@ -44,13 +43,12 @@ defmodule IeeeTamuPortalWeb.OAuthController do
 
       {:error, _error} ->
         # Different error handling based on whether user is authenticated
-        redirect_location =
-          if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
-
-        error_message =
-          if conn.assigns[:current_member],
-            do: "Failed to initiate Google authentication. Please try again.",
-            else: "Failed to initiate Google login. Please try again."
+        {redirect_location, error_message} =
+          if conn.assigns[:current_member] do
+            {~p"/members/settings", "Failed to initiate Google authentication. Please try again."}
+          else
+            {~p"/members/login", "Failed to initiate Google login. Please try again."}
+          end
 
         conn
         |> put_flash(:error, error_message)
@@ -64,13 +62,12 @@ defmodule IeeeTamuPortalWeb.OAuthController do
 
   def callback(conn, %{"provider" => "discord", "error" => _error}) do
     # Different error handling based on whether user is authenticated
-    redirect_location =
-      if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
-
-    error_message =
-      if conn.assigns[:current_member],
-        do: "Discord authentication was cancelled or failed.",
-        else: "Discord login was cancelled or failed."
+    {redirect_location, error_message} =
+      if conn.assigns[:current_member] do
+        {~p"/members/settings", "Discord authentication was cancelled or failed."}
+      else
+        {~p"/members/login", "Discord login was cancelled or failed."}
+      end
 
     conn
     |> put_flash(:error, error_message)
@@ -95,13 +92,12 @@ defmodule IeeeTamuPortalWeb.OAuthController do
 
       {:error, _error} ->
         # Different error handling based on whether user is authenticated
-        redirect_location =
-          if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
-
-        error_message =
-          if conn.assigns[:current_member],
-            do: "Discord authentication failed. Please try again.",
-            else: "Discord login failed. Please try again."
+        {redirect_location, error_message} =
+          if conn.assigns[:current_member] do
+            {~p"/members/settings", "Discord authentication failed. Please try again."}
+          else
+            {~p"/members/login", "Discord login failed. Please try again."}
+          end
 
         conn
         |> put_flash(:error, error_message)
@@ -111,13 +107,12 @@ defmodule IeeeTamuPortalWeb.OAuthController do
 
   def callback(conn, %{"provider" => "google", "error" => _error}) do
     # Different error handling based on whether user is authenticated
-    redirect_location =
-      if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
-
-    error_message =
-      if conn.assigns[:current_member],
-        do: "Google authentication was cancelled or failed.",
-        else: "Google login was cancelled or failed."
+    {redirect_location, error_message} =
+      if conn.assigns[:current_member] do
+        {~p"/members/settings", "Google authentication was cancelled or failed."}
+      else
+        {~p"/members/login", "Google login was cancelled or failed."}
+      end
 
     conn
     |> put_flash(:error, error_message)
@@ -142,13 +137,12 @@ defmodule IeeeTamuPortalWeb.OAuthController do
 
       {:error, _error} ->
         # Different error handling based on whether user is authenticated
-        redirect_location =
-          if conn.assigns[:current_member], do: ~p"/members/settings", else: ~p"/members/login"
-
-        error_message =
-          if conn.assigns[:current_member],
-            do: "Google authentication failed. Please try again.",
-            else: "Google login failed. Please try again."
+        {redirect_location, error_message} =
+          if conn.assigns[:current_member] do
+            {~p"/members/settings", "Google authentication failed. Please try again."}
+          else
+            {~p"/members/login", "Google login failed. Please try again."}
+          end
 
         conn
         |> put_flash(:error, error_message)
