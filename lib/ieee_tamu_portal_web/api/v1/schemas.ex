@@ -4,21 +4,29 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
   defmodule UnauthorizedResponse do
     require OpenApiSpex
 
+    @default %{error: "Unauthorized: Invalid or missing API token"}
+
     OpenApiSpex.schema(%{
       type: :object,
       description: "Response for unauthorized access",
       properties: %{
         error: %Schema{
           type: :string,
-          example: "Unauthorized: Invalid or missing API token"
+          example: @default.error
         }
       },
       required: [:error]
     })
+
+    def default do
+      @default
+    end
   end
 
   defmodule ForbiddenResponse do
     require OpenApiSpex
+
+    @default %{error: "Forbidden: Admin access required"}
 
     OpenApiSpex.schema(%{
       type: :object,
@@ -26,23 +34,33 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
       properties: %{
         error: %Schema{
           type: :string,
-          example: "Forbidden: Admin access required"
+          example: @default.error
         }
       },
       required: [:error]
     })
+
+    def default do
+      @default
+    end
   end
 
   defmodule PingResponse do
     require OpenApiSpex
 
+    @default %{message: "pong"}
+
     OpenApiSpex.schema(%{
       type: :object,
       properties: %{
-        message: %Schema{type: :string, example: "pong"}
+        message: %Schema{type: :string, example: @default.message}
       },
       required: [:message]
     })
+
+    def default do
+      @default
+    end
   end
 
   defmodule Payment do
@@ -108,15 +126,21 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
   defmodule PaymentNotFoundResponse do
     require OpenApiSpex
 
+    @default %{error: "Payment not found"}
+
     OpenApiSpex.schema(%{
       type: :object,
       properties: %{
         error: %Schema{
           type: :string,
-          example: "Payment not found"
+          example: @default.error
         }
       },
       required: [:error]
     })
+
+    def default do
+      @default
+    end
   end
 end

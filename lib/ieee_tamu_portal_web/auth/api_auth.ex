@@ -25,7 +25,7 @@ defmodule IeeeTamuPortalWeb.Auth.ApiAuth do
             conn =
               conn
               |> put_status(:unauthorized)
-              |> json(%{error: "Unauthorized: Invalid or missing API token"})
+              |> json(IeeeTamuPortalWeb.Api.V1.Schemas.UnauthorizedResponse.default())
               |> halt()
 
             {:error, :invalid_token, conn}
@@ -35,7 +35,7 @@ defmodule IeeeTamuPortalWeb.Auth.ApiAuth do
         conn =
           conn
           |> put_status(:unauthorized)
-          |> json(%{error: "Unauthorized: Invalid or missing API token"})
+          |> json(IeeeTamuPortalWeb.Api.V1.Schemas.UnauthorizedResponse.default())
           |> halt()
 
         {:error, :missing_token, conn}
@@ -57,7 +57,7 @@ defmodule IeeeTamuPortalWeb.Auth.ApiAuth do
             conn =
               conn
               |> put_status(:forbidden)
-              |> json(%{error: "Forbidden: Admin access required"})
+              |> json(IeeeTamuPortalWeb.Api.V1.Schemas.ForbiddenResponse.default())
               |> halt()
 
             {:error, :not_admin, conn}

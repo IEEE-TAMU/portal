@@ -11,7 +11,7 @@ defmodule IeeeTamuPortalWeb.Api.V1.PingController do
       ok: {"Pong response", "application/json", IeeeTamuPortalWeb.Api.V1.Schemas.PingResponse}
     ] do
     fn conn, _params ->
-      json(conn, %{message: "pong"})
+      json(conn, IeeeTamuPortalWeb.Api.V1.Schemas.PingResponse.default())
     end
   end
 end

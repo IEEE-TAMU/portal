@@ -49,7 +49,7 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentController do
         {:error, :not_found} ->
           conn
           |> put_status(:not_found)
-          |> json(%{error: "Payment not found"})
+          |> json(Schemas.PaymentNotFoundResponse.default())
           |> halt()
       end
     end
