@@ -6,77 +6,86 @@ defmodule IeeeTamuPortalWeb.Auth.ApiAuth do
 
   alias IeeeTamuPortal.Api
 
-  def api_auth(conn, _opts) do
-    token = get_req_header(conn, "authorization") |> List.first()
+  @header "authorization"
+
+  @doc """
+  Extracts and verifies API token from the connection.
+  Returns {:ok, api_key, conn} on success, {:error, reason, conn} on failure.
+  """
+  def get_api_key(conn) do
+    token = get_req_header(conn, @header) |> List.first()
 
     case token do
       "Bearer " <> provided_token ->
         case Api.verify_api_token(provided_token) do
           {:ok, api_key} ->
-            conn
-            |> assign(:api_key, api_key)
+            {:ok, api_key, conn}
 
           {:error, :invalid_token} ->
-            conn
-            |> unauthorized()
+            conn =
+              conn
+              |> put_status(:unauthorized)
+              |> json(%{error: "Unauthorized: Invalid or missing API token"})
+              |> halt()
+
+            {:error, :invalid_token, conn}
         end
 
       _ ->
-        conn
-        |> unauthorized()
+        conn =
+          conn
+          |> put_status(:unauthorized)
+          |> json(%{error: "Unauthorized: Invalid or missing API token"})
+          |> halt()
+
+        {:error, :missing_token, conn}
     end
-  end
-
-  # Admin-only plug must come after api_auth
-  def admin_only(conn, _opts) do
-    case conn.assigns[:api_key].context do
-      :admin ->
-        conn
-
-      _ ->
-        conn
-        |> put_status(:forbidden)
-        |> json(%{error: "Forbidden: Admin access required"})
-        |> halt()
-    end
-  end
-
-  defp unauthorized(conn) do
-    conn
-    |> put_status(:unauthorized)
-    |> json(%{error: "Unauthorized: Invalid or missing API token"})
-    |> halt()
   end
 
   @doc """
-  When used, invokes `api_auth` plug and sets up security schemes for OpenAPI.
-  If `:admin_only` is set to true, it also invokes the `admin_only` plug.
+  Extracts API token and verifies admin access.
+  Returns {:ok, api_key, conn} on success, {:error, reason, conn} on failure.
   """
-  defmacro __using__(opts) do
-    admin_only = Keyword.get(opts, :admin_only, false)
+  def require_admin(conn) do
+    case get_api_key(conn) do
+      {:ok, api_key, conn} ->
+        case api_key.context do
+          :admin ->
+            {:ok, api_key, conn}
 
-    quote do
-      import unquote(__MODULE__), only: [api_auth: 2, admin_only: 2]
+          _ ->
+            conn =
+              conn
+              |> put_status(:forbidden)
+              |> json(%{error: "Forbidden: Admin access required"})
+              |> halt()
 
-      plug :api_auth
+            {:error, :not_admin, conn}
+        end
 
-      @auth_responses [
-        unauthorized:
-          {"Unauthorized response", "application/json",
-           IeeeTamuPortalWeb.Api.V1.Schemas.UnauthorizedResponse}
-      ]
-
-      if unquote(admin_only) do
-        plug :admin_only
-
-        @auth_responses [
-          forbidden:
-            {"Forbidden response", "application/json",
-             IeeeTamuPortalWeb.Api.V1.Schemas.ForbiddenResponse}
-        ]
-      end
-
-      security [%{"authorization" => []}]
+      {:error, reason, conn} ->
+        {:error, reason, conn}
     end
+  end
+
+  def standard_auth_responses do
+    [
+      unauthorized:
+        {"Unauthorized response", "application/json",
+         IeeeTamuPortalWeb.Api.V1.Schemas.UnauthorizedResponse}
+    ]
+  end
+
+  def admin_auth_responses do
+    standard_auth_responses() ++
+      [
+        forbidden:
+          {"Forbidden response", "application/json",
+           IeeeTamuPortalWeb.Api.V1.Schemas.ForbiddenResponse}
+      ]
+  end
+
+  def auth_header do
+    @header
   end
 end
