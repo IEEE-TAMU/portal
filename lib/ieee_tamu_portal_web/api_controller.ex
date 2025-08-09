@@ -53,6 +53,9 @@ defmodule IeeeTamuPortalWeb.ApiController do
           admin_operation: 3,
           insecure_operation: 3
         ]
+
+      # Import shared utility functions
+      import IeeeTamuPortalWeb.ApiController.Utils, only: [changeset_errors: 1]
     end
   end
 

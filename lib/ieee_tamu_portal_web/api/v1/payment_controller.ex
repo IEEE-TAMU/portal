@@ -69,21 +69,27 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentController do
       created: {"Payment created", "application/json", Schemas.Payment}
     ] do
     fn conn, params, _api_key ->
-      {:ok, payment} = Members.create_payment(params)
+      case Members.create_payment(params) do
+        {:ok, payment} ->
+          payment =
+            case Members.associate_payment_with_registration(payment) do
+              {:ok, payment} ->
+                payment
 
-      payment =
-        case Members.associate_payment_with_registration(payment) do
-          {:ok, payment} ->
-            payment
+              {:error, _reason} ->
+                Logger.warning("Failed to associate payment with registration: #{inspect(payment)}")
+                payment
+            end
 
-          {:error, _reason} ->
-            Logger.error("Failed to associate payment with registration: #{inspect(payment)}")
-            payment
-        end
+          conn
+          |> put_status(:created)
+          |> json(Schemas.Payment.from_struct(payment))
 
-      conn
-      |> put_status(:created)
-      |> json(Schemas.Payment.from_struct(payment))
+        {:error, changeset} ->
+          conn
+          |> put_status(:unprocessable_entity)
+          |> json(%{errors: changeset_errors(changeset)})
+      end
     end
   end
 end

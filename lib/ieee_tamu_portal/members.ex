@@ -468,15 +468,21 @@ defmodule IeeeTamuPortal.Members do
       :admin ->
         {:ok, Repo.all(Payment)}
 
-        # :member ->
-        #   {:ok,
-        #    from(p in Payment,
-        #      join: r in Registration,
-        #      on: p.registration_id == r.id,
-        #      where: r.member_id == ^api_key.member_id,
-        #      select: p
-        #    )
-        #    |> Repo.all()}
+      :member ->
+        if api_key.member_id do
+          payments =
+            from(p in Payment,
+              join: r in Registration,
+              on: p.registration_id == r.id,
+              where: r.member_id == ^api_key.member_id,
+              select: p
+            )
+            |> Repo.all()
+
+          {:ok, payments}
+        else
+          {:ok, []}
+        end
     end
   end
 
@@ -488,17 +494,21 @@ defmodule IeeeTamuPortal.Members do
           payment -> {:ok, payment}
         end
 
-        # :member ->
-        #   from(p in Payment,
-        #     join: r in Registration,
-        #     on: p.registration_id == r.id,
-        #     where: r.member_id == ^api_key.member_id and p.id == ^id
-        #   )
-        #   |> Repo.one()
-        #   |> case do
-        #     nil -> {:error, :not_found}
-        #     payment -> {:ok, payment}
-        #   end
+      :member ->
+        if api_key.member_id do
+          from(p in Payment,
+            join: r in Registration,
+            on: p.registration_id == r.id,
+            where: r.member_id == ^api_key.member_id and p.id == ^id
+          )
+          |> Repo.one()
+          |> case do
+            nil -> {:error, :not_found}
+            payment -> {:ok, payment}
+          end
+        else
+          {:error, :not_found}
+        end
     end
   end
 

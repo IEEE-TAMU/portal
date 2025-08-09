@@ -5,7 +5,7 @@ defmodule IeeeTamuPortal.AccountsFixtures do
   """
 
   def unique_member_email, do: "member#{System.unique_integer()}@tamu.edu"
-  def invaild_member_email, do: "member#{System.unique_integer()}@example.com"
+  def invalid_member_email, do: "member#{System.unique_integer()}@example.com"
   def valid_member_password, do: "hello world!"
 
   def valid_member_attributes(attrs \\ %{}) do

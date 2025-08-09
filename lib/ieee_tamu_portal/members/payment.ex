@@ -22,7 +22,7 @@ defmodule IeeeTamuPortal.Members.Payment do
     |> cast(attrs, [:id, :amount, :confirmation_code, :tshirt_size, :name])
     |> validate_required([:id, :amount, :tshirt_size, :name])
     |> validate_number(:amount, greater_than_or_equal_to: 0)
-    |> unique_constraint(:id)
+    |> unique_constraint(:id, name: "PRIMARY") # unique constraint named PRIMARY due to priv/repo/migrations/20250731185436_update_payments_table.exs:30
   end
 
   def registration_changeset(payment, attrs) do

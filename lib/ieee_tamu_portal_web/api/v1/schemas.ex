@@ -105,9 +105,9 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
       %{
         id: struct.id,
         name: struct.name,
-        amount: struct.amount,
+        amount: Decimal.to_float(struct.amount),
         confirmation_code: struct.confirmation_code,
-        tshirt_size: struct.tshirt_size,
+        tshirt_size: to_string(struct.tshirt_size),
         registration_id: struct.registration_id
       }
     end
