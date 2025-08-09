@@ -5,5 +5,11 @@
   ],
   "assignees": [
     "gigamonster256"
-  ]
+  ],
+  "mix": {
+    "rangeStrategy": "pin",
+    "lockFileMaintenance": {
+      "enabled": true
+    }
+  }
 }
