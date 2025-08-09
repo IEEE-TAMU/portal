@@ -5,7 +5,7 @@ defmodule IeeeTamuPortal.MixProject do
     [
       app: :ieee_tamu_portal,
       version: "0.1.2",
-      elixir: "~> 1.14",
+      elixir: "== 1.18.4",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
@@ -32,20 +32,20 @@ defmodule IeeeTamuPortal.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:bcrypt_elixir, "~> 3.0"},
-      {:phoenix, "~> 1.7.20"},
-      {:phoenix_ecto, "~> 4.5"},
-      {:ecto_sql, "~> 3.10"},
-      {:myxql, "~> 0.8.0"},
-      {:ecto_mysql_extras, "~> 0.6", only: :dev},
-      {:phoenix_html, "~> 4.1"},
-      {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:phoenix_live_view, "~> 1.1.0"},
-      {:aws_signature, "~> 0.4.0"},
-      {:floki, ">= 0.30.0", only: :test},
-      {:phoenix_live_dashboard, "~> 0.8.3"},
-      {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
-      {:tailwind, "~> 0.3", runtime: Mix.env() == :dev},
+      {:bcrypt_elixir, "== 3.3.2"},
+      {:phoenix, "== 1.8.0"},
+      {:phoenix_ecto, "== 4.6.5"},
+      {:ecto_sql, "== 3.13.2"},
+      {:myxql, "== 0.8.0"},
+      {:ecto_mysql_extras, "== 0.6.3", only: :dev},
+      {:phoenix_html, "== 4.2.1"},
+      {:phoenix_live_reload, "== 1.6.0", only: :dev},
+      {:phoenix_live_view, "== 1.1.0"},
+      {:aws_signature, "== 0.4.0"},
+      {:floki, "== 0.38.0", only: :test},
+      {:phoenix_live_dashboard, "== 0.8.7"},
+      {:esbuild, "== 0.10.0", runtime: Mix.env() == :dev},
+      {:tailwind, "== 0.3.1", runtime: Mix.env() == :dev},
       {:heroicons,
        github: "tailwindlabs/heroicons",
        tag: "v2.2.0",
@@ -53,20 +53,21 @@ defmodule IeeeTamuPortal.MixProject do
        app: false,
        compile: false,
        depth: 1},
-      {:swoosh, "~> 1.5"},
-      {:gen_smtp, "~> 1.1", only: :prod},
-      {:telemetry_metrics, "~> 1.0"},
-      {:telemetry_poller, "~> 1.0"},
-      {:gettext, "~> 0.26"},
-      {:jason, "~> 1.2"},
-      {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.5"},
-      {:open_api_spex, "~> 3.21"},
-      {:deps_nix, "~> 2.0", only: :dev},
-      {:req, "~> 0.4"},
-      {:assent, "~> 0.3.1"},
-      {:zstream, "~> 0.6.7"},
-      {:flop_phoenix, "~> 0.25.3"}
+      {:swoosh, "== 1.19.5"},
+      {:gen_smtp, "== 1.3.0", only: :prod},
+      {:telemetry_metrics, "== 1.1.0"},
+      {:telemetry_poller, "== 1.3.0"},
+      {:gettext, "== 0.26.2"},
+      {:jason, "== 1.4.4"},
+      {:dns_cluster, "== 0.2.0"},
+      {:bandit, "== 1.7.0"},
+      {:open_api_spex, "== 3.22.0"},
+      {:deps_nix, "== 2.3.0", only: :dev},
+      {:req, "== 0.5.15"},
+      {:assent, "== 0.3.1"},
+      {:zstream, "== 0.6.7"},
+      {:flop_phoenix, "== 0.25.3"},
+      {:lazy_html, "== 0.1.0", only: :test}
     ]
   end
 
@@ -89,10 +90,10 @@ defmodule IeeeTamuPortal.MixProject do
         "esbuild ieee_tamu_portal --minify",
         "phx.digest"
       ],
-      fmt: ["format"]
+      fmt: ["format"],
       # deps_nix
-      # "deps.get": ["deps.get", "deps.nix"],
-      # "deps.update": ["deps.update", "deps.nix"]
+      "deps.get": ["deps.get", "deps.nix"],
+      "deps.update": ["deps.update", "deps.nix"]
     ]
   end
 end
