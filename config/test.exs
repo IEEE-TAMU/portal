@@ -43,3 +43,10 @@ config :phoenix_live_view,
 config :ieee_tamu_portal, IeeeTamuPortalWeb.Auth.AdminAuth,
   username: "admin",
   password: "test_password"
+
+# S3 configuration for tests (mock values)
+config :ieee_tamu_portal, IeeeTamuPortalWeb.Upload.SimpleS3Upload,
+  region: "us-east-1",
+  access_key_id: "test_access_key",
+  secret_access_key: "test_secret_key",
+  url: "https://test-bucket.s3.amazonaws.com"

@@ -63,13 +63,13 @@ defmodule IeeeTamuPortalWeb.MemberLoginLiveTest do
     test "redirects to registration page when the Register button is clicked", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/members/login")
 
-      {:ok, _login_live, login_html} =
+      {:ok, conn} =
         lv
-        |> element(~s|main a:fl-contains("Sign up")|)
+        |> element("a", "Register")
         |> render_click()
         |> follow_redirect(conn, ~p"/members/register")
 
-      assert login_html =~ "Register"
+      assert conn.resp_body =~ "Register"
     end
 
     test "redirects to forgot password page when the Forgot Password button is clicked", %{
@@ -79,7 +79,7 @@ defmodule IeeeTamuPortalWeb.MemberLoginLiveTest do
 
       {:ok, conn} =
         lv
-        |> element(~s|main a:fl-contains("Forgot your password?")|)
+        |> element("a", "Forgot your password?")
         |> render_click()
         |> follow_redirect(conn, ~p"/members/reset_password")
 

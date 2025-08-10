@@ -56,12 +56,13 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLiveTest do
     test "renders errors for duplicated email", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/members/register")
 
-      member = member_fixture(%{email: "test@tamu.edu"})
+      existing_email = unique_member_email()
+      _member = member_fixture(%{email: existing_email})
 
       result =
         lv
         |> form("#registration_form",
-          member: %{"email" => member.email, "password" => "valid_password"}
+          member: %{"email" => existing_email, "password" => "valid_password"}
         )
         |> render_submit()
 
@@ -73,13 +74,13 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLiveTest do
     test "redirects to login page when the Log in button is clicked", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/members/register")
 
-      {:ok, _login_live, login_html} =
+      {:ok, conn} =
         lv
-        |> element(~s|main a:fl-contains("Log in")|)
+        |> element(~s|a[title="Log in"]|)
         |> render_click()
         |> follow_redirect(conn, ~p"/members/login")
 
-      assert login_html =~ "Log in"
+      assert conn.resp_body =~ "Log in"
     end
   end
 end

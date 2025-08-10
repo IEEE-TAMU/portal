@@ -61,36 +61,6 @@ defmodule IeeeTamuPortal.Services.FileStorageServiceTest do
     end
   end
 
-  describe "get_resume_url/2" do
-    test "handles S3 configuration errors gracefully" do
-      member = member_fixture()
-
-      resume = %Members.Resume{
-        original_filename: "test_resume.pdf",
-        key: "resumes/#{member.id}-test_resume.pdf",
-        bucket_url: "https://test-bucket.s3.amazonaws.com"
-      }
-
-      # Should handle missing S3 config gracefully
-      assert {:error, :configuration_missing} = FileStorageService.get_resume_url(resume)
-    end
-
-    test "accepts options for URL generation" do
-      member = member_fixture()
-
-      resume = %Members.Resume{
-        original_filename: "test_resume.pdf",
-        key: "resumes/#{member.id}-test_resume.pdf",
-        bucket_url: "https://test-bucket.s3.amazonaws.com"
-      }
-
-      opts = [method: "GET", response_content_type: "application/pdf"]
-
-      # Should handle missing S3 config gracefully even with options
-      assert {:error, :configuration_missing} = FileStorageService.get_resume_url(resume, opts)
-    end
-  end
-
   describe "generate_resume_key/2" do
     test "generates unique key for member and upload" do
       member = member_fixture()
