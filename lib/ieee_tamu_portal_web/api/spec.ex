@@ -11,11 +11,16 @@ defmodule IeeeTamuPortalWeb.Api.Spec do
         Server.from_endpoint(Endpoint)
       ],
       info: %Info{
-        title: to_string(Application.spec(:my_app, :description)),
-        version: to_string(Application.spec(:my_app, :vsn))
+        title: to_string(Application.spec(:ieee_tamu_portal, :description)),
+        version: to_string(Application.spec(:ieee_tamu_portal, :vsn))
       },
       components: %Components{
-        securitySchemes: %{"authorization" => %SecurityScheme{type: "http", scheme: "bearer"}}
+        securitySchemes: %{
+          IeeeTamuPortalWeb.Auth.ApiAuth.auth_header() => %SecurityScheme{
+            type: "http",
+            scheme: "bearer"
+          }
+        }
       },
       # Populate the paths from a phoenix router
       paths: Paths.from_router(Router)
