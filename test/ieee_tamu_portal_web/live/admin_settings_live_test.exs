@@ -9,9 +9,12 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLiveTest do
 
   defp admin_auth_conn(conn) do
     # Add basic auth headers for admin access
-    username = Application.fetch_env!(:ieee_tamu_portal, IeeeTamuPortalWeb.Auth.AdminAuth)[:username]
-    password = Application.fetch_env!(:ieee_tamu_portal, IeeeTamuPortalWeb.Auth.AdminAuth)[:password]
-    
+    username =
+      Application.fetch_env!(:ieee_tamu_portal, IeeeTamuPortalWeb.Auth.AdminAuth)[:username]
+
+    password =
+      Application.fetch_env!(:ieee_tamu_portal, IeeeTamuPortalWeb.Auth.AdminAuth)[:password]
+
     credentials = Base.encode64("#{username}:#{password}")
     Plug.Conn.put_req_header(conn, "authorization", "Basic #{credentials}")
   end
@@ -51,8 +54,19 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLiveTest do
     end
 
     test "displays existing settings in table", %{conn: conn} do
-      setting1 = setting_fixture(%{key: "test_key_1", value: "test_value_1", description: "Test setting 1"})
-      setting2 = setting_fixture(%{key: "test_key_2", value: "test_value_2", description: "Test setting 2"})
+      setting1 =
+        setting_fixture(%{
+          key: "test_key_1",
+          value: "test_value_1",
+          description: "Test setting 1"
+        })
+
+      setting2 =
+        setting_fixture(%{
+          key: "test_key_2",
+          value: "test_value_2",
+          description: "Test setting 2"
+        })
 
       {:ok, _lv, html} =
         conn
@@ -188,7 +202,7 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLiveTest do
         |> render_submit()
 
       assert result =~ "Setting created successfully"
-      
+
       # Check that form inputs are cleared
       create_form = element(lv, "#create_setting_form")
       form_html = render(create_form)
@@ -220,7 +234,12 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLiveTest do
     end
 
     test "updates setting with valid data", %{conn: conn} do
-      setting = setting_fixture(%{key: "update_test", value: "original_value", description: "Original description"})
+      setting =
+        setting_fixture(%{
+          key: "update_test",
+          value: "original_value",
+          description: "Original description"
+        })
 
       {:ok, lv, _html} =
         conn
@@ -245,8 +264,10 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLiveTest do
       # Verify setting was actually updated in database
       updated_setting = Settings.get_setting!(setting.id)
       assert updated_setting.value == "updated_value"
-      assert updated_setting.key == setting.key  # Key should not change
-      assert updated_setting.description == setting.description  # Description should not change
+      # Key should not change
+      assert updated_setting.key == setting.key
+      # Description should not change
+      assert updated_setting.description == setting.description
     end
 
     test "shows error when updating setting with invalid data", %{conn: conn} do
@@ -371,6 +392,7 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLiveTest do
 
       # Verify only the correct setting was deleted
       assert Settings.get_setting!(setting1.id)
+
       assert_raise Ecto.NoResultsError, fn ->
         Settings.get_setting!(setting2.id)
       end
@@ -518,11 +540,11 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLiveTest do
         |> render_submit()
 
       assert result =~ "Setting updated successfully"
-      
+
       # Verify second setting was updated while first remained unchanged
       updated_setting2 = Settings.get_setting!(setting2.id)
       unchanged_setting1 = Settings.get_setting!(setting1.id)
-      
+
       assert updated_setting2.value == "updated_value_2"
       assert unchanged_setting1.value == "value_1"
     end

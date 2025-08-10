@@ -27,9 +27,11 @@ defmodule IeeeTamuPortalWeb.ApiController.Utils do
           case value do
             value when is_binary(value) or is_atom(value) or is_number(value) ->
               to_string(value)
+
             _ ->
               inspect(value)
           end
+
         String.replace(acc, "%{#{key}}", string_value)
       end)
     end)

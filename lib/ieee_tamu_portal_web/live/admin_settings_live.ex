@@ -155,12 +155,12 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
                 />
               </div>
               <div>
-                <.input 
-                  field={@create_form[:value]} 
+                <.input
+                  field={@create_form[:value]}
                   id="create_setting_value"
-                  label="Value" 
-                  placeholder="e.g., 2025" 
-                  required 
+                  label="Value"
+                  placeholder="e.g., 2025"
+                  required
                 />
               </div>
               <div>

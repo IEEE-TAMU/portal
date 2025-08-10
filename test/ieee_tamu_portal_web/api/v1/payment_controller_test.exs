@@ -100,7 +100,8 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentControllerTest do
       {token, _api_key} = member_api_key_fixture(member1)
 
       payment1 = payment_fixture(member1)
-      _payment2 = payment_fixture(member2) # This shouldn't be returned
+      # This shouldn't be returned
+      _payment2 = payment_fixture(member2)
 
       conn =
         conn
@@ -210,7 +211,7 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentControllerTest do
         |> post(~p"/api/v1/payments", @valid_payment_attrs)
 
       assert %{
-                "id" => @valid_payment_attrs[:id],
+               "id" => @valid_payment_attrs[:id],
                "name" => @valid_payment_attrs[:name],
                "amount" => @valid_payment_attrs[:amount],
                "tshirt_size" => @valid_payment_attrs[:tshirt_size],

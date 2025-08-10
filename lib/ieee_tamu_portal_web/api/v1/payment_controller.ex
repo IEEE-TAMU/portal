@@ -77,7 +77,10 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentController do
                 payment
 
               {:error, _reason} ->
-                Logger.warning("Failed to associate payment with registration: #{inspect(payment)}")
+                Logger.warning(
+                  "Failed to associate payment with registration: #{inspect(payment)}"
+                )
+
                 payment
             end
 
