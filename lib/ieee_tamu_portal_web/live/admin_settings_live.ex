@@ -148,17 +148,25 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
               <div>
                 <.input
                   field={@create_form[:key]}
+                  id="create_setting_key"
                   label="Key"
                   placeholder="e.g., registration_year"
                   required
                 />
               </div>
               <div>
-                <.input field={@create_form[:value]} label="Value" placeholder="e.g., 2025" required />
+                <.input 
+                  field={@create_form[:value]} 
+                  id="create_setting_value"
+                  label="Value" 
+                  placeholder="e.g., 2025" 
+                  required 
+                />
               </div>
               <div>
                 <.input
                   field={@create_form[:description]}
+                  id="create_setting_description"
                   label="Description"
                   placeholder="Description of this setting"
                 />
@@ -219,6 +227,7 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
                         <div class="flex items-center space-x-2">
                           <.input
                             field={Map.get(@update_forms, setting.id)[:value]}
+                            id={"setting_value_#{setting.id}"}
                             class="text-sm m-0"
                             style="border: 1px solid #d1d5db; padding: 0.25rem 0.5rem;"
                           />
