@@ -5,6 +5,8 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
 
   @impl true
   def mount(_params, _session, socket) do
+    current_year = Settings.get_registration_year!()
+
     socket =
       socket
       |> assign(:page_title, "Members - Admin")
@@ -16,6 +18,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
       |> assign(:current_member, nil)
       |> assign(:member_info_form, nil)
       |> assign(:view_only_mode, false)
+      |> assign(year: current_year)
 
     {:ok, socket}
   end
@@ -399,7 +402,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                   label="Payment"
                   tbody_td_attrs={[class: "whitespace-nowrap px-3 py-4 text-sm text-gray-500 w-32"]}
                 >
-                  <%= case Members.get_payment_status(member) do %>
+                  <%= case Members.get_payment_status(member, @year) do %>
                     <% :paid -> %>
                       <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                         Paid

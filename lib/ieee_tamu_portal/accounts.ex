@@ -133,8 +133,8 @@ defmodule IeeeTamuPortal.Accounts do
     |> Enum.map(fn member ->
       # Add payment status using Members context functions
       member
-      |> Map.put(:has_paid, Members.has_paid?(member))
-      |> Map.put(:has_override, Members.has_payment_override?(member))
+      |> Map.put(:has_paid, Members.has_paid?(member, year))
+      |> Map.put(:has_override, Members.has_payment_override?(member, year))
     end)
   end
 

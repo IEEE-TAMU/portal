@@ -22,6 +22,10 @@ defmodule IeeeTamuPortal.Settings do
   alias IeeeTamuPortal.Repo
   alias IeeeTamuPortal.Settings.Setting
 
+  require Logger
+
+  @default_year 2025
+
   # Gets a setting by its key.
   # Returns the setting struct if found, nil otherwise.
   defp get_setting(key) do
@@ -77,7 +81,7 @@ defmodule IeeeTamuPortal.Settings do
   """
   def create_setting(attrs) do
     %Setting{}
-    |> Setting.changeset(attrs)
+    |> Setting.create_changeset(attrs)
     |> Repo.insert()
   end
 
@@ -99,7 +103,7 @@ defmodule IeeeTamuPortal.Settings do
   """
   def update_setting(setting, attrs) do
     setting
-    |> Setting.changeset(attrs)
+    |> Setting.update_changeset(attrs)
     |> Repo.update()
   end
 
@@ -143,8 +147,45 @@ defmodule IeeeTamuPortal.Settings do
   """
   def get_registration_year! do
     case get_setting("registration_year") do
-      nil -> raise "Membership year setting not found"
-      setting -> setting.value |> String.to_integer()
+      nil ->
+        Logger.error("Membership year setting not found - defaulting to #{@default_year}")
+        @default_year
+
+      setting ->
+        try do
+          setting.value |> String.to_integer()
+        rescue
+          ArgumentError ->
+            Logger.error(
+              "Invalid registration year format in setting: #{setting.value} - defaulting to #{@default_year}"
+            )
+
+            @default_year
+        end
     end
+  end
+
+  @doc """
+  Returns a changeset for creating a new setting.
+
+  ## Examples
+
+      iex> change_setting(%Setting{})
+      %Ecto.Changeset{data: %Setting{}}
+  """
+  def change_setting(%Setting{} = setting, attrs \\ %{}) do
+    Setting.create_changeset(setting, attrs)
+  end
+
+  @doc """
+  Returns a changeset for updating an existing setting.
+
+  ## Examples
+
+      iex> change_setting_update(setting)
+      %Ecto.Changeset{data: %Setting{}}
+  """
+  def change_setting_update(%Setting{} = setting, attrs \\ %{}) do
+    Setting.update_changeset(setting, attrs)
   end
 end

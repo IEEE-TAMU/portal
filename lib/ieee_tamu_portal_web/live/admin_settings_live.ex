@@ -6,8 +6,73 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
   @impl true
   def mount(_params, _session, socket) do
     settings = Settings.all_settings()
+    create_changeset = Settings.change_setting(%Settings.Setting{})
 
-    {:ok, assign(socket, settings: settings)}
+    {:ok,
+     assign(socket,
+       settings: settings,
+       create_form: to_form(create_changeset),
+       update_forms: build_update_forms(settings)
+     )}
+  end
+
+  defp build_update_forms(settings) do
+    settings
+    |> Enum.map(fn setting ->
+      {setting.id, to_form(Settings.change_setting_update(setting))}
+    end)
+    |> Map.new()
+  end
+
+  @impl true
+  def handle_event("validate_create", %{"setting" => setting_params}, socket) do
+    create_form =
+      %Settings.Setting{}
+      |> Settings.change_setting(setting_params)
+      |> Map.put(:action, :validate)
+      |> to_form()
+
+    {:noreply, assign(socket, create_form: create_form)}
+  end
+
+  @impl true
+  def handle_event("create_setting", %{"setting" => setting_params}, socket) do
+    case Settings.create_setting(setting_params) do
+      {:ok, new_setting} ->
+        updated_settings = [new_setting | socket.assigns.settings]
+        updated_forms = build_update_forms(updated_settings)
+        create_changeset = Settings.change_setting(%Settings.Setting{})
+
+        {:noreply,
+         socket
+         |> assign(
+           settings: updated_settings,
+           update_forms: updated_forms,
+           create_form: to_form(create_changeset)
+         )
+         |> put_flash(:info, "Setting created successfully")}
+
+      {:error, changeset} ->
+        {:noreply,
+         socket
+         |> assign(create_form: to_form(changeset))
+         |> put_flash(:error, "Failed to create setting")}
+    end
+  end
+
+  @impl true
+  def handle_event("validate_update", %{"setting" => setting_params}, socket) do
+    setting = Settings.get_setting!(setting_params["id"])
+
+    update_form =
+      setting
+      |> Settings.change_setting_update(setting_params)
+      |> Map.put(:action, :validate)
+      |> to_form()
+
+    updated_forms = Map.put(socket.assigns.update_forms, setting.id, update_form)
+
+    {:noreply, assign(socket, update_forms: updated_forms)}
   end
 
   @impl true
@@ -22,31 +87,20 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
             if s.id == updated_setting.id, do: updated_setting, else: s
           end)
 
+        updated_forms = build_update_forms(updated_settings)
+
         {:noreply,
          socket
-         |> assign(settings: updated_settings)
+         |> assign(settings: updated_settings, update_forms: updated_forms)
          |> put_flash(:info, "Setting updated successfully")}
 
       {:error, changeset} ->
-        {:noreply,
-         put_flash(socket, :error, "Failed to update setting: #{inspect(changeset.errors)}")}
-    end
-  end
-
-  @impl true
-  def handle_event("create_setting", %{"setting" => setting_params}, socket) do
-    case Settings.create_setting(setting_params) do
-      {:ok, new_setting} ->
-        updated_settings = [new_setting | socket.assigns.settings]
+        updated_forms = Map.put(socket.assigns.update_forms, setting.id, to_form(changeset))
 
         {:noreply,
          socket
-         |> assign(settings: updated_settings)
-         |> put_flash(:info, "Setting created successfully")}
-
-      {:error, changeset} ->
-        {:noreply,
-         put_flash(socket, :error, "Failed to create setting: #{inspect(changeset.errors)}")}
+         |> assign(update_forms: updated_forms)
+         |> put_flash(:error, "Failed to update setting")}
     end
   end
 
@@ -56,16 +110,17 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
 
     case Settings.delete_setting(setting) do
       {:ok, _} ->
-        updated_settings = Enum.reject(socket.assigns.settings, &(&1.id == String.to_integer(id)))
+        setting_id = String.to_integer(id)
+        updated_settings = Enum.reject(socket.assigns.settings, &(&1.id == setting_id))
+        updated_forms = build_update_forms(updated_settings)
 
         {:noreply,
          socket
-         |> assign(settings: updated_settings)
+         |> assign(settings: updated_settings, update_forms: updated_forms)
          |> put_flash(:info, "Setting deleted successfully")}
 
-      {:error, changeset} ->
-        {:noreply,
-         put_flash(socket, :error, "Failed to delete setting: #{inspect(changeset.errors)}")}
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Failed to delete setting")}
     end
   end
 
@@ -83,41 +138,38 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
         <div class="bg-white shadow rounded-lg p-6 mb-6">
           <h3 class="text-lg font-medium text-gray-900 mb-4">Add New Setting</h3>
 
-          <.form for={%{}} phx-submit="create_setting">
+          <.simple_form
+            for={@create_form}
+            id="create_setting_form"
+            phx-change="validate_create"
+            phx-submit="create_setting"
+          >
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <.input
-                  name="setting[key]"
+                  field={@create_form[:key]}
                   label="Key"
                   placeholder="e.g., registration_year"
-                  value=""
                   required
                 />
               </div>
               <div>
-                <.input
-                  name="setting[value]"
-                  label="Value"
-                  placeholder="e.g., 2025"
-                  value=""
-                  required
-                />
+                <.input field={@create_form[:value]} label="Value" placeholder="e.g., 2025" required />
               </div>
               <div>
                 <.input
-                  name="setting[description]"
+                  field={@create_form[:description]}
                   label="Description"
                   placeholder="Description of this setting"
-                  value=""
                 />
               </div>
             </div>
-            <div class="mt-4">
+            <:actions>
               <.button type="submit" class="bg-blue-600 hover:bg-blue-700">
                 Add Setting
               </.button>
-            </div>
-          </.form>
+            </:actions>
+          </.simple_form>
         </div>
         
     <!-- Existing Settings -->
@@ -155,16 +207,19 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
                         {setting.key}
                       </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <.form for={%{}} phx-submit="update_setting">
+                    <td class="px-6 py-4 whitespace-nowrap align-middle">
+                      <.form
+                        for={Map.get(@update_forms, setting.id)}
+                        id={"update_setting_form_#{setting.id}"}
+                        phx-change="validate_update"
+                        phx-submit="update_setting"
+                        class="m-0"
+                      >
                         <input type="hidden" name="setting[id]" value={setting.id} />
-                        <input type="hidden" name="setting[key]" value={setting.key} />
-                        <input type="hidden" name="setting[description]" value={setting.description} />
                         <div class="flex items-center space-x-2">
                           <.input
-                            name="setting[value]"
-                            value={setting.value}
-                            class="text-sm"
+                            field={Map.get(@update_forms, setting.id)[:value]}
+                            class="text-sm m-0"
                             style="border: 1px solid #d1d5db; padding: 0.25rem 0.5rem;"
                           />
                           <.button

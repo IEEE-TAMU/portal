@@ -21,6 +21,14 @@ defmodule IeeeTamuPortal.Members do
   Each academic year, members must register and pay dues. The system tracks
   registrations per year and associated payments or payment overrides.
 
+  ## Payment Status
+
+  The module provides functions to check payment status for specific years:
+
+  - `get_payment_status/2` - Returns `:paid`, `:override`, or `:unpaid`
+  - `has_paid?/2` - Returns true if member has paid or has override
+  - `has_payment_override?/2` - Returns true if member has payment override
+
   ## Examples
 
       iex> Members.get_info_by_member_id(123)
@@ -28,6 +36,15 @@ defmodule IeeeTamuPortal.Members do
 
       iex> Members.create_registration(member, %{year: 2024})
       {:ok, %Registration{}}
+
+      iex> Members.get_payment_status(member, 2024)
+      :paid
+
+      iex> Members.has_paid?(member, 2024)
+      true
+
+      iex> Members.has_payment_override?(member, 2024)
+      false
   """
 
   import Ecto.Query, warn: false
@@ -114,7 +131,7 @@ defmodule IeeeTamuPortal.Members do
 
       iex> get_member_with_preloads(123)
       %Member{info: %Info{}, resume: %Resume{}}
-      
+
       iex> get_member_with_preloads(123, [:info, :registrations])
       %Member{info: %Info{}, registrations: [%Registration{}]}
   """
@@ -515,27 +532,34 @@ defmodule IeeeTamuPortal.Members do
   ## Payment Status Functions
 
   @doc """
-  Gets the payment status for a member.
+  Gets the payment status for a member in a specific year.
 
   Returns one of :paid, :override, or :unpaid.
 
   ## Parameters
 
     * `member` - The member struct with preloaded registrations
+    * `year` - The year to check payment status for (integer)
 
   ## Examples
 
-      iex> get_payment_status(member)
+      iex> get_payment_status(member, 2024)
       :paid
 
-      iex> get_payment_status(member_with_override)
+      iex> get_payment_status(member_with_override, 2024)
       :override
 
-      iex> get_payment_status(member_without_payment)
+      iex> get_payment_status(member_without_payment, 2024)
       :unpaid
   """
-  def get_payment_status(member) do
-    case member.registrations do
+  def get_payment_status(member, year) do
+    registrations_for_year =
+      Enum.filter(member.registrations, fn reg ->
+        reg.year == year
+      end)
+      |> Repo.preload(:payment)
+
+    case registrations_for_year do
       [] ->
         :unpaid
 
@@ -551,40 +575,42 @@ defmodule IeeeTamuPortal.Members do
   end
 
   @doc """
-  Checks if a member has paid for the current year.
+  Checks if a member has paid for a specific year.
 
   ## Parameters
 
     * `member` - The member struct with preloaded registrations
+    * `year` - The year to check payment for (integer)
 
   ## Examples
 
-      iex> has_paid?(member)
+      iex> has_paid?(member, 2024)
       true
 
-      iex> has_paid?(unpaid_member)
+      iex> has_paid?(unpaid_member, 2024)
       false
   """
-  def has_paid?(member) do
-    get_payment_status(member) in [:paid, :override]
+  def has_paid?(member, year) do
+    get_payment_status(member, year) in [:paid, :override]
   end
 
   @doc """
-  Checks if a member has a payment override.
+  Checks if a member has a payment override for a specific year.
 
   ## Parameters
 
     * `member` - The member struct with preloaded registrations
+    * `year` - The year to check payment override for (integer)
 
   ## Examples
 
-      iex> has_payment_override?(member)
+      iex> has_payment_override?(member, 2024)
       true
 
-      iex> has_payment_override?(regular_member)
+      iex> has_payment_override?(regular_member, 2024)
       false
   """
-  def has_payment_override?(member) do
-    get_payment_status(member) == :override
+  def has_payment_override?(member, year) do
+    get_payment_status(member, year) == :override
   end
 end
