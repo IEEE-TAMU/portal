@@ -74,6 +74,7 @@ defmodule IeeeTamuPortalWeb.Router do
       ] do
       live "/members/settings", MemberSettingsLive, :edit
       live "/members/info", MemberInfoLive, :edit
+      live "/members/api-keys", MemberApiKeysLive, :index
     end
 
     live_session :ensure_info_submitted,
