@@ -6,18 +6,7 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLiveTest do
 
   import Phoenix.LiveViewTest
   import IeeeTamuPortal.SettingsFixtures
-
-  defp admin_auth_conn(conn) do
-    # Add basic auth headers for admin access
-    username =
-      Application.fetch_env!(:ieee_tamu_portal, IeeeTamuPortalWeb.Auth.AdminAuth)[:username]
-
-    password =
-      Application.fetch_env!(:ieee_tamu_portal, IeeeTamuPortalWeb.Auth.AdminAuth)[:password]
-
-    credentials = Base.encode64("#{username}:#{password}")
-    Plug.Conn.put_req_header(conn, "authorization", "Basic #{credentials}")
-  end
+  import IeeeTamuPortalWeb.TestHelpers.AdminAuth, only: [admin_auth_conn: 1]
 
   setup do
     # Clean up any seeded settings for test isolation
