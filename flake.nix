@@ -27,59 +27,63 @@
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-          mixNixDeps = pkgs.callPackages ./deps.nix { };
+
+          # # also see https://gist.github.com/NobbZ/1603ba65e135bf293a50c4b98eb41f71 for smaller image sizes
+          mixNixDeps = pkgs.callPackages ./deps.nix { beamPackages = pkgs.beamMinimalPackages; };
         in
         rec {
           devenv-up = self.devShells.${system}.default.config.procfileScript;
           default = portal;
+
           # see https://hexdocs.pm/phoenix/releases.html and
           # https://github.com/code-supply/nix-phoenix/tree/main/flake-template
           # for more information
-          portal =
-            with pkgs;
-            beamPackages.mixRelease {
-              inherit mixNixDeps;
-              pname = "ieee-tamu-portal";
-              src = ./.;
-              version = "0.1.9";
 
-              stripDebug = true;
+          # lockily we have no JS deps, so we can just build the beam release
+          # and not worry about a JS package (for now at least)
+          portal = pkgs.beamMinimalPackages.mixRelease {
+            inherit mixNixDeps;
+            pname = "ieee-tamu-portal";
+            src = ./.;
+            version = "0.1.9";
 
-              nativeBuildInputs = [
-                esbuild
-                tailwindcss
-              ];
+            stripDebug = true;
 
-              # make runtime.ex happy during build
-              NIX_BUILD_ENV = "true";
+            # make runtime.ex happy during build
+            NIX_BUILD_ENV = "true";
 
-              # generate phx overlays (migrate and server)
-              preBuild = ''
-                mix phx.gen.release
-              '';
+            # generate phx overlays (migrate and server)
+            preBuild = ''
+              mix phx.gen.release
+            '';
 
-              postBuild = ''
-                tailwind_path="$(mix do \
-                  app.config --no-deps-check --no-compile, \
-                  eval 'Tailwind.bin_path() |> IO.puts()')"
-                esbuild_path="$(mix do \
-                  app.config --no-deps-check --no-compile, \
-                  eval 'Esbuild.bin_path() |> IO.puts()')"
+            postBuild = ''
+              tailwind_path="$(mix do \
+                app.config --no-deps-check --no-compile, \
+                eval 'Tailwind.bin_path() |> IO.puts()')"
+              esbuild_path="$(mix do \
+                app.config --no-deps-check --no-compile, \
+                eval 'Esbuild.bin_path() |> IO.puts()')"
 
-                ln -sfv ${tailwindcss}/bin/tailwindcss "$tailwind_path"
-                ln -sfv ${esbuild}/bin/esbuild "$esbuild_path"
-                ln -sfv ${mixNixDeps.heroicons} deps/heroicons
+              ln -sfv ${pkgs.tailwindcss}/bin/tailwindcss "$tailwind_path"
+              ln -sfv ${pkgs.esbuild}/bin/esbuild "$esbuild_path"
+              ln -sfv ${mixNixDeps.heroicons} deps/heroicons
 
-                mix do \
-                  app.config --no-deps-check --no-compile, \
-                  assets.deploy --no-deps-check
-              '';
-            };
+              mix do \
+                app.config --no-deps-check --no-compile, \
+                assets.deploy --no-deps-check
+            '';
+          };
           docker = pkgs.dockerTools.buildLayeredImage {
             name = "portal";
             tag = "latest";
-            contents = [ portal ];
-            config.Cmd = [ "/bin/server" ];
+            config.Cmd = [ "${portal}/bin/server" ];
+            config.Env = [
+              # locale info
+              "LC_ALL=C.UTF-8"
+              # do not try to set up name with epmd (not a clustered app)
+              "RELEASE_DISTRIBUTION=none"
+            ];
           };
         }
       );
