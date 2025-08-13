@@ -20,7 +20,7 @@ defmodule IeeeTamuPortal.MixProject do
   def application do
     [
       mod: {IeeeTamuPortal.Application, []},
-      extra_applications: [:logger, :runtime_tools, :wx, :observer, :inets, :ssl, :crypto]
+      extra_applications: [:logger, :runtime_tools]
     ]
   end
 

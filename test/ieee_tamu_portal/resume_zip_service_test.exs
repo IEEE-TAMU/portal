@@ -12,9 +12,4 @@ defmodule IeeeTamuPortal.ResumeZipServiceTest do
     # Should return error when no resumes are available
     assert {:error, :no_resumes_found} = ResumeZipService.stream_zip()
   end
-
-  test "can check if inets is available" do
-    # This test ensures that :inets is available
-    assert function_exported?(:inets, :start, 0)
-  end
 end
