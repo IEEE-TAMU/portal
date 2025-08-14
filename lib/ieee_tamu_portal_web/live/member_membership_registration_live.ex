@@ -39,7 +39,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
   end
 
   @impl true
-  def handle_event("copy_confirmation_code", %{"code" => _code}, socket) do
+  def handle_event("copy_confirmation_code", _params, socket) do
     # This will be handled by JavaScript on the client side
     {:noreply, put_flash(socket, :info, "Confirmation code copied to clipboard!")}
   end
@@ -106,7 +106,6 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
                   <button
                     type="button"
                     phx-click="copy_confirmation_code"
-                    phx-value-code={@registration.confirmation_code}
                     phx-hook="CopyToClipboard"
                     id="copy-button-pending"
                     class="absolute right-2 top-2 text-gray-400 hover:text-gray-600"

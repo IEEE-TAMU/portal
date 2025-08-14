@@ -24,45 +24,6 @@ import {hooks as colocatedHooks} from "phoenix-colocated/ieee_tamu_portal"
 import topbar from "../vendor/topbar"
 
 let Hooks = {...colocatedHooks}
-Hooks.Flash = {
-  mounted() {
-    const time = 5000;
-    let hide = () => liveSocket.execJS(this.el, this.el.getAttribute("phx-click"))
-    this.timer = setTimeout(() => hide(), time)
-    this.el.addEventListener("phx:hide-start", () => clearTimeout(this.timer))
-    this.el.addEventListener("mouseover", () => {
-      clearTimeout(this.timer)
-    })
-    this.el.addEventListener("mouseout", () => {
-      this.timer = setTimeout(() => hide(), time)
-    })
-  },
-  destroyed() { clearTimeout(this.timer) }
-}
-Hooks.PhoneNumber = {
-  mounted() {
-    let func = e => {
-      const value = this.el.value.replace(/\D/g, "")
-      this.el.value = value
-      match = value.match(/^(\d{3})(\d{1,3})?(\d{1,4})?$/)
-      if (match) {
-        this.el.value = match[1] + (match[2] ? "-" + match[2] : "") + (match[3] ? "-" + match[3] : "")
-      }
-    }
-    this.el.addEventListener("input", func)
-    func()
-  }
-}
-Hooks.AutoUpcase = {
-  mounted() {
-    let func = e => {
-      const value = this.el.value.toUpperCase()
-      this.el.value = value
-    }
-    this.el.addEventListener("input", func)
-    func()
-  }
-}
 Hooks.CopyToClipboard = {
   mounted() {
     this.el.addEventListener("click", (e) => {

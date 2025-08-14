@@ -105,8 +105,24 @@ defmodule IeeeTamuPortalWeb.MemberInfoLive do
               label="Phone number"
               type="tel"
               placeholder="Ex. 979-845-7200"
-              phx-hook="PhoneNumber"
+              phx-hook=".PhoneNumber"
             />
+            <script :type={Phoenix.LiveView.ColocatedHook} name=".PhoneNumber">
+              export default {
+                mounted() {
+                  let func = e => {
+                    const value = this.el.value.replace(/\D/g, "")
+                    this.el.value = value
+                    match = value.match(/^(\d{3})(\d{1,3})?(\d{1,4})?$/)
+                    if (match) {
+                      this.el.value = match[1] + (match[2] ? "-" + match[2] : "") + (match[3] ? "-" + match[3] : "")
+                    }
+                  }
+                  this.el.addEventListener("input", func)
+                  func()
+                }
+              }
+            </script>
             <.input field={@info_form[:age]} label="Age" type="number" />
             <.input
               field={@info_form[:gender]}
@@ -149,9 +165,21 @@ defmodule IeeeTamuPortalWeb.MemberInfoLive do
               field={@info_form[:major_other]}
               label="Please specify *"
               type="text"
-              phx-hook="AutoUpcase"
+              phx-hook=".AutoUpcase"
               required
             />
+            <script :type={Phoenix.LiveView.ColocatedHook} name=".AutoUpcase">
+              export default {
+                mounted() {
+                  let func = e => {
+                    const value = this.el.value.toUpperCase()
+                    this.el.value = value
+                  }
+                  this.el.addEventListener("input", func)
+                  func()
+                }
+              }
+            </script>
             <div class="flex justify-center items-center">
               <.input
                 field={@info_form[:international_student]}
