@@ -490,6 +490,28 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                         Resend
                       </button>
                     <% end %>
+                    <%= if member.info && member.info.ieee_membership_number do %>
+                      <form
+                        action="https://services24.ieee.org/membership-validator.html"
+                        method="post"
+                        target="_blank"
+                        rel="noopener"
+                        class="inline"
+                      >
+                        <input
+                          type="hidden"
+                          name="customerId"
+                          value={member.info.ieee_membership_number}
+                        />
+                        <button
+                          type="submit"
+                          class="text-indigo-600 hover:text-indigo-900 text-xs"
+                          title="Open IEEE Membership Validator in a new tab"
+                        >
+                          Validate
+                        </button>
+                      </form>
+                    <% end %>
                   </div>
                 </:col>
               </Flop.Phoenix.table>
