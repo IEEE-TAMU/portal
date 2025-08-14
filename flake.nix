@@ -46,7 +46,7 @@
             inherit mixNixDeps;
             pname = "ieee-tamu-portal";
             src = ./.;
-            version = "0.1.10";
+            version = "0.1.11";
 
             stripDebug = true;
 
@@ -73,6 +73,8 @@
           docker = pkgs.dockerTools.buildLayeredImage {
             name = "portal";
             tag = "latest";
+             # put 'server' and 'migrate' in /bin for overriding Cmd
+            contents = [ portal ];
             config.Cmd = [ "${portal}/bin/server" ];
             config.Env = [
               # locale info
