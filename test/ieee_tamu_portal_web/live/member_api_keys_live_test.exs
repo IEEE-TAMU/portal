@@ -18,7 +18,7 @@ defmodule IeeeTamuPortalWeb.MemberApiKeysLiveTest do
   end
 
   describe "/members/api-keys access" do
-    test "requires login", %{conn: conn} do
+    test "requires login", %{conn: _conn} do
       assert {:error, redirect} = live(build_conn(), ~p"/members/api-keys")
       assert {:redirect, %{to: path}} = redirect
       assert path == ~p"/members/login"
@@ -62,6 +62,8 @@ defmodule IeeeTamuPortalWeb.MemberApiKeysLiveTest do
       assert result =~ "portal_api_"
       assert result =~ name
       assert result =~ "Active"
+
+      import Ecto.Query, only: [from: 2]
 
       # Verify it is saved and scoped to this member
       key = Repo.one(from k in ApiKey, where: k.name == ^name)
@@ -112,7 +114,7 @@ defmodule IeeeTamuPortalWeb.MemberApiKeysLiveTest do
       refute result =~ api_key.name
     end
 
-    test "member cannot toggle/delete other member's key", %{conn: conn, member: member} do
+    test "member cannot toggle/delete other member's key", %{conn: conn, member: _member} do
       # Create key for another member
       other = confirmed_member_fixture()
       {_token, _other_key} = member_api_key_fixture(other, %{"name" => "Not Yours"})

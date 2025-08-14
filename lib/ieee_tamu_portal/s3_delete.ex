@@ -1,6 +1,8 @@
 defmodule IeeeTamuPortal.S3Delete do
   use GenServer
 
+  require Logger
+
   alias IeeeTamuPortalWeb.Upload.SimpleS3Upload
 
   # Client
@@ -27,10 +29,10 @@ defmodule IeeeTamuPortal.S3Delete do
         :ok
 
       {:ok, {{_, status_code, _}, _, _}} ->
-        IO.puts("S3 delete failed with status code: #{status_code} for #{uri}")
+        Logger.error("S3 delete failed with status code: #{status_code} for #{uri}")
 
       {:error, reason} ->
-        IO.puts("S3 delete failed with reason: #{reason}")
+        Logger.error("S3 delete failed with reason: #{reason}")
     end
 
     {:noreply, state}
