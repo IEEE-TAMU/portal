@@ -16,7 +16,7 @@ jobs:
     - uses: DeterminateSystems/nix-installer-action@v19
     - uses: DeterminateSystems/magic-nix-cache-action@v13
     - name: build image
-      run: nix build --extra-experimental-features "nix-command flakes" .#packages.x86_64-linux.docker
+      run: nix build --extra-experimental-features "nix-command flakes" --accept-flake-config .#packages.x86_64-linux.docker
     - name: Log in to registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
     - name: Load image
