@@ -52,11 +52,6 @@
             # make runtime.ex happy during build
             NIX_BUILD_ENV = "true";
 
-            # generate phx overlays (migrate and server)
-            preBuild = ''
-              mix phx.gen.release
-            '';
-
             postBuild = ''
               tailwind_path="$(mix do \
                 app.config --no-deps-check --no-compile, \

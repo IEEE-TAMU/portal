@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+cd -P -- "$(dirname -- "$0")"
+exec ./ieee_tamu_portal eval IeeeTamuPortal.Release.migrate
