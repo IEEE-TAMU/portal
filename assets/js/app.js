@@ -20,9 +20,10 @@ import "phoenix_html"
 // Establish Phoenix Socket and LiveView configuration.
 import { Socket } from "phoenix"
 import { LiveSocket } from "phoenix_live_view"
+import {hooks as colocatedHooks} from "phoenix-colocated/ieee_tamu_portal"
 import topbar from "../vendor/topbar"
 
-let Hooks = {}
+let Hooks = {...colocatedHooks}
 Hooks.Flash = {
   mounted() {
     const time = 5000;
