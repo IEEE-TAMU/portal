@@ -39,7 +39,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
   end
 
   @impl true
-  def handle_event("copy_confirmation_code", _params, socket) do
+  def handle_event("copy_confirmation_code", %{"code" => _code}, socket) do
     # This will be handled by JavaScript on the client side
     {:noreply, put_flash(socket, :info, "Confirmation code copied to clipboard!")}
   end
@@ -106,7 +106,8 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
                   <button
                     type="button"
                     phx-click="copy_confirmation_code"
-                    phx-hook="CopyToClipboard"
+                    phx-value-code={@registration.confirmation_code}
+                    phx-hook=".CopyToClipboard"
                     id="copy-button-pending"
                     class="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
                     title="Copy to clipboard"
@@ -114,6 +115,52 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
                     <.icon name="hero-clipboard" class="w-4 h-4" />
                     <.icon name="hero-check" class="w-4 h-4 hidden text-green-600" />
                   </button>
+                  <script :type={Phoenix.LiveView.ColocatedHook} name=".CopyToClipboard">
+                    export default {
+                      mounted() {
+                        this.el.addEventListener("click", (e) => {
+                          const code = this.el.getAttribute("phx-value-code")
+                          navigator.clipboard.writeText(code).then(() => {
+                            // Toggle visibility of clipboard and check icons
+                            const clipboardIcon = this.el.querySelector('[class*="hero-clipboard"]')
+                            const checkIcon = this.el.querySelector('[class*="hero-check"]')
+
+                            if (clipboardIcon && checkIcon) {
+                              clipboardIcon.classList.add('hidden')
+                              checkIcon.classList.remove('hidden')
+
+                              setTimeout(() => {
+                                clipboardIcon.classList.remove('hidden')
+                                checkIcon.classList.add('hidden')
+                              }, 1000)
+                            }
+                          }).catch(() => {
+                            // Fallback for browsers that don't support clipboard API
+                            const textArea = document.createElement("textarea")
+                            textArea.value = code
+                            document.body.appendChild(textArea)
+                            textArea.select()
+                            document.execCommand("copy")
+                            document.body.removeChild(textArea)
+
+                            // Still show the visual feedback even with fallback
+                            const clipboardIcon = this.el.querySelector('[class*="hero-clipboard"]')
+                            const checkIcon = this.el.querySelector('[class*="hero-check"]')
+
+                            if (clipboardIcon && checkIcon) {
+                              clipboardIcon.classList.add('hidden')
+                              checkIcon.classList.remove('hidden')
+
+                              setTimeout(() => {
+                                clipboardIcon.classList.remove('hidden')
+                                checkIcon.classList.add('hidden')
+                              }, 1000)
+                            }
+                          })
+                        })
+                      }
+                    }
+                  </script>
                 </div>
               </div>
             </div>
