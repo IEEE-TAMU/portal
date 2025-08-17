@@ -20,9 +20,12 @@ defmodule IeeeTamuPortal.ResumeZipService do
         {:error, :no_resumes_found}
 
       members ->
+        short_date = Date.utc_today() |> to_string()
+        folder_name = "ieee_tamu_resumes_#{short_date}"
+
         zip_stream =
           members
-          |> Stream.map(&create_zip_entry/1)
+          |> Stream.map(&create_zip_entry(&1, folder_name))
           |> Stream.filter(&(&1 != nil))
           |> Zstream.zip()
 
@@ -45,12 +48,12 @@ defmodule IeeeTamuPortal.ResumeZipService do
     |> IeeeTamuPortal.Repo.preload([:info])
   end
 
-  defp create_zip_entry(member) do
+  defp create_zip_entry(member, folder_name) do
     try do
       case fetch_resume_content(member) do
         {:ok, content} ->
           filename = create_safe_filename(member)
-          Zstream.entry(filename, [content])
+          Zstream.entry(Path.join(folder_name, filename), [content])
 
         {:error, reason} ->
           # Log error but continue with other resumes
