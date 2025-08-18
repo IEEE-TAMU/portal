@@ -622,6 +622,23 @@ let
         in
         drv;
 
+      nimble_csv =
+        let
+          version = "1.3.0";
+          drv = buildMix {
+            inherit version;
+            name = "nimble_csv";
+            appConfigPath = ./config;
+
+            src = fetchHex {
+              inherit version;
+              pkg = "nimble_csv";
+              sha256 = "41ccdc18f7c8f8bb06e84164fc51635321e80d5a3b450761c4997d620925d619";
+            };
+          };
+        in
+        drv;
+
       nimble_options =
         let
           version = "1.1.1";
@@ -909,6 +926,7 @@ let
               finch
               jason
               mime
+              nimble_csv
               plug
             ];
           };
