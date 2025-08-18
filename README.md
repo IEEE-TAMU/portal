@@ -1,3 +1,4 @@
+[![.github/workflows/build-and-deploy.yaml](https://github.com/IEEE-TAMU/portal/actions/workflows/build-and-deploy.yaml/badge.svg?branch=main)](https://github.com/IEEE-TAMU/portal/actions/workflows/build-and-deploy.yaml)
 # IeeeTamuPortal
 
 To start your Phoenix server:
