@@ -109,6 +109,7 @@ defmodule IeeeTamuPortalWeb.Router do
   scope "/admin", IeeeTamuPortalWeb do
     pipe_through [:browser, :admin_auth]
     get "/download-resumes", AdminResumeZipController, :download
+    get "/download-members", AdminMemberExportController, :download
 
     live_session :admin_auth,
       # on_mount: [{IeeeTamuPortalWeb.Auth.AdminAuth, :admin_auth}],

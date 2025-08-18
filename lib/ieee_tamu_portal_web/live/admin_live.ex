@@ -40,62 +40,42 @@ defmodule IeeeTamuPortalWeb.AdminLive do
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                <.icon name="hero-users" class="w-5 h-5 text-white" />
-              </div>
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Total Members</p>
-              <p class="text-2xl font-bold text-gray-900">{@member_count}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                <.icon name="hero-credit-card" class="w-5 h-5 text-white" />
-              </div>
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Paid Members</p>
-              <p class="text-2xl font-bold text-gray-900">{@paid_members_count}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                  <.icon name="hero-document-text" class="w-5 h-5 text-white" />
-                </div>
-              </div>
-
-              <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Uploaded Resumes</p>
-                <p class="text-2xl font-bold text-gray-900">{@resume_count}</p>
-              </div>
-            </div>
-            <%= if @resume_count > 0 do %>
-              <div class="flex-shrink-0">
-                <.link
-                  href={~p"/admin/download-resumes"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                >
-                  <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download
-                </.link>
-              </div>
-            <% end %>
-          </div>
-        </div>
+        <.stats_card
+          label="Total Members"
+          value={@member_count}
+          icon="hero-users"
+          icon_bg="bg-blue-500"
+          action_href={~p"/admin/download-members"}
+          action_label="CSV"
+          action_class="bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+        />
+        <.stats_card
+          label="Paid Members"
+          value={@paid_members_count}
+          icon="hero-credit-card"
+          icon_bg="bg-green-500"
+          action_href={~p"/admin/download-members?paid=true"}
+          action_label="CSV"
+          action_class="bg-green-600 hover:bg-green-700 focus:ring-green-500"
+        />
+        <.stats_card
+          label="Resumes"
+          value={@resume_count}
+          icon="hero-document-text"
+          icon_bg="bg-purple-500"
+          show_action={@resume_count > 0}
+        >
+          <:action :if={@resume_count > 0}>
+            <.link
+              href={~p"/admin/download-resumes"}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+            >
+              <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download
+            </.link>
+          </:action>
+        </.stats_card>
       </div>
 
       <div class="mt-8 bg-white rounded-lg shadow p-6">
@@ -119,6 +99,80 @@ defmodule IeeeTamuPortalWeb.AdminLive do
             </div>
             <p class="text-xs text-gray-500 mt-1">Manage application-wide settings</p>
           </.link>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  @doc """
+  Compact statistic card with an icon, label, value, and optional action link/button.
+
+  ## Assigns
+
+    * `:label` - short descriptor shown under/next to the value
+    * `:value` - the primary number/text to surface (any renderable)
+    * `:icon` - hero icon name (e.g. "hero-users")
+    * `:icon_bg` - Tailwind utility classes for icon circle background (default blue)
+    * `:value_class` - optional classes to override value style
+    * `:action_href` - optional URL for an action link (e.g. download)
+    * `:action_label` - text for the action (default: "Action")
+    * `:action_icon` - hero icon for the action (default: hero-arrow-down-tray)
+    * `:action_class` - Tailwind classes for the action control
+    * `:show_action` - boolean (default true) to conditionally hide while keeping assigns
+
+  You may also provide a custom action via the `:action` slot which overrides
+  the generated link when present.
+  """
+  attr :label, :string, required: true
+  attr :value, :any, required: true
+  attr :icon, :string, required: true
+  attr :icon_bg, :string, default: "bg-blue-500"
+  attr :value_class, :string, default: nil
+  attr :action_href, :string, default: nil
+  attr :action_label, :string, default: "Action"
+  attr :action_icon, :string, default: "hero-arrow-down-tray"
+  attr :action_class, :string, default: nil
+  attr :show_action, :boolean, default: true
+  slot :action
+
+  def stats_card(assigns) do
+    ~H"""
+    <div class="bg-white rounded-lg shadow p-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class={[
+              "w-8 h-8 rounded-full flex items-center justify-center text-white",
+              @icon_bg
+            ]}>
+              <.icon name={@icon} class="w-5 h-5" />
+            </div>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">{@label}</p>
+            <p class={[
+              "text-2xl font-bold text-gray-900",
+              @value_class
+            ]}>{@value}</p>
+          </div>
+        </div>
+        <div :if={@show_action && (@action != [] or @action_href)} class="ml-4 flex-shrink-0">
+          <%= if @action != [] do %>
+            {render_slot(@action)}
+          <% else %>
+            <.link
+              :if={@action_href}
+              href={@action_href}
+              download
+              class={[
+                "inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2",
+                @action_class || "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+              ]}
+            >
+              <.icon name={@action_icon} class="w-4 h-4 mr-2" /> {@action_label}
+            </.link>
+          <% end %>
         </div>
       </div>
     </div>
