@@ -154,7 +154,9 @@ defmodule IeeeTamuPortalWeb.AdminLive do
             <p class={[
               "text-2xl font-bold text-gray-900",
               @value_class
-            ]}>{@value}</p>
+            ]}>
+              {@value}
+            </p>
           </div>
         </div>
         <div :if={@show_action && (@action != [] or @action_href)} class="ml-4 flex-shrink-0">
