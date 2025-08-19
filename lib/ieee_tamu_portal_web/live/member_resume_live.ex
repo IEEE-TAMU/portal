@@ -133,41 +133,15 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
         </div>
       <% end %>
       <div class="flex border-t border-gray-200 pt-5 justify-evenly items-center">
-        <%= for entry <- @uploads.member_resume.entries do %>
-          <article class="upload-entry" phx-drop-target={@uploads.member_resume.ref}>
-            <span class="upload-entry-name">{entry.client_name}</span>
-            <button
-              type="button"
-              phx-click="cancel-upload"
-              phx-value-ref={entry.ref}
-              aria-label="cancel"
-            >
-              <.icon name="hero-x-mark" />
-            </button>
-          </article>
-        <% end %>
-        <%= if length(@uploads.member_resume.entries) < @uploads.member_resume.max_entries do %>
-          <div class="mt-1 sm:mt-0 flex-grow" phx-drop-target={@uploads.member_resume.ref}>
-            <div class="flex-col justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-              <div class="space-y-1 text-center">
-                <.icon name="hero-document-text" />
-                <div class="flex-col justify-center text-sm pb-4">
-                  <p class="pb-2">Drag and drop your resume here, or</p>
-                  <label
-                    for={@uploads.member_resume.ref}
-                    class="relative cursor-pointer rounded-md font-medium px-4 py-2 text-white bg-zinc-900 hover:bg-zinc-700 focus-within:ring-2 focus-within:ring-offset-1"
-                  >
-                    Choose file
-                  </label>
-                </div>
-              </div>
-              <div class="text-xs text-center text-gray-500">
-                PDFs only | Max 5MB
-              </div>
-            </div>
-          </div>
-        <% end %>
-        <.live_file_input upload={@uploads.member_resume} class="sr-only" tabindex="0" />
+        <.upload_zone
+          upload={@uploads.member_resume}
+          title="Drag & drop your PDF resume here, or"
+          subtitle="PDF • Max 5MB"
+          icon="hero-document-text"
+          cta_text="Choose file"
+          replace_text="Replace"
+          cancel_event="cancel-upload"
+        />
       </div>
       <div class="mt-2 flex items-center justify-between gap-6">
         <.button phx-disable-with="Uploading...">

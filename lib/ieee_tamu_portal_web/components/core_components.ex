@@ -261,6 +261,126 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
   end
 
   @doc """
+  Renders a drag & drop upload zone with per-file entry cards.
+
+  Accepts a LiveView upload config assign (for example: `@uploads.photos`).
+
+  Features:
+    * Handles single or multiple uploads (uses `upload.max_entries`).
+    * Drop zone auto-hides when capacity is reached.
+    * Per-entry error display and remove (cancel) button.
+    * Progress bar while uploading (for non-error, in-progress entries).
+    * Customizable icon, title line, subtitle line, and call-to-action button text.
+
+  Pass a custom `:subtitle` like "PDF • Max 5MB" when desired; if omitted, none is shown.
+  """
+  attr :upload, :map, required: true
+  attr :icon, :string, default: "hero-document-text"
+  attr :title, :string, default: nil
+  attr :subtitle, :string, default: nil
+  attr :cta_text, :string, default: "Choose file"
+  attr :replace_text, :string, default: "Replace"
+  attr :remove_aria_label, :string, default: "Remove file"
+  attr :class, :string, default: nil, doc: "optional wrapper classes"
+  attr :cancel_event, :string, required: true, doc: "event name to push when removing an entry"
+
+  def upload_zone(assigns) do
+    assigns = assign_new(assigns, :title, fn -> assigns.title || "Drag & drop files here, or" end)
+    ~H"""
+    <div class={[@class, "w-full"]} phx-drop-target={@upload.ref}>
+      <.live_file_input upload={@upload} class="sr-only" tabindex="0" />
+      <div class="space-y-3">
+        <div :for={entry <- @upload.entries} class="group">
+          <% errors = upload_errors(@upload, entry) %>
+          <% icon_class = Enum.reject([
+                "h-5 w-5",
+                errors == [] && "text-gray-500 group-hover:text-gray-600",
+                errors != [] && "text-rose-600"
+              ], &is_nil/1) |> Enum.join(" ") %>
+          <div
+            class={[
+              "flex items-start gap-3 rounded-lg border p-3 w-full text-sm transition bg-white",
+              errors == [] && "border-gray-200",
+              errors != [] && "border-rose-300 bg-rose-50/70"
+            ]}
+            role={if errors != [], do: "alert", else: nil}
+            aria-live={if errors != [], do: "assertive", else: nil}
+          >
+            <div class="pt-0.5">
+              <.icon
+                name={if errors != [], do: "hero-exclamation-circle-mini", else: @icon}
+                class={icon_class}
+              />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class={[
+                "font-medium truncate",
+                errors == [] && "text-gray-800",
+                errors != [] && "text-rose-700"
+              ]}>{entry.client_name}</p>
+              <%= if errors == [] do %>
+                <div :if={entry.progress < 100} class="mt-1 h-1 w-full rounded bg-gray-100">
+                  <div class="h-1 rounded bg-emerald-500 transition-all" style={"width: #{entry.progress}%"}></div>
+                </div>
+                <p :if={entry.progress == 100} class="mt-0.5 text-[11px] text-emerald-600">Ready</p>
+              <% else %>
+                <ul class="mt-1 space-y-0.5 text-rose-600 list-disc list-inside">
+                  <%= for err <- Enum.uniq(Enum.map(errors, &file_upload_error/1)) do %>
+                    <li>{err}</li>
+                  <% end %>
+                </ul>
+                <p class="mt-2 text-[11px] text-rose-500">Select a different file to replace this one.</p>
+              <% end %>
+            </div>
+            <div class="flex flex-col items-end gap-2">
+              <button
+                type="button"
+                phx-click={@cancel_event}
+                phx-value-ref={entry.ref}
+                aria-label={@remove_aria_label}
+                class="text-gray-500 hover:text-gray-700 rounded p-1"
+              >
+                <.icon name="hero-x-mark" class="h-4 w-4" />
+              </button>
+              <label
+                :if={@upload.max_entries == 1}
+                for={@upload.ref}
+                class="text-[11px] cursor-pointer text-zinc-700 hover:text-zinc-900 underline"
+              >
+                {@replace_text}
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <% remaining = @upload.max_entries - length(@upload.entries) %>
+        <div :if={remaining > 0} class="w-full" phx-drop-target={@upload.ref}>
+          <div class="flex flex-col items-center justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md text-center gap-3">
+            <.icon name={@icon} class="h-8 w-8 text-gray-500" />
+            <div class="text-sm">
+              <p class="pb-2 text-gray-600">{@title}</p>
+              <label
+                for={@upload.ref}
+                class="inline-block cursor-pointer rounded-md font-medium px-4 py-2 text-white bg-zinc-900 hover:bg-zinc-700 focus-within:ring-2 focus-within:ring-offset-1"
+              >
+                {@cta_text}
+              </label>
+            </div>
+            <div :if={@subtitle} class="text-xs text-gray-500">{@subtitle}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  # Internal helper to map upload errors to human text (generic wording)
+  defp file_upload_error(:too_large), do: gettext("File exceeds size limit")
+  defp file_upload_error(:not_accepted), do: gettext("Unaccepted file type")
+  defp file_upload_error(:external_client_failure), do: gettext("Upload failed. Try again.")
+  defp file_upload_error(other) when is_atom(other), do: Phoenix.Naming.humanize(to_string(other))
+
+  @doc """
   Renders an input with label and error messages.
 
   A `Phoenix.HTML.FormField` may be passed as argument,
@@ -645,7 +765,7 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
       <.icon name="hero-arrow-path" class="ml-1 w-3 h-3 animate-spin" />
   """
   attr :name, :string, required: true
-  attr :class, :string, default: nil
+  attr :class, :any, default: nil
   attr :id, :string, default: nil
 
   def icon(%{name: "hero-" <> _} = assigns) do
