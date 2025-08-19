@@ -286,17 +286,23 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
 
   def upload_zone(assigns) do
     assigns = assign_new(assigns, :title, fn -> assigns.title || "Drag & drop files here, or" end)
+
     ~H"""
     <div class={[@class, "w-full"]} phx-drop-target={@upload.ref}>
       <.live_file_input upload={@upload} class="sr-only" tabindex="0" />
       <div class="space-y-3">
         <div :for={entry <- @upload.entries} class="group">
           <% errors = upload_errors(@upload, entry) %>
-          <% icon_class = Enum.reject([
+          <% icon_class =
+            Enum.reject(
+              [
                 "h-5 w-5",
                 errors == [] && "text-gray-500 group-hover:text-gray-600",
                 errors != [] && "text-rose-600"
-              ], &is_nil/1) |> Enum.join(" ") %>
+              ],
+              &is_nil/1
+            )
+            |> Enum.join(" ") %>
           <div
             class={[
               "flex items-start gap-3 rounded-lg border p-3 w-full text-sm transition bg-white",
@@ -317,10 +323,16 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
                 "font-medium truncate",
                 errors == [] && "text-gray-800",
                 errors != [] && "text-rose-700"
-              ]}>{entry.client_name}</p>
+              ]}>
+                {entry.client_name}
+              </p>
               <%= if errors == [] do %>
                 <div :if={entry.progress < 100} class="mt-1 h-1 w-full rounded bg-gray-100">
-                  <div class="h-1 rounded bg-emerald-500 transition-all" style={"width: #{entry.progress}%"}></div>
+                  <div
+                    class="h-1 rounded bg-emerald-500 transition-all"
+                    style={"width: #{entry.progress}%"}
+                  >
+                  </div>
                 </div>
                 <p :if={entry.progress == 100} class="mt-0.5 text-[11px] text-emerald-600">Ready</p>
               <% else %>
@@ -329,7 +341,9 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
                     <li>{err}</li>
                   <% end %>
                 </ul>
-                <p class="mt-2 text-[11px] text-rose-500">Select a different file to replace this one.</p>
+                <p class="mt-2 text-[11px] text-rose-500">
+                  Select a different file to replace this one.
+                </p>
               <% end %>
             </div>
             <div class="flex flex-col items-end gap-2">

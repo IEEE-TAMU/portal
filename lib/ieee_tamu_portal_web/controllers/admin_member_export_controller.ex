@@ -45,7 +45,7 @@ defmodule IeeeTamuPortalWeb.AdminMemberExportController do
         left_join: p in Payment,
         on: p.registration_id == r.id,
         left_join: a in assoc(m, :secondary_auth_methods),
-        where: a.provider == :discord,
+        on: a.provider == :discord,
         where:
           ^paid_only? == false or
             (not is_nil(r.id) and (r.payment_override == true or not is_nil(p.id))),
