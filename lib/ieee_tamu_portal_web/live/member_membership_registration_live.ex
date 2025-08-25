@@ -83,7 +83,9 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
                 <br />
                 <p>
                   If you only want to sign up for branch membership, you can do so<.link
-                    href="https://tamu.estore.flywire.com/institute-of-electrical-and-electronics-engineers/membership-dues"
+                    href="https://sofctamu.estore.flywire.com/institute-of-electrical-and-electronics-engineers/membership-dues"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     class="text-yellow-800 hover:underline"
                   >
                     here <.icon name="hero-arrow-top-right-on-square" class="w-4 h-5" />.</.link> (make sure to enter the confirmation code below in the order form)
