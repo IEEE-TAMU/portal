@@ -715,7 +715,7 @@ let
 
       phoenix =
         let
-          version = "1.8.0";
+          version = "1.8.1";
           drv = buildMix {
             inherit version;
             name = "phoenix";
@@ -724,7 +724,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "phoenix";
-              sha256 = "15f6e9cb76646ad8d9f2947240519666fc2c4f29f8a93ad9c7664916ab4c167b";
+              sha256 = "84d77d2b2e77c3c7e7527099bd01ef5c8560cd149c036d6b3a40745f11cd2fb2";
             };
 
             beamDeps = [
