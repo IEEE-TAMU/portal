@@ -366,6 +366,23 @@ let
         in
         drv;
 
+      eqrcode =
+        let
+          version = "0.2.1";
+          drv = buildMix {
+            inherit version;
+            name = "eqrcode";
+            appConfigPath = ./config;
+
+            src = fetchHex {
+              inherit version;
+              pkg = "eqrcode";
+              sha256 = "d5828a222b904c68360e7dc2a40c3ef33a1328b7c074583898040f389f928025";
+            };
+          };
+        in
+        drv;
+
       esbuild =
         let
           version = "0.10.0";
