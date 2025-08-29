@@ -257,4 +257,16 @@ defmodule IeeeTamuPortal.SettingsTest do
       refute Map.has_key?(changeset.changes, :key)
     end
   end
+
+  describe "get_current_event!/0" do
+    test "returns the current event name when setting exists" do
+      current_event_setting_fixture("first_meeting")
+      assert Settings.get_current_event!() == "first_meeting"
+    end
+
+    test "returns default event when current_event setting does not exist" do
+      # setup removed all settings
+      assert is_binary(Settings.get_current_event!())
+    end
+  end
 end

@@ -39,4 +39,20 @@ defmodule IeeeTamuPortal.SettingsFixtures do
 
     setting
   end
+
+  def current_event_setting_fixture(event_name \\ "general_meeting") do
+    case IeeeTamuPortal.Repo.get_by(IeeeTamuPortal.Settings.Setting, key: "current_event") do
+      nil -> :ok
+      existing_setting -> IeeeTamuPortal.Repo.delete!(existing_setting)
+    end
+
+    {:ok, setting} =
+      Settings.create_setting(%{
+        key: "current_event",
+        value: event_name,
+        description: "Current event for member check-ins"
+      })
+
+    setting
+  end
 end
