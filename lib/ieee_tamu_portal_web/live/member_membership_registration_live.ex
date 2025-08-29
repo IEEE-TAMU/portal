@@ -22,11 +22,18 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
       end
       |> Members.get_registration_with_payment()
 
-    status =
-      if Members.Registration.payment_complete?(registration) do
-        :paid
+    paid? = Members.Registration.payment_complete?(registration)
+    status = if paid?, do: :paid, else: :pending
+
+    # Build QR code data for admin check-in when eligible
+    current_event = Settings.get_current_event!()
+
+    checkin_qr_svg =
+      if paid? and is_binary(current_event) and current_event != "NONE" do
+        url = url(~p"/admin/check-in?member_id=#{current_member.id}")
+        EQRCode.encode(url) |> EQRCode.svg()
       else
-        :pending
+        nil
       end
 
     socket =
@@ -34,6 +41,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
       |> assign(:registration, registration)
       |> assign(:current_year, current_year)
       |> assign(:status, status)
+      |> assign(:checkin_qr_svg, checkin_qr_svg)
 
     {:ok, socket}
   end
@@ -167,6 +175,10 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
               </div>
             </div>
           <% :paid -> %>
+            <%= if @checkin_qr_svg do %>
+              <.checkin_qr svg={@checkin_qr_svg} />
+            <% end %>
+
             <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
               <div class="flex items-center">
                 <.icon name="hero-check-circle" class="w-5 h-5 text-green-600 mr-2" />
@@ -237,6 +249,28 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
               <% end %>
             </div>
         <% end %>
+      </div>
+    </div>
+    """
+  end
+
+  # Small function component to render the QR code block
+  def checkin_qr(assigns) do
+    ~H"""
+    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">Event Check-in QR</h3>
+      <p class="text-gray-600 mb-4">
+        Show this QR to an officer to be checked in for {@event_name}.
+      </p>
+      <div class="flex justify-center">
+        <div
+          id="checkin-qrcode"
+          phx-update="ignore"
+          aria-label="Check-in QR Code"
+          class="p-2 bg-white"
+        >
+          {Phoenix.HTML.raw(@svg)}
+        </div>
       </div>
     </div>
     """
