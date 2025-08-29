@@ -44,13 +44,11 @@ defmodule IeeeTamuPortal.Accounts.Member do
   end
 
   def list_members(params) do
+    alias IeeeTamuPortal.Members.Registration
     import Ecto.Query
 
     query =
-      from m in __MODULE__,
-        left_join: info in assoc(m, :info),
-        as: :info,
-        preload: [:info, :resume, registrations: :payment]
+      preload(__MODULE__, [:info, :resume, registrations: ^Registration.with_payment_status()])
 
     Flop.validate_and_run!(query, params, for: __MODULE__, replace_invalid_params: true)
   end

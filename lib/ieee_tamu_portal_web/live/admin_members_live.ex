@@ -416,14 +416,14 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                       >
                         Override
                       </button>
-                    <% :unpaid -> %>
+                    <% :pending -> %>
                       <button
                         phx-click="toggle_payment_override"
                         phx-value-member_id={member.id}
                         class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 hover:bg-red-200 cursor-pointer transition-colors"
                         title="Click to mark as paid"
                       >
-                        Unpaid
+                        Pending
                       </button>
                   <% end %>
                 </:col>

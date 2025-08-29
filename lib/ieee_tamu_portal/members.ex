@@ -20,31 +20,6 @@ defmodule IeeeTamuPortal.Members do
 
   Each academic year, members must register and pay dues. The system tracks
   registrations per year and associated payments or payment overrides.
-
-  ## Payment Status
-
-  The module provides functions to check payment status for specific years:
-
-  - `get_payment_status/2` - Returns `:paid`, `:override`, or `:unpaid`
-  - `has_paid?/2` - Returns true if member has paid or has override
-  - `has_payment_override?/2` - Returns true if member has payment override
-
-  ## Examples
-
-      iex> Members.get_info_by_member_id(123)
-      %Info{first_name: "John", last_name: "Doe", ...}
-
-      iex> Members.create_registration(member, %{year: 2024})
-      {:ok, %Registration{}}
-
-      iex> Members.get_payment_status(member, 2024)
-      :paid
-
-      iex> Members.has_paid?(member, 2024)
-      true
-
-      iex> Members.has_payment_override?(member, 2024)
-      false
   """
 
   import Ecto.Query, warn: false
@@ -563,23 +538,16 @@ defmodule IeeeTamuPortal.Members do
       :unpaid
   """
   def get_payment_status(member, year) do
-    registrations_for_year =
-      Enum.filter(member.registrations, fn reg ->
-        reg.year == year
-      end)
-      |> Repo.preload(:payment)
+    case member.registrations do
+      nil ->
+        :pending
 
-    case registrations_for_year do
-      [] ->
-        :unpaid
-
-      [registration] ->
-        cond do
-          registration.payment_override -> :override
-          # Check if payment is actually loaded and not nil
-          match?(%Ecto.Association.NotLoaded{}, registration.payment) -> :unpaid
-          registration.payment != nil -> :paid
-          true -> :unpaid
+      regs ->
+        regs
+        |> Enum.filter(&(&1.year == year))
+        |> case do
+          [] -> :pending
+          [reg] -> reg.payment_status
         end
     end
   end

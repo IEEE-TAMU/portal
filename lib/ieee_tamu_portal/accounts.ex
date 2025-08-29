@@ -94,48 +94,18 @@ defmodule IeeeTamuPortal.Accounts do
 
   """
   def list_members_with_registrations(year) do
-    alias IeeeTamuPortal.Members.{Registration, Payment}
+    alias IeeeTamuPortal.Members.Registration
     import Ecto.Query
 
-    from(m in Member,
-      left_join: r in Registration,
-      on: m.id == r.member_id and r.year == ^year,
-      left_join: p in Payment,
-      on: r.id == p.registration_id,
-      preload: [
-        :resume,
-        registrations: {r, payment: p}
-      ]
-    )
+    regs_query =
+      Registration
+      |> where([r], r.year == ^year)
+      |> Registration.with_payment_status()
+      |> preload(:payment)
+
+    from(m in Member)
+    |> preload([:resume, registrations: ^regs_query])
     |> Repo.all()
-  end
-
-  @doc """
-  Lists members with registrations and payment status for admin views.
-
-  Returns members enhanced with payment status information for easier
-  admin dashboard display.
-
-  ## Parameters
-
-    * `year` - The registration year to check payment status for
-
-  ## Examples
-
-      iex> list_members_for_admin(2024)
-      [%Member{has_paid: true, has_override: false, ...}, ...]
-
-  """
-  def list_members_for_admin(year) do
-    alias IeeeTamuPortal.Members
-
-    list_members_with_registrations(year)
-    |> Enum.map(fn member ->
-      # Add payment status using Members context functions
-      member
-      |> Map.put(:has_paid, Members.has_paid?(member, year))
-      |> Map.put(:has_override, Members.has_payment_override?(member, year))
-    end)
   end
 
   @doc """
