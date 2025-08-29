@@ -69,7 +69,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:assent, "== 0.3.1"},
       {:zstream, "== 0.6.7"},
       {:flop_phoenix, "== 0.25.3"},
-      {:lazy_html, "== 0.1.6", only: :test},
+      {:lazy_html, "== 0.1.7", only: :test},
       {:mox, "== 1.2.0", only: :test},
       {:igniter, "== 0.6.28", only: [:dev, :test]},
       {:igniter_new, "== 0.5.31", only: :dev},
