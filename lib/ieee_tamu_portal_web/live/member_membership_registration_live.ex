@@ -2,6 +2,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
   use IeeeTamuPortalWeb, :live_view
 
   alias IeeeTamuPortal.{Settings, Members}
+  alias IeeeTamuPortal.Accounts.Member
 
   @impl true
   def mount(_params, _session, socket) do
@@ -25,11 +26,12 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
     paid? = Members.Registration.payment_complete?(registration)
     status = if paid?, do: :paid, else: :pending
 
-    # Build QR code data for admin check-in when eligible
+    # Build QR code or show message depending on check-in state
     current_event = Settings.get_current_event!()
-
+    already_checked_in? = Member.member_is_checked_in?(current_member.id)
     checkin_qr_svg =
-      if paid? and is_binary(current_event) and current_event != "NONE" do
+      if paid? and not already_checked_in? and is_binary(current_event) and
+           current_event != "NONE" do
         url = url(~p"/admin/check-in?member_id=#{current_member.id}")
         EQRCode.encode(url) |> EQRCode.svg()
       else
@@ -41,6 +43,8 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
       |> assign(:registration, registration)
       |> assign(:current_year, current_year)
       |> assign(:status, status)
+      |> assign(:current_event, current_event)
+      |> assign(:already_checked_in?, already_checked_in?)
       |> assign(:checkin_qr_svg, checkin_qr_svg)
 
     {:ok, socket}
@@ -175,8 +179,12 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
               </div>
             </div>
           <% :paid -> %>
-            <%= if @checkin_qr_svg do %>
-              <.checkin_qr svg={@checkin_qr_svg} />
+            <%= if @already_checked_in? do %>
+              <.checked_in_message event_name={@current_event} />
+            <% else %>
+              <%= if @checkin_qr_svg do %>
+                <.checkin_qr svg={@checkin_qr_svg} event_name={@current_event} />
+              <% end %>
             <% end %>
 
             <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
@@ -274,5 +282,26 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
       </div>
     </div>
     """
+  end
+
+  # Small function component to render the checked-in message
+  def checked_in_message(assigns) do
+    ~H"""
+    <div class="bg-white border rounded-lg p-6 mb-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">You're checked in</h3>
+      <p>You are checked into {@event_name}.</p>
+    </div>
+    """
+  end
+
+  @impl true
+  def handle_info({:member_checked_in, member_id}, socket) do
+    current = socket.assigns.current_member
+
+    if to_string(current.id) == to_string(member_id) do
+      {:noreply, socket |> assign(:already_checked_in?, true) |> assign(:checkin_qr_svg, nil)}
+    else
+      {:noreply, socket}
+    end
   end
 end

@@ -227,4 +227,47 @@ defmodule IeeeTamuPortal.Accounts.Member do
         {:ok, %__MODULE__{member | resume: nil}}
     end
   end
+
+  @doc """
+  Returns true if the member has an EventCheckin for the current event and registration year.
+
+  Accepts a Member struct or a member id.
+  If the current event is "NONE", returns false.
+  """
+  def member_is_checked_in?(%__MODULE__{id: id}), do: member_is_checked_in?(id)
+
+  def member_is_checked_in?(member_id) when is_integer(member_id) or is_binary(member_id) do
+    import Ecto.Query
+    alias IeeeTamuPortal.Members.EventCheckin
+
+    event_name = IeeeTamuPortal.Settings.get_current_event!()
+
+    if event_name == "NONE" do
+      false
+    else
+      event_year = IeeeTamuPortal.Settings.get_registration_year!()
+
+      member_id =
+        case member_id do
+          id when is_integer(id) ->
+            id
+
+          bin when is_binary(bin) ->
+            case Integer.parse(bin) do
+              {int, _} -> int
+              :error -> -1
+            end
+        end
+
+      query =
+        from ec in EventCheckin,
+          where:
+            ec.member_id == ^member_id and ec.event_name == ^event_name and
+              ec.event_year == ^event_year,
+          select: 1,
+          limit: 1
+
+      IeeeTamuPortal.Repo.exists?(query)
+    end
+  end
 end
