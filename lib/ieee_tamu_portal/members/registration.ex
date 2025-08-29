@@ -1,12 +1,14 @@
 defmodule IeeeTamuPortal.Members.Registration do
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
 
   schema "registrations" do
     field :year, :integer, autogenerate: {IeeeTamuPortal.Settings, :get_registration_year!, []}
 
     field :confirmation_code, :string
     field :payment_override, :boolean, default: false
+    field :payment_status, Ecto.Enum, values: [:pending, :paid, :override], virtual: true
 
     belongs_to :member, IeeeTamuPortal.Accounts.Member
     has_one :payment, IeeeTamuPortal.Members.Payment
@@ -130,15 +132,63 @@ defmodule IeeeTamuPortal.Members.Registration do
   end
 
   @doc """
-  Checks if a member has payment override enabled for a specific year.
-  """
-  def member_has_payment_override?(member_id, year) do
-    alias IeeeTamuPortal.Repo
-    import Ecto.Query
+  Compute the payment status for a loaded registration struct.
 
-    from(r in __MODULE__,
-      where: r.member_id == ^member_id and r.year == ^year and r.payment_override == true
-    )
-    |> Repo.exists?()
+  Returns one of `:override`, `:paid`, or `:pending` based on:
+  - `payment_override` being true -> `:override`
+  - a non-nil associated `payment` -> `:paid`
+  - otherwise -> `:pending`
+
+  """
+  def put_payment_status(%__MODULE__{} = registration) do
+    registration = IeeeTamuPortal.Repo.preload(registration, :payment)
+
+    status =
+      cond do
+        registration.payment_override -> :override
+        registration.payment != nil -> :paid
+        true -> :pending
+      end
+
+    %{registration | payment_status: status}
+  end
+
+  def put_payment_status(registrations) when is_list(registrations) do
+    registrations
+    |> IeeeTamuPortal.Repo.preload(:payment)
+    |> Enum.map(&put_payment_status/1)
+  end
+
+  @doc """
+  Augments a registrations query to select the virtual `payment_status` field
+  for every row in a single roundtrip.
+
+  Use it in a pipeline:
+
+      Registration
+      |> where([r], r.year == ^year)
+      |> IeeeTamuPortal.Members.Registration.with_payment_status()
+      |> Repo.all()
+
+  This performs a LEFT JOIN to the `payment` association (if not already joined)
+  and sets `payment_status` according to the following precedence:
+  - `override` when `payment_override` is true
+  - `paid` when there is a related payment row
+  - `pending` otherwise
+  """
+  def with_payment_status(queryable \\ __MODULE__) do
+    from r in queryable,
+      left_join: p in assoc(r, :payment),
+      select_merge: %{
+        payment_status:
+          type(
+            fragment(
+              "CASE WHEN ? THEN 'override' WHEN ? IS NOT NULL THEN 'paid' ELSE 'pending' END",
+              r.payment_override,
+              p.id
+            ),
+            r.payment_status
+          )
+      }
   end
 end
