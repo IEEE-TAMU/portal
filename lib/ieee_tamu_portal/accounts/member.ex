@@ -39,6 +39,7 @@ defmodule IeeeTamuPortal.Accounts.Member do
     has_one :info, IeeeTamuPortal.Members.Info
     has_one :resume, IeeeTamuPortal.Members.Resume
     has_many :registrations, IeeeTamuPortal.Members.Registration
+    has_many :event_checkins, IeeeTamuPortal.Members.EventCheckin
     has_many :api_keys, IeeeTamuPortal.Api.ApiKey
     has_many :secondary_auth_methods, IeeeTamuPortal.Accounts.AuthMethod
   end
