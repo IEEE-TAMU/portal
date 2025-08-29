@@ -9,6 +9,12 @@ defmodule IeeeTamuPortalWeb.AdminCheckinController do
 
     case EventCheckin.insert_for_member_id(parsed_id) do
       {:ok, _checkin} ->
+        Phoenix.PubSub.broadcast(
+          IeeeTamuPortal.PubSub,
+          "checkins",
+          {:member_checked_in, parsed_id}
+        )
+
         conn |> put_status(:created) |> text("checked-in")
 
       {:error, _changeset} ->

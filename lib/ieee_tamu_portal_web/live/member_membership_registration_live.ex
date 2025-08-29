@@ -29,6 +29,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
     # Build QR code or show message depending on check-in state
     current_event = Settings.get_current_event!()
     already_checked_in? = Member.member_is_checked_in?(current_member.id)
+
     checkin_qr_svg =
       if paid? and not already_checked_in? and is_binary(current_event) and
            current_event != "NONE" do
@@ -47,6 +48,10 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
       |> assign(:already_checked_in?, already_checked_in?)
       |> assign(:checkin_qr_svg, checkin_qr_svg)
 
+    if connected?(socket) and not already_checked_in? do
+      Phoenix.PubSub.subscribe(IeeeTamuPortal.PubSub, "checkins")
+    end
+
     {:ok, socket}
   end
 
@@ -54,6 +59,20 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
   def handle_event("copy_confirmation_code", %{"code" => _code}, socket) do
     # This will be handled by JavaScript on the client side
     {:noreply, put_flash(socket, :info, "Confirmation code copied to clipboard!")}
+  end
+
+  @impl true
+  def handle_info({:member_checked_in, member_id}, socket) do
+    current = socket.assigns.current_member
+
+    if to_string(current.id) == to_string(member_id) do
+      {:noreply,
+       socket
+       |> assign(:already_checked_in?, true)
+       |> assign(:checkin_qr_svg, nil)}
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true
