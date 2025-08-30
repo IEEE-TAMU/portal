@@ -179,7 +179,7 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
             </:actions>
           </.simple_form>
         </div>
-        
+
     <!-- Existing Settings -->
         <div class="bg-white shadow rounded-lg overflow-hidden">
           <div class="px-6 py-4 border-b border-gray-200">
@@ -190,16 +190,16 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th class="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Key
                   </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th class="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Value
                   </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                     Description
                   </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                     Last Updated
                   </th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -210,12 +210,12 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
               <tbody class="bg-white divide-y divide-gray-200">
                 <%= for setting <- @settings do %>
                   <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="text-sm font-medium text-gray-900">
+                    <td class="px-2 sm:px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-gray-900 max-w-[14ch] truncate sm:max-w-none">
                         {setting.key}
                       </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap align-middle">
+                    <td class="px-2 sm:px-6 py-4 align-middle w-full">
                       <.form
                         for={Map.get(@update_forms, setting.id)}
                         id={"update_setting_form_#{setting.id}"}
@@ -224,28 +224,28 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
                         class="m-0"
                       >
                         <input type="hidden" name="setting[id]" value={setting.id} />
-                        <div class="flex items-center space-x-2">
+                        <div class="flex items-center gap-1.5 sm:gap-2 w-full">
                           <.input
                             field={Map.get(@update_forms, setting.id)[:value]}
                             id={"setting_value_#{setting.id}"}
-                            class="text-sm m-0"
+              class="text-sm m-0 flex-1 min-w-[12rem] sm:min-w-[16rem]"
                             style="border: 1px solid #d1d5db; padding: 0.25rem 0.5rem;"
                           />
                           <.button
                             type="submit"
-                            class="text-xs bg-green-600 hover:bg-green-700 px-2 py-1"
+                            class="text-xs bg-green-600 hover:bg-green-700 px-2 py-1 flex-none"
                           >
                             Update
                           </.button>
                         </div>
                       </.form>
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-6 py-4 hidden lg:table-cell">
                       <div class="text-sm text-gray-900 max-w-xs truncate">
                         {setting.description}
                       </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
                       {Calendar.strftime(setting.updated_at, "%b %d, %Y at %I:%M %p")}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">

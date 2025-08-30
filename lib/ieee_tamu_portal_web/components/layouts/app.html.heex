@@ -1,7 +1,7 @@
 <div class="min-h-screen flex flex-col">
   <header class="px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm">
-      <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900">
+      <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900 whitespace-nowrap">
         <.link href="/">
           <img src={~p"/images/logo.svg"} width="36" />
         </.link>
@@ -19,9 +19,9 @@
           <.navbar_button name="Member Info" navigate={~p"/members/info"} icon="hero-user" />
         <% end %>
       </div>
-      <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900 text-[0.8125rem]">
+      <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900 text-[0.8125rem] whitespace-nowrap overflow-x-auto">
         <%= if @current_member do %>
-          <p class="max-sm:hidden">
+          <p class="hidden sm:block max-w-[22ch] truncate" title={@current_member.email}>
             {@current_member.email}
           </p>
           <.navbar_button

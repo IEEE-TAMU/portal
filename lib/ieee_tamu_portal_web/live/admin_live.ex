@@ -39,7 +39,7 @@ defmodule IeeeTamuPortalWeb.AdminLive do
         <p class="text-gray-600 mt-2">Overview of the IEEE TAMU Portal</p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <.stats_card
           label="Total Members"
           value={@member_count}
@@ -139,8 +139,8 @@ defmodule IeeeTamuPortalWeb.AdminLive do
   def stats_card(assigns) do
     ~H"""
     <div class="bg-white rounded-lg shadow p-6">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center">
+      <div class="flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
+        <div class="flex items-center min-w-0">
           <div class="flex-shrink-0">
             <div class={[
               "w-8 h-8 rounded-full flex items-center justify-center text-white",
@@ -149,17 +149,20 @@ defmodule IeeeTamuPortalWeb.AdminLive do
               <.icon name={@icon} class="w-5 h-5" />
             </div>
           </div>
-          <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">{@label}</p>
+          <div class="ml-4 min-w-0">
+            <p class="text-sm font-medium text-gray-600 truncate">{@label}</p>
             <p class={[
-              "text-2xl font-bold text-gray-900",
+              "text-2xl font-bold text-gray-900 whitespace-nowrap",
               @value_class
             ]}>
               {@value}
             </p>
           </div>
         </div>
-        <div :if={@show_action && (@action != [] or @action_href)} class="ml-4 flex-shrink-0">
+        <div
+          :if={@show_action && (@action != [] or @action_href)}
+          class="w-full sm:w-auto mt-4 sm:mt-0 sm:ml-4 flex-shrink-0"
+        >
           <%= if @action != [] do %>
             {render_slot(@action)}
           <% else %>
@@ -168,7 +171,7 @@ defmodule IeeeTamuPortalWeb.AdminLive do
               href={@action_href}
               download
               class={[
-                "inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2",
+                "inline-flex items-center justify-center px-3 py-2 w-full sm:w-auto border border-transparent text-sm leading-4 font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2",
                 @action_class || "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
               ]}
             >

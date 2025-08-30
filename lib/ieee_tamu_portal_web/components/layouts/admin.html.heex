@@ -2,30 +2,33 @@
   <header class="bg-white shadow-sm border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
-        <div class="flex items-center space-x-8">
-          <h1 class="text-xl font-semibold text-gray-900">IEEE TAMU Portal - Admin</h1>
-          <nav class="flex space-x-4">
+        <div class="flex items-center space-x-4 sm:space-x-8 min-w-0">
+          <h1 class="hidden sm:block text-xl font-semibold text-gray-900">
+            IEEE TAMU Portal - Admin
+          </h1>
+          <h1 class="sm:hidden text-xl font-semibold text-gray-900">Admin</h1>
+          <nav class="flex-1 flex items-center space-x-2 sm:space-x-4 overflow-x-auto whitespace-nowrap">
             <.link
               navigate={~p"/admin"}
-              class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900"
+              class="flex-none px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900"
             >
               Dashboard
             </.link>
             <.link
               navigate={~p"/admin/members"}
-              class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900"
+              class="flex-none px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900"
             >
               Members
             </.link>
             <.link
               navigate={~p"/admin/api-keys"}
-              class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900"
+              class="flex-none px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900"
             >
               API Keys
             </.link>
           </nav>
         </div>
-        <div class="flex items-center space-x-4">
+        <div class="hidden md:flex items-center space-x-4">
           <span class="text-sm text-gray-600">Admin Panel</span>
         </div>
       </div>

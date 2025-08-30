@@ -796,10 +796,10 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
     ~H"""
     <.link {@rest} class="hover:text-zinc-700" title={@name}>
       <%= if @icon do %>
-        <.icon class="sm:hidden" name={@icon} />
-        <p class="max-sm:hidden">{@name}</p>
+        <.icon class="md:hidden" name={@icon} />
+        <p class="hidden md:block whitespace-nowrap">{@name}</p>
       <% else %>
-        {@name}
+        <span class="whitespace-nowrap">{@name}</span>
       <% end %>
     </.link>
     """
