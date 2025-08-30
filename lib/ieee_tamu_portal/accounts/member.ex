@@ -49,7 +49,12 @@ defmodule IeeeTamuPortal.Accounts.Member do
     import Ecto.Query
 
     query =
-      preload(__MODULE__, [:info, :resume, registrations: ^Registration.with_payment_status()])
+      from(m in __MODULE__,
+        left_join: info in assoc(m, :info),
+        as: :info,
+        preload: [info: info]
+      )
+      |> preload([:resume, registrations: ^Registration.with_payment_status()])
 
     Flop.validate_and_run!(query, params, for: __MODULE__, replace_invalid_params: true)
   end
