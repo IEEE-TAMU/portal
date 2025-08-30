@@ -312,15 +312,4 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
     </div>
     """
   end
-
-  @impl true
-  def handle_info({:member_checked_in, member_id}, socket) do
-    current = socket.assigns.current_member
-
-    if to_string(current.id) == to_string(member_id) do
-      {:noreply, socket |> assign(:already_checked_in?, true) |> assign(:checkin_qr_svg, nil)}
-    else
-      {:noreply, socket}
-    end
-  end
 end
