@@ -294,7 +294,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
           id="checkin-qrcode"
           phx-update="ignore"
           aria-label="Check-in QR Code"
-          class="p-2 bg-white"
+          class="p-2 bg-white w-full max-w-xs sm:max-w-sm md:max-w-md"
         >
           {Phoenix.HTML.raw(@svg)}
         </div>

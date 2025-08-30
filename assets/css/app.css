@@ -3,3 +3,10 @@
 @import "tailwindcss/utilities";
 
 /* This file is for your main application CSS */
+
+/* Make embedded QR SVG responsive */
+#checkin-qrcode svg {
+	max-width: 100% !important;
+	width: 100% !important;
+	height: auto !important;
+}
