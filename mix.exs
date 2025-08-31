@@ -41,7 +41,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:myxql, "== 0.8.0"},
       {:ecto_mysql_extras, "== 0.6.3", only: :dev},
       {:phoenix_html, "== 4.2.1"},
-      {:phoenix_live_reload, "== 1.6.0", only: :dev},
+      {:phoenix_live_reload, "== 1.6.1", only: :dev},
       {:phoenix_live_view, "== 1.1.8"},
       {:aws_signature, "== 0.4.0"},
       {:floki, "== 0.38.0", only: :test},
