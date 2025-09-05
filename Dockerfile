@@ -18,6 +18,10 @@ ARG DEBIAN_VERSION=bookworm-20250811-slim
 ARG BUILDER_IMAGE="docker.io/hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 ARG RUNNER_IMAGE="docker.io/debian:${DEBIAN_VERSION}"
 
+FROM node:20 AS node
+COPY assets assets
+RUN cd assets && npm install
+
 FROM ${BUILDER_IMAGE} AS builder
 
 # install build dependencies
@@ -56,6 +60,7 @@ COPY lib lib
 RUN mix compile
 
 COPY assets assets
+COPY --from=node assets/node_modules assets/node_modules
 
 # compile assets
 RUN mix assets.deploy
