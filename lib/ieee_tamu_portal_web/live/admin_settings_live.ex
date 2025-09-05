@@ -179,7 +179,7 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
             </:actions>
           </.simple_form>
         </div>
-
+        
     <!-- Existing Settings -->
         <div class="bg-white shadow rounded-lg overflow-hidden">
           <div class="px-6 py-4 border-b border-gray-200">
@@ -228,7 +228,7 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
                           <.input
                             field={Map.get(@update_forms, setting.id)[:value]}
                             id={"setting_value_#{setting.id}"}
-              class="text-sm m-0 flex-1 min-w-[12rem] sm:min-w-[16rem]"
+                            class="text-sm m-0 flex-1 min-w-[12rem] sm:min-w-[16rem]"
                             style="border: 1px solid #d1d5db; padding: 0.25rem 0.5rem;"
                           />
                           <.button
