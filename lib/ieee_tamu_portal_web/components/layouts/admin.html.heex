@@ -8,30 +8,26 @@
           </h1>
           <h1 class="sm:hidden text-xl font-semibold text-gray-900">Admin</h1>
           <nav class="flex-1 flex items-center space-x-2 sm:space-x-4 overflow-x-auto whitespace-nowrap">
-            <.link
+            <.navbar_button
+              name="Dashboard"
               navigate={~p"/admin"}
-              class="flex-none px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900"
-            >
-              Dashboard
-            </.link>
-            <.link
+              icon="hero-home"
+            />
+            <.navbar_button
+              name="Members"
               navigate={~p"/admin/members"}
-              class="flex-none px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900"
-            >
-              Members
-            </.link>
-            <.link
+              icon="hero-users"
+            />
+            <.navbar_button
+              name="API Keys"
               navigate={~p"/admin/api-keys"}
-              class="flex-none px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900"
-            >
-              API Keys
-            </.link>
-            <.link
+              icon="hero-key"
+            />
+            <.navbar_button
+              name="Check-in Scanner"
               navigate={~p"/admin/checkin-scanner"}
-              class="flex-none px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900"
-            >
-              Check-in Scanner
-            </.link>
+              icon="hero-qr-code"
+            />
           </nav>
         </div>
         <div class="hidden md:flex items-center space-x-4">
