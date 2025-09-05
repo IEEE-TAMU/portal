@@ -119,6 +119,7 @@ defmodule IeeeTamuPortalWeb.Router do
       live "/members", AdminMembersLive, :index
       live "/settings", AdminSettingsLive, :index
       live "/api-keys", AdminApiKeysLive, :index
+      live "/checkin-scanner", AdminCheckinScannerLive, :index
     end
   end
 end

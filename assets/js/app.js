@@ -25,6 +25,109 @@ import topbar from "../vendor/topbar"
 
 let Hooks = {...colocatedHooks}
 
+// Integrated QR scanner hook for admin check-in
+Hooks.QRScanner = {
+  mounted() {
+    // Lazy import to keep initial bundle smaller
+    import('qr-scanner').then(mod => {
+      const QrScanner = mod.default
+      const video = document.getElementById('qr-video')
+      if(!video) return
+
+      let lastText = null
+      const scanResult = (result) => {
+        const text = result?.data || result
+        if(!text || text === lastText) return
+        lastText = text
+        this.pushEvent('qr_scanned', {content: text})
+      }
+
+      const scanner = new QrScanner(video, scanResult, { returnDetailedScanResult: true })
+      this.scanner = scanner
+
+      const flashBtn = document.getElementById('toggle-flash')
+      const cameraSelect = document.getElementById('camera-select')
+
+      const updateFlashAvailability = () => {
+        if(!flashBtn) return
+        scanner.hasFlash().then(supported => {
+          if(!supported) {
+            flashBtn.disabled = true
+            flashBtn.classList.add('opacity-50','cursor-not-allowed')
+            flashBtn.classList.remove('bg-yellow-600')
+            flashBtn.classList.add('bg-gray-600')
+            flashBtn.textContent = 'Flash N/A'
+          } else {
+            flashBtn.disabled = false
+            flashBtn.classList.remove('opacity-50','cursor-not-allowed')
+            const on = scanner.isFlashOn()
+            flashBtn.classList.toggle('bg-yellow-600', on)
+            flashBtn.classList.toggle('bg-gray-600', !on)
+            flashBtn.textContent = on ? 'Flash On' : 'Flash Off'
+          }
+        }).catch(() => {/* ignore */})
+      }
+
+      // Start scanner first, then enumerate cameras and configure preferred one.
+      scanner.start()
+        .then(() => QrScanner.listCameras(true))
+        .then(cameras => {
+          if(cameraSelect) {
+            cameraSelect.innerHTML = ''
+            cameras.forEach(c => {
+              const opt = document.createElement('option')
+              opt.value = c.id
+              opt.textContent = c.label || c.id
+              cameraSelect.appendChild(opt)
+            })
+            const back = cameras.find(c => /back|rear|environment/i.test(c.label))
+            if(back) {
+              scanner.setCamera(back.id).then(updateFlashAvailability)
+              cameraSelect.value = back.id
+            } else {
+              updateFlashAvailability()
+            }
+          } else {
+            updateFlashAvailability()
+          }
+        })
+        .catch(() => { /* start failed (permission denied?) */ })
+
+      cameraSelect?.addEventListener('change', e => {
+        const id = e.target.value
+        scanner.setCamera(id).then(() => {
+          // After camera switch, update flash availability/state
+          updateFlashAvailability()
+        })
+      })
+
+      flashBtn?.addEventListener('click', () => {
+        scanner.toggleFlash()
+          .then(() => updateFlashAvailability())
+          .catch(() => {/* ignore toggle errors */})
+      })
+
+      this.handleEvent('perform_checkin', ({member_id}) => {
+        // Call existing endpoint; controller responds to GET
+        fetch(`/admin/check-in?member_id=${encodeURIComponent(member_id)}`, {credentials: 'same-origin'})
+          .then(r => {
+            const ok = r.status === 201
+            this.pushEvent('checkin_response', {ok, member_id})
+          })
+          .catch(() => this.pushEvent('checkin_response', {ok: false, member_id}))
+          .finally(() => { setTimeout(()=> { lastText = null }, 1200) })
+      })
+
+      this.el.addEventListener('click', e => {
+        if(e.target && e.target.id === 'restart-scan') {
+          lastText = null
+        }
+      })
+    })
+  },
+  destroyed() { this.scanner && this.scanner.stop() }
+}
+
 let Uploaders = {};
 Uploaders.S3 = function (entries, onViewError) {
   entries.forEach((entry) => {
