@@ -294,39 +294,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
       </div>
 
       <div class="mt-6">
-        <div class="flex items-center justify-center">
-          <Flop.Phoenix.pagination
-            meta={@meta}
-            path={~p"/admin/members"}
-            page_link_attrs={[
-              class:
-                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            ]}
-            current_page_link_attrs={[
-              class:
-                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-indigo-600 rounded-md"
-            ]}
-            page_list_attrs={[class: "flex space-x-1"]}
-            disabled_link_attrs={[
-              class:
-                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 bg-white border border-gray-300 cursor-default rounded-md"
-            ]}
-            class="flex items-center space-x-2"
-          >
-            <:previous attrs={[
-              class:
-                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            ]}>
-              Previous
-            </:previous>
-            <:next attrs={[
-              class:
-                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            ]}>
-              Next
-            </:next>
-          </Flop.Phoenix.pagination>
-        </div>
+        <.pagination meta={@meta} />
       </div>
 
       <div class="mt-8 flow-root">
@@ -531,39 +499,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
       </div>
 
       <div class="mt-6">
-        <div class="flex items-center justify-center">
-          <Flop.Phoenix.pagination
-            meta={@meta}
-            path={~p"/admin/members"}
-            page_link_attrs={[
-              class:
-                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            ]}
-            current_page_link_attrs={[
-              class:
-                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-indigo-600 rounded-md"
-            ]}
-            page_list_attrs={[class: "flex space-x-1"]}
-            disabled_link_attrs={[
-              class:
-                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 bg-white border border-gray-300 cursor-default rounded-md"
-            ]}
-            class="flex items-center space-x-2"
-          >
-            <:previous attrs={[
-              class:
-                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            ]}>
-              Previous
-            </:previous>
-            <:next attrs={[
-              class:
-                "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            ]}>
-              Next
-            </:next>
-          </Flop.Phoenix.pagination>
-        </div>
+        <.pagination meta={@meta} />
       </div>
 
       <%= if @show_resume_modal do %>
@@ -909,6 +845,53 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
           </div>
         </div>
       <% end %>
+    </div>
+    """
+  end
+
+  defp pagination(assigns) do
+    ~H"""
+    <div class="flex items-center justify-center">
+      <Flop.Phoenix.pagination
+        meta={@meta}
+        path={~p"/admin/members"}
+        page_links={2}
+        page_link_attrs={[
+          class:
+            "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+        ]}
+        current_page_link_attrs={[
+          class:
+            "relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-indigo-600 rounded-md"
+        ]}
+        page_list_attrs={[class: "flex space-x-1"]}
+        disabled_link_attrs={[
+          class:
+            "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 bg-white border border-gray-300 cursor-default rounded-md"
+        ]}
+        class="flex items-center space-x-2"
+      >
+        <:previous attrs={[
+          class:
+            "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+        ]}>
+          Previous
+        </:previous>
+        <:next attrs={[
+          class:
+            "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+        ]}>
+          Next
+        </:next>
+        <:ellipsis>
+          <span
+            class="relative inline-flex items-center py-2 text-sm font-medium text-gray-500"
+            aria-hidden="true"
+          >
+            &hellip;
+          </span>
+        </:ellipsis>
+      </Flop.Phoenix.pagination>
     </div>
     """
   end

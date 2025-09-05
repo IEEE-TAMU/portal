@@ -358,11 +358,11 @@ case Accounts.register_member(%{
     IO.inspect(changeset.errors)
 end
 
-# Generate 100 random users
-IO.puts("\n🚀 Generating 100 random users...")
+# Generate 500 random users
+IO.puts("\n🚀 Generating 500 random users...")
 
 {created_count, failed_count, unconfirmed_count, confirmed_no_info_count} =
-  Enum.reduce(1..100, {0, 0, 0, 0}, fn i, {created, failed, unconfirmed, confirmed_no_info} ->
+  Enum.reduce(1..500, {0, 0, 0, 0}, fn i, {created, failed, unconfirmed, confirmed_no_info} ->
     first_name = SeedHelpers.random_first_name()
     last_name = SeedHelpers.random_last_name()
     email = SeedHelpers.generate_email(first_name, last_name)
