@@ -23,7 +23,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinScannerLive do
      |> assign(:page_title, "Check-in Scanner")
      |> assign(:last_result, nil)
      |> assign(:status, :idle)
-  |> assign(:error, nil)}
+     |> assign(:error, nil)}
   end
 
   @impl true
@@ -51,7 +51,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinScannerLive do
     {:noreply,
      socket
      |> assign(:status, :success)
-  |> assign(:last_result, "Checked in member #{member_id}")}
+     |> assign(:last_result, "Checked in member #{member_id}")}
   end
 
   def handle_event("checkin_response", %{"ok" => false, "member_id" => member_id}, socket) do
@@ -106,7 +106,8 @@ defmodule IeeeTamuPortalWeb.AdminCheckinScannerLive do
                 phx-update="ignore"
                 class="absolute inset-0 w-full h-full object-cover"
                 playsinline
-              ></video>
+              >
+              </video>
               <div
                 :if={@status == :checking}
                 class="absolute inset-0 flex items-center justify-center bg-black/40"
@@ -133,7 +134,11 @@ defmodule IeeeTamuPortalWeb.AdminCheckinScannerLive do
             >
               Toggle Flash
             </button>
-            <select id="camera-select" phx-update="ignore" class="px-3 py-2 border border-gray-300 rounded-md text-sm">
+            <select
+              id="camera-select"
+              phx-update="ignore"
+              class="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
             </select>
           </div>
         </div>
