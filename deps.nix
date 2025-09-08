@@ -1054,7 +1054,7 @@ let
 
       thousand_island =
         let
-          version = "1.4.0";
+          version = "1.4.1";
           drv = buildMix {
             inherit version;
             name = "thousand_island";
@@ -1063,7 +1063,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "thousand_island";
-              sha256 = "686ff52b9e4cf1e16d2bd8ba83360f2357ac6ca304250702ecc3b40000f04015";
+              sha256 = "204a8640e5d2818589b87286ae66160978628d7edf6095181cbe0440765fb6c1";
             };
 
             beamDeps = [
