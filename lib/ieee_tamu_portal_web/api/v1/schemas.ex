@@ -70,7 +70,7 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
       type: :object,
       properties: %{
         name: %Schema{type: :string, description: "Name of the payer"},
-        amount: %Schema{type: :number, format: :decimal, description: "Payment amount"},
+        amount: %Schema{type: :number, format: :float, description: "Payment amount"},
         confirmation_code: %Schema{
           type: :string,
           description: "Confirmation code for the payment",
