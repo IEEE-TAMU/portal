@@ -18,6 +18,7 @@ defmodule IeeeTamuPortal.Members.Resume do
     resume
     |> cast(attrs, [:original_filename, :bucket_url, :key])
     |> validate_required([:original_filename, :key])
+    |> unique_constraint(:member_id)
   end
 
   defp uri(resume) do

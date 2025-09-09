@@ -209,15 +209,20 @@ defmodule IeeeTamuPortal.Accounts.Member do
   def put_resume(%__MODULE__{} = member, %Phoenix.LiveView.UploadEntry{} = entry) do
     alias IeeeTamuPortal.Members.Resume
 
-    {:ok, resume} =
-      Ecto.build_assoc(member, :resume)
-      |> Resume.changeset(%{
+    existing_resume = member |> IeeeTamuPortal.Repo.preload(:resume) |> Map.get(:resume)
+
+    resume = existing_resume || Ecto.build_assoc(member, :resume)
+
+    changeset =
+      Resume.changeset(resume, %{
         original_filename: entry.client_name,
         key: Resume.key(member, entry)
       })
-      |> IeeeTamuPortal.Repo.insert_or_update()
 
-    {:ok, %__MODULE__{member | resume: resume}}
+    case IeeeTamuPortal.Repo.insert_or_update(changeset) do
+      {:ok, resume} -> {:ok, %__MODULE__{member | resume: resume}}
+      {:error, cs} -> {:error, cs}
+    end
   end
 
   def delete_resume(%__MODULE__{} = member) do
