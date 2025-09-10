@@ -980,7 +980,7 @@ let
 
       tailwind =
         let
-          version = "0.3.1";
+          version = "0.4.0";
           drv = buildMix {
             inherit version;
             name = "tailwind";
@@ -989,7 +989,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "tailwind";
-              sha256 = "98a45febdf4a87bc26682e1171acdedd6317d0919953c353fcd1b4f9f4b676a2";
+              sha256 = "530bd35699333f8ea0e9038d7146c2f0932dfec2e3636bd4a8016380c4bc382e";
             };
           };
         in
