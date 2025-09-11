@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm">
       <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900 whitespace-nowrap">
         <.link href="/">
-          <img src={~p"/images/logo.svg"} width="36" />
+          <img src={~p"/images/logo.svg"} width="36" alt="IEEE TAMU Bolt Logo" />
         </.link>
         <%= if @current_member do %>
           <.navbar_button
@@ -21,7 +21,7 @@
       </div>
       <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900 text-[0.8125rem] whitespace-nowrap overflow-x-auto">
         <%= if @current_member do %>
-          <p class="hidden sm:block max-w-[22ch] truncate" title={@current_member.email}>
+          <p class="hidden sm:block max-w-[22ch] truncate">
             {@current_member.email}
           </p>
           <.navbar_button

@@ -134,12 +134,15 @@ defmodule IeeeTamuPortalWeb.AdminCheckinScannerLive do
             >
               Toggle Flash
             </button>
-            <select
-              id="camera-select"
-              phx-update="ignore"
-              class="px-3 py-2 border border-gray-300 rounded-md text-sm"
-            >
-            </select>
+            <label for="camera-select">
+              Camera Source
+              <select
+                id="camera-select"
+                phx-update="ignore"
+                class="px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+              </select>
+            </label>
           </div>
         </div>
 

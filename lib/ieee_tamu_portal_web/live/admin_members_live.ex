@@ -317,10 +317,10 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                   tbody_td_attrs: [class: "whitespace-nowrap px-3 py-4 text-sm text-gray-500"],
                   tbody_tr_attrs: [class: "hover:bg-gray-50"],
                   no_results_content: nil,
-                  symbol_asc: "↑",
-                  symbol_desc: "↓",
-                  symbol_unsorted: "↕",
-                  symbol_attrs: [class: "ml-1 text-gray-400"]
+                  symbol_asc: icon(%{name: "hero-arrow-up"}),
+                  symbol_desc: icon(%{name: "hero-arrow-down"}),
+                  symbol_unsorted: icon(%{name: "hero-arrows-up-down"}),
+                  symbol_attrs: [class: "stroke-5 ml-1 text-gray-500"]
                 ]}
               >
                 <:col
@@ -453,7 +453,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                       <button
                         phx-click="resend_confirmation"
                         phx-value-member_id={member.id}
-                        class="text-orange-600 hover:text-orange-900 text-xs"
+                        class="text-orange-700 hover:text-orange-900 text-xs"
                       >
                         Resend
                       </button>

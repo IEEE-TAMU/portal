@@ -164,9 +164,9 @@ defmodule IeeeTamuPortalWeb.MemberApiKeysLive do
             <.icon name="hero-check-circle" class="h-5 w-5 text-green-400" />
           </div>
           <div class="ml-3">
-            <h3 class="text-sm font-medium text-green-800">
+            <h2 class="text-sm font-medium text-green-800">
               API Key Created Successfully!
-            </h3>
+            </h2>
             <div class="mt-2 text-sm text-green-700">
               <p class="font-semibold">Your new API key (save this, it won't be shown again):</p>
               <div class="mt-2 font-mono text-xs bg-green-100 p-2 rounded border break-all">
@@ -188,7 +188,7 @@ defmodule IeeeTamuPortalWeb.MemberApiKeysLive do
 
       <div :if={@show_form and !@new_token} class="mt-6">
         <div class="rounded-lg border border-gray-200 bg-white p-6">
-          <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Create New API Key</h3>
+          <h2 class="text-lg font-medium leading-6 text-gray-900 mb-4">Create New API Key</h2>
 
           <.simple_form for={@form} phx-change="validate" phx-submit="save">
             <.input field={@form[:name]} type="text" label="Name" placeholder="e.g., My Script" />
@@ -290,7 +290,7 @@ defmodule IeeeTamuPortalWeb.MemberApiKeysLive do
 
               <div :if={@api_keys == []} class="text-center py-12 bg-white">
                 <.icon name="hero-key" class="mx-auto h-12 w-12 text-gray-400" />
-                <h3 class="mt-2 text-sm font-semibold text-gray-900">No API keys</h3>
+                <h2 class="mt-2 text-sm font-semibold text-gray-900">No API keys</h2>
                 <p class="mt-1 text-sm text-gray-500">Get started by creating your first API key.</p>
                 <div class="mt-6">
                   <button

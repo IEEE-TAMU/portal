@@ -794,7 +794,7 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
 
   def navbar_button(assigns) do
     ~H"""
-    <.link {@rest} class="hover:text-zinc-700" title={@name}>
+    <.link {@rest} class="hover:text-zinc-700">
       <%= if @icon do %>
         <.icon class="md:hidden" name={@icon} />
         <p class="hidden md:block whitespace-nowrap">{@name}</p>

@@ -94,7 +94,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
               <div class="flex items-center">
                 <.icon name="hero-clock" class="w-5 h-5 text-yellow-600 mr-2" />
-                <h3 class="text-yellow-800 font-medium">Payment Pending</h3>
+                <h2 class="text-yellow-800 font-medium">Payment Pending</h2>
               </div>
               <div class="text-yellow-700 mt-2">
                 <p>
@@ -125,29 +125,31 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
             </div>
 
             <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Registration Details</h3>
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">Registration Details</h2>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700">Confirmation Code</label>
-                <div class="mt-1 relative">
-                  <input
-                    type="text"
-                    value={@registration.confirmation_code}
-                    readonly
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 font-mono text-lg"
-                  />
-                  <button
-                    type="button"
-                    phx-click="copy_confirmation_code"
-                    phx-value-code={@registration.confirmation_code}
-                    phx-hook=".CopyToClipboard"
-                    id="copy-button-pending"
-                    class="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
-                    title="Copy to clipboard"
-                  >
-                    <.icon name="hero-clipboard" class="w-4 h-4" />
-                    <.icon name="hero-check" class="w-4 h-4 hidden text-green-600" />
-                  </button>
+                <label class="block text-sm font-medium text-gray-700">
+                  Confirmation Code
+                  <div class="mt-1 relative">
+                    <input
+                      type="text"
+                      value={@registration.confirmation_code}
+                      readonly
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 font-mono text-lg"
+                    />
+                    <button
+                      type="button"
+                      phx-click="copy_confirmation_code"
+                      phx-value-code={@registration.confirmation_code}
+                      phx-hook=".CopyToClipboard"
+                      id="copy-button-pending"
+                      class="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
+                      title="Copy to clipboard"
+                    >
+                      <.icon name="hero-clipboard" class="w-4 h-4" />
+                      <.icon name="hero-check" class="w-4 h-4 hidden text-green-600" />
+                    </button>
+                  </div>
                   <script :type={Phoenix.LiveView.ColocatedHook} name=".CopyToClipboard">
                     export default {
                       mounted() {
@@ -194,7 +196,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
                       }
                     }
                   </script>
-                </div>
+                </label>
               </div>
             </div>
           <% :paid -> %>
@@ -209,7 +211,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
             <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
               <div class="flex items-center">
                 <.icon name="hero-check-circle" class="w-5 h-5 text-green-600 mr-2" />
-                <h3 class="text-green-800 font-medium">Registration Complete!</h3>
+                <h2 class="text-green-800 font-medium">Registration Complete!</h2>
               </div>
               <p class="text-green-700 mt-2">
                 Your registration and payment have been processed successfully.
@@ -217,7 +219,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
             </div>
 
             <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Payment Details</h3>
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">Payment Details</h2>
 
               <%= if @registration.payment do %>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -267,7 +269,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div class="flex items-center">
                     <.icon name="hero-information-circle" class="w-5 h-5 text-blue-600 mr-2" />
-                    <h3 class="text-blue-800 font-medium">Payment Override Applied</h3>
+                    <h2 class="text-blue-800 font-medium">Payment Override Applied</h2>
                   </div>
                   <p class="text-blue-700 mt-2">
                     Your registration has been marked as paid by an officer.
@@ -285,7 +287,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
   def checkin_qr(assigns) do
     ~H"""
     <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">Event Check-in QR</h3>
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Event Check-in QR</h2>
       <p class="text-gray-600 mb-4">
         Show this QR to an officer to be checked in for {@event_name}.
       </p>
@@ -307,7 +309,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
   def checked_in_message(assigns) do
     ~H"""
     <div class="bg-white border rounded-lg p-6 mb-6">
-      <h3 class="text-lg font-semibold text-gray-900 mb-2">You're checked in</h3>
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">You're checked in</h2>
       <p>You are checked into {@event_name}.</p>
     </div>
     """
