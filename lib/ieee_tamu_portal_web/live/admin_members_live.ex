@@ -253,7 +253,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
           </p>
         </div>
       </div>
-      
+
     <!-- Filter Form -->
       <div class="mt-6 bg-white shadow rounded-lg p-4">
         <.form for={to_form(@meta)} class="space-y-4" phx-change="filter" phx-submit="filter">
@@ -875,7 +875,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
           class:
             "relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
         ]}>
-          Previous
+          Prev
         </:previous>
         <:next attrs={[
           class:
