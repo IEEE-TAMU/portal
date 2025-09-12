@@ -73,7 +73,8 @@ defmodule IeeeTamuPortal.MixProject do
       {:igniter, "== 0.6.28", only: [:dev, :test]},
       {:igniter_new, "== 0.5.31", only: :dev},
       {:nimble_csv, "== 1.3.0"},
-      {:eqrcode, "== 0.2.1"}
+      {:eqrcode, "== 0.2.1"},
+      {:live_debugger, "~> 0.4", only: [:dev]}
     ]
   end
 

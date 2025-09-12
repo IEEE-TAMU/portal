@@ -253,7 +253,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
           </p>
         </div>
       </div>
-
+      
     <!-- Filter Form -->
       <div class="mt-6 bg-white shadow rounded-lg p-4">
         <.form for={to_form(@meta)} class="space-y-4" phx-change="filter" phx-submit="filter">
