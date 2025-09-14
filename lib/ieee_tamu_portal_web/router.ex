@@ -110,6 +110,7 @@ defmodule IeeeTamuPortalWeb.Router do
     pipe_through [:browser, :admin_auth]
     get "/download-resumes", AdminResumeZipController, :download
     get "/download-members", AdminMemberExportController, :download
+    get "/download-checkins", AdminCheckinsExportController, :download
     get "/check-in", AdminCheckinController, :create
 
     live_session :admin_auth,
@@ -117,9 +118,9 @@ defmodule IeeeTamuPortalWeb.Router do
       layout: {IeeeTamuPortalWeb.Layouts, :admin} do
       live "/", AdminLive, :index
       live "/members", AdminMembersLive, :index
+      live "/checkin", AdminCheckinLive, :index
       live "/settings", AdminSettingsLive, :index
       live "/api-keys", AdminApiKeysLive, :index
-      live "/checkin-scanner", AdminCheckinScannerLive, :index
     end
   end
 end

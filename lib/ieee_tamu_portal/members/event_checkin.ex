@@ -1,6 +1,9 @@
 defmodule IeeeTamuPortal.Members.EventCheckin do
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
+
+  alias IeeeTamuPortal.Repo
 
   schema "event_checkins" do
     field :event_name, :string, autogenerate: {IeeeTamuPortal.Settings, :get_current_event!, []}
@@ -38,5 +41,53 @@ defmodule IeeeTamuPortal.Members.EventCheckin do
     %__MODULE__{}
     |> changeset(attrs)
     |> IeeeTamuPortal.Repo.insert(on_conflict: :nothing)
+  end
+
+  @doc """
+  Returns list of {email, event_name} tuples for all check-ins in the given year.
+
+  Used by admin CSV export.
+  """
+  def emails_and_event_names_for_year(year) when is_integer(year) do
+    from(e in __MODULE__,
+      join: m in assoc(e, :member),
+      where: e.event_year == ^year,
+      select: {m.email, e.event_name}
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns list of {email, event_name} tuples for all check-ins in the given year for a specific event.
+  """
+  def emails_and_event_names_for_year(year, event_name)
+      when is_integer(year) and is_binary(event_name) do
+    from(e in __MODULE__,
+      join: m in assoc(e, :member),
+      where: e.event_year == ^year and e.event_name == ^event_name,
+      select: {m.email, e.event_name}
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns the count of check-ins for the given year.
+  """
+  def count_for_year(year) when is_integer(year) do
+    from(e in __MODULE__, where: e.event_year == ^year, select: count(e.id))
+    |> Repo.one()
+  end
+
+  @doc """
+  Lists distinct event names recorded for the given year.
+  """
+  def list_event_names_for_year(year) when is_integer(year) do
+    from(e in __MODULE__,
+      where: e.event_year == ^year,
+      distinct: true,
+      order_by: e.event_name,
+      select: e.event_name
+    )
+    |> Repo.all()
   end
 end

@@ -35,6 +35,9 @@ Hooks.QRScanner = {
       if(!video) return
 
       let lastText = null
+      let scanner = null
+      let started = false
+
       const scanResult = (result) => {
         const text = result?.data || result
         if(!text || text === lastText) return
@@ -42,22 +45,31 @@ Hooks.QRScanner = {
         this.pushEvent('qr_scanned', {content: text})
       }
 
-      const scanner = new QrScanner(video, scanResult, { returnDetailedScanResult: true })
-      this.scanner = scanner
+      const ensureScanner = () => {
+        if(!scanner) {
+          scanner = new QrScanner(video, scanResult, { returnDetailedScanResult: true })
+          this.scanner = scanner
+        }
+        return scanner
+      }
 
       const flashBtn = document.getElementById('toggle-flash')
+      const flashWrapper = document.getElementById('toggle-flash-wrapper')
       const cameraSelect = document.getElementById('camera-select')
+      const cameraSelectWrapper = document.getElementById('camera-select-wrapper')
 
       const updateFlashAvailability = () => {
-        if(!flashBtn) return
+        if(!flashBtn || !scanner) return
         scanner.hasFlash().then(supported => {
           if(!supported) {
+            if(flashWrapper) flashWrapper.classList.add('hidden')
             flashBtn.disabled = true
             flashBtn.classList.add('opacity-50','cursor-not-allowed')
             flashBtn.classList.remove('bg-yellow-600')
             flashBtn.classList.add('bg-gray-600')
             flashBtn.textContent = 'Flash N/A'
           } else {
+            if(flashWrapper) flashWrapper.classList.remove('hidden')
             flashBtn.disabled = false
             flashBtn.classList.remove('opacity-50','cursor-not-allowed')
             const on = scanner.isFlashOn()
@@ -68,47 +80,52 @@ Hooks.QRScanner = {
         }).catch(() => {/* ignore */})
       }
 
-      // Start scanner first, then enumerate cameras and configure preferred one.
-      scanner.start()
-        .then(() => QrScanner.listCameras(true))
-        .then(cameras => {
-          if(cameraSelect) {
-            cameraSelect.innerHTML = ''
-            cameras.forEach(c => {
-              const opt = document.createElement('option')
-              opt.value = c.id
-              opt.textContent = c.label || c.id
-              cameraSelect.appendChild(opt)
-            })
-            const back = cameras.find(c => /back|rear|environment/i.test(c.label))
-            if(back) {
-              scanner.setCamera(back.id).then(updateFlashAvailability)
-              cameraSelect.value = back.id
+      const startScannerFlow = () => {
+        if(started) return
+        started = true
+        const s = ensureScanner()
+        s.start()
+          .then(() => QrScanner.listCameras(true))
+          .then(cameras => {
+            if(cameraSelect) {
+              cameraSelect.innerHTML = ''
+              cameras.forEach(c => {
+                const opt = document.createElement('option')
+                opt.value = c.id
+                opt.textContent = c.label || c.id
+                cameraSelect.appendChild(opt)
+              })
+            if(cameraSelectWrapper) cameraSelectWrapper.classList.remove('hidden')
+              const back = cameras.find(c => /back|rear|environment/i.test(c.label))
+              if(back) {
+                s.setCamera(back.id).then(updateFlashAvailability)
+                cameraSelect.value = back.id
+              } else {
+                updateFlashAvailability()
+              }
             } else {
               updateFlashAvailability()
             }
-          } else {
-            updateFlashAvailability()
-          }
-        })
-        .catch(() => { /* start failed (permission denied?) */ })
+          })
+          .catch(() => { /* start failed (permission denied?) */ })
+      }
 
       cameraSelect?.addEventListener('change', e => {
         const id = e.target.value
-        scanner.setCamera(id).then(() => {
-          // After camera switch, update flash availability/state
-          updateFlashAvailability()
-        })
+        if(!scanner) return
+        scanner.setCamera(id).then(() => updateFlashAvailability())
       })
 
       flashBtn?.addEventListener('click', () => {
+        if(!scanner) return
         scanner.toggleFlash()
           .then(() => updateFlashAvailability())
           .catch(() => {/* ignore toggle errors */})
       })
 
+      this.handleEvent('start_scanner', () => startScannerFlow())
+
       this.handleEvent('perform_checkin', ({member_id}) => {
-        // Call existing endpoint; controller responds to GET
         fetch(`/admin/check-in?member_id=${encodeURIComponent(member_id)}`, {credentials: 'same-origin'})
           .then(r => {
             const ok = r.status === 201
