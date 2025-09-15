@@ -27,6 +27,11 @@ defmodule IeeeTamuPortalWeb.Router do
     scope "/v1", V1 do
       resources "/ping", PingController, only: [:show], singleton: true
       resources "/payments", PaymentController, only: [:index, :show, :create]
+      # Discord role management (admin-only via ApiController macro)
+      # resources "/discord/roles", DiscordRolesController, only: [:index, :create]
+      get "/discord/roles", DiscordRolesController, :index
+      post "/discord/roles", DiscordRolesController, :create
+      delete "/discord/roles", DiscordRolesController, :delete
     end
   end
 

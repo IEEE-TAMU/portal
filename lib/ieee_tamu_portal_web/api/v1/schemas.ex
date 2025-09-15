@@ -143,4 +143,79 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
       @default
     end
   end
+
+  defmodule NotFoundResponse do
+    require OpenApiSpex
+
+    @default %{error: "Not found"}
+
+    OpenApiSpex.schema(%{
+      type: :object,
+      properties: %{
+        error: %Schema{type: :string, example: @default.error}
+      },
+      required: [:error]
+    })
+
+    def default(message \\ @default.error) do
+      %{error: message}
+    end
+  end
+
+  defmodule DiscordRolesResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      type: :object,
+      properties: %{
+        success: %Schema{type: :boolean, example: true},
+        roles: %Schema{
+          type: :array,
+          items: %Schema{
+            type: :object,
+            properties: %{
+              id: %Schema{type: :string, example: "1234567890"},
+              name: %Schema{type: :string, example: "Member"}
+            },
+            required: [:id, :name]
+          }
+        }
+      },
+      required: [:success, :roles]
+    })
+
+    def from_client(%{"success" => success, "roles" => roles}) do
+      %{success: success, roles: roles}
+    end
+  end
+
+  defmodule DiscordRoleManageRequest do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      type: :object,
+      properties: %{
+        email: %Schema{type: :string, format: :email},
+        role: %Schema{type: :string}
+      },
+      required: [:email, :role]
+    })
+  end
+
+  defmodule DiscordRoleManageResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      type: :object,
+      properties: %{
+        success: %Schema{type: :boolean, example: true},
+        message: %Schema{type: :string, example: "Role updated"}
+      },
+      required: [:success]
+    })
+
+    def from_client(%{"success" => success} = body) do
+      %{success: success, message: Map.get(body, "message")}
+    end
+  end
 end
