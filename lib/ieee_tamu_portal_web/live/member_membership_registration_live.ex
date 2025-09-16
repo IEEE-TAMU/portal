@@ -32,7 +32,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
 
     checkin_qr_svg =
       if paid? and not already_checked_in? and is_binary(current_event) and
-           current_event != "NONE" do
+           current_event != IeeeTamuPortal.Settings.default_current_event() do
         url = url(~p"/admin/check-in?member_id=#{current_member.id}")
         EQRCode.encode(url) |> EQRCode.svg()
       else

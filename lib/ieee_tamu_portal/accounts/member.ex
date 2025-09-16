@@ -242,7 +242,7 @@ defmodule IeeeTamuPortal.Accounts.Member do
   Returns true if the member has an EventCheckin for the current event and registration year.
 
   Accepts a Member struct or a member id.
-  If the current event is "NONE", returns false.
+  If the current event is the default "NONE", this always returns false.
   """
   def member_is_checked_in?(%__MODULE__{id: id}), do: member_is_checked_in?(id)
 
@@ -252,7 +252,7 @@ defmodule IeeeTamuPortal.Accounts.Member do
 
     event_name = IeeeTamuPortal.Settings.get_current_event!()
 
-    if event_name == "NONE" do
+    if event_name == IeeeTamuPortal.Settings.default_current_event() do
       false
     else
       event_year = IeeeTamuPortal.Settings.get_registration_year!()

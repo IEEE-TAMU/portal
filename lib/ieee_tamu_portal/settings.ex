@@ -25,7 +25,7 @@ defmodule IeeeTamuPortal.Settings do
   require Logger
 
   @default_year 2025
-  @default_current_event "general_meeting"
+  @default_current_event "NONE"
 
   # Gets a setting by its key.
   # Returns the setting struct if found, nil otherwise.
@@ -183,6 +183,8 @@ defmodule IeeeTamuPortal.Settings do
       setting -> setting.value
     end
   end
+
+  def default_current_event, do: @default_current_event
 
   @doc """
   Returns a changeset for creating a new setting.
