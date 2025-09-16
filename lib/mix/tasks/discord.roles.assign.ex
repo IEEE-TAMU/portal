@@ -48,7 +48,7 @@ defmodule Mix.Tasks.Discord.Roles.Assign do
         end
 
       _ ->
-  Mix.shell().error("Invalid arguments. See `mix help discord.roles.assign`.")
+        Mix.shell().error("Invalid arguments. See `mix help discord.roles.assign`.")
     end
   end
 end

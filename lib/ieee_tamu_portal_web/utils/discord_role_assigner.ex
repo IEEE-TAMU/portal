@@ -18,7 +18,8 @@ defmodule IeeeTamuPortalWeb.Utils.DiscordRoleAssigner do
   @type assign_opts :: [dry_run: boolean(), concurrency: pos_integer()]
 
   @spec assign(String.t(), String.t(), String.t(), assign_opts) :: {:ok, map()} | {:error, term()}
-  def assign(host, api_key, path, opts \\ []) when is_binary(host) and is_binary(api_key) and is_binary(path) do
+  def assign(host, api_key, path, opts \\ [])
+      when is_binary(host) and is_binary(api_key) and is_binary(path) do
     dry_run = Keyword.get(opts, :dry_run, false)
     concurrency = Keyword.get(opts, :concurrency, @default_concurrency)
 
@@ -44,9 +45,14 @@ defmodule IeeeTamuPortalWeb.Utils.DiscordRoleAssigner do
             )
 
           Enum.reduce(stream, {[], []}, fn
-            {:ok, {{email, role}, {:ok, _resp}}}, {oks, errs} -> {[{{email, role}, :ok} | oks], errs}
-            {:ok, {{email, role}, {:error, reason}}}, {oks, errs} -> {oks, [{{email, role}, reason} | errs]}
-            {:exit, reason}, {oks, errs} -> {oks, [{:exit, reason} | errs]}
+            {:ok, {{email, role}, {:ok, _resp}}}, {oks, errs} ->
+              {[{{email, role}, :ok} | oks], errs}
+
+            {:ok, {{email, role}, {:error, reason}}}, {oks, errs} ->
+              {oks, [{{email, role}, reason} | errs]}
+
+            {:exit, reason}, {oks, errs} ->
+              {oks, [{:exit, reason} | errs]}
           end)
         end
 
@@ -74,7 +80,9 @@ defmodule IeeeTamuPortalWeb.Utils.DiscordRoleAssigner do
     rows = NimbleCSV.RFC4180.parse_string(content, skip_headers: false)
 
     case rows do
-      [] -> {:ok, []}
+      [] ->
+        {:ok, []}
+
       [headers | data] ->
         headers = Enum.map(headers, &String.trim/1)
 
