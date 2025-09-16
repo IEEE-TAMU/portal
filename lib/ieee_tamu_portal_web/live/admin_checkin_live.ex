@@ -21,6 +21,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
 
     year = Settings.get_registration_year!()
     events = EventCheckin.list_event_names_for_year(year)
+    scanning_enabled = Settings.get_current_event!() != Settings.default_current_event()
 
     {:ok,
      socket
@@ -29,6 +30,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
      |> assign(:status, :idle)
      |> assign(:error, nil)
      |> assign(:scanner_active, false)
+     |> assign(:scanning_enabled, scanning_enabled)
      |> assign(:year, year)
      |> assign(:events, events)
      |> assign(:selected_event, "")}
@@ -81,10 +83,14 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
 
   @impl true
   def handle_event("start_scanner", _params, socket) do
-    {:noreply,
-     socket
-     |> assign(:scanner_active, true)
-     |> push_event("start_scanner", %{})}
+    if socket.assigns[:scanning_enabled] do
+      {:noreply,
+       socket
+       |> assign(:scanner_active, true)
+       |> push_event("start_scanner", %{})}
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true
@@ -120,13 +126,13 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
         <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <.icon name="hero-qr-code" class="w-7 h-7 text-indigo-600" /> Check-in
         </h1>
-        <p class="text-gray-600 mt-1">
+        <p :if={@scanning_enabled} class="lg:col-span-2 space-y-4">
           Use your device camera to scan member check-in QR codes or export year check-ins.
         </p>
       </div>
 
       <div class="grid lg:grid-cols-3 gap-6 items-start">
-        <div class="lg:col-span-2 space-y-4">
+        <div :if={@scanning_enabled} class="lg:col-span-2 space-y-4">
           <div class="w-full max-w-xl mx-auto relative">
             <div
               id="qr-container"
@@ -200,7 +206,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
         </div>
 
         <div class="space-y-4">
-          <div class="bg-white p-4 rounded-lg shadow">
+          <div :if={@scanning_enabled} class="bg-white p-4 rounded-lg shadow">
             <h2 class="text-lg font-semibold mb-2">Status</h2>
             <p class={status_color(@status)}>{@last_result || "Idle"}</p>
             <p :if={@error} class="text-red-600 text-sm mt-2">{@error}</p>
@@ -228,7 +234,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
             </.link>
           </div>
 
-          <div class="bg-white p-4 rounded-lg shadow">
+          <div :if={@scanning_enabled} class="bg-white p-4 rounded-lg shadow">
             <h2 class="text-lg font-semibold mb-2">Instructions</h2>
             <ol class="list-decimal list-inside text-sm text-gray-600 space-y-1">
               <li>Click "Start Scanner" to initialize the camera.</li>
