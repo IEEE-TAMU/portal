@@ -85,7 +85,7 @@ defmodule IeeeTamuPortal.MixProject do
   #
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
-    base_aliases = [
+    [
       setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
@@ -97,28 +97,9 @@ defmodule IeeeTamuPortal.MixProject do
         "esbuild ieee_tamu_portal --minify",
         "phx.digest"
       ],
-      fmt: ["format"]
+      fmt: ["format"],
+      "deps.get": ["deps.get", "deps.nix"],
+      "deps.update": ["deps.update", "deps.get", "deps.nix"]
     ]
-
-    if Mix.env() == :dev do
-      base_aliases ++
-        [
-          # deps_nix -  ensure deps.nix is run before cutting a nix based release
-          # to update deps.nix with the latest dependencies from mix.lock.
-          # if release is made in gh actions - can install nix and fail if deps.nix
-          # is not up to date - opening a PR to update it. Or, run a gh action whenever
-          # renovate open a PR to update deps.nix in the same PR.
-
-          # renovate runs something like: 'mix deps.update phoenix_live_view'
-          # to update the mix lockfile. However, deps_nix requires all dependencies
-          # to be fetched before it can run. It also calls out to the nix cli
-          # to hash non mix dependencies. Work with upstream to do the hashing
-          # in elixir? and only need the one dep being updated?
-          # "deps.get": ["deps.get", "deps.nix"],
-          # "deps.update": ["deps.update", "deps.get", "deps.nix"]
-        ]
-    else
-      base_aliases
-    end
   end
 end
