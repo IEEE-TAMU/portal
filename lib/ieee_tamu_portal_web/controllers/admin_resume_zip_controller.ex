@@ -3,14 +3,28 @@ defmodule IeeeTamuPortalWeb.AdminResumeZipController do
 
   alias IeeeTamuPortal.ResumeZipService
 
-  def download(conn, _params) do
-    case ResumeZipService.stream_zip() do
+  def download(conn, params) do
+    filter =
+      case Map.get(params, "looking_for") do
+        "full_time" -> :full_time
+        "internship" -> :internship
+        _ -> :all
+      end
+
+    case ResumeZipService.stream_zip(looking_for: filter) do
       {:ok, zip_stream} ->
+        suffix =
+          case filter do
+            :full_time -> "_full_time"
+            :internship -> "_internship"
+            _ -> ""
+          end
+
         conn
         |> put_resp_content_type("application/zip")
         |> put_resp_header(
           "content-disposition",
-          "attachment; filename=\"ieee_tamu_resumes.zip\""
+          "attachment; filename=\"ieee_tamu_resumes#{suffix}.zip\""
         )
         |> send_chunked(200)
         |> stream_zip_data(zip_stream)

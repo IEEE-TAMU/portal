@@ -11,17 +11,31 @@ defmodule IeeeTamuPortal.ResumeZipService do
   alias IeeeTamuPortal.Members.Resume
 
   @doc """
-  Creates a streaming zip response containing all member resumes.
+  Creates a streaming zip response containing member resumes.
+
+  Options:
+    * `:looking_for` - filter by `:full_time` or `:internship`. Defaults to `:all`.
+      When filtering, members marked `:either` are included in both subsets.
   Returns a Stream that can be used directly in Phoenix responses.
   """
-  def stream_zip() do
-    case get_members_with_resumes() do
+  def stream_zip(opts \\ []) do
+    looking_for = Keyword.get(opts, :looking_for, :all)
+
+    case get_members_with_resumes(looking_for) do
       [] ->
         {:error, :no_resumes_found}
 
       members ->
         short_date = Date.utc_today() |> to_string()
-        folder_name = "ieee_tamu_resumes_#{short_date}"
+
+        filter_suffix =
+          case looking_for do
+            :full_time -> "_full_time"
+            :internship -> "_internship"
+            _ -> ""
+          end
+
+        folder_name = "ieee_tamu_resumes#{filter_suffix}_#{short_date}"
 
         zip_stream =
           members
@@ -37,15 +51,27 @@ defmodule IeeeTamuPortal.ResumeZipService do
   Gets the count of members with resumes for display purposes.
   """
   def count_resumes() do
-    get_members_with_resumes() |> length()
+    get_members_with_resumes(:all) |> length()
+  end
+
+  def count_resumes(filter) when filter in [:full_time, :internship] do
+    get_members_with_resumes(filter) |> length()
   end
 
   # Private functions
 
-  defp get_members_with_resumes do
+  defp get_members_with_resumes(filter) do
     Accounts.list_members()
     |> Enum.filter(& &1.resume)
     |> IeeeTamuPortal.Repo.preload([:info])
+    |> Enum.filter(fn member ->
+      case filter do
+        :all -> true
+        :full_time -> member.resume.looking_for in [:full_time, :either]
+        :internship -> member.resume.looking_for in [:internship, :either]
+        _ -> true
+      end
+    end)
   end
 
   defp create_zip_entry(member, folder_name) do

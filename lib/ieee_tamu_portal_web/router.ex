@@ -122,6 +122,7 @@ defmodule IeeeTamuPortalWeb.Router do
       # on_mount: [{IeeeTamuPortalWeb.Auth.AdminAuth, :admin_auth}],
       layout: {IeeeTamuPortalWeb.Layouts, :admin} do
       live "/", AdminLive, :index
+      live "/resumes", AdminResumesLive, :index
       live "/members", AdminMembersLive, :index
       live "/checkin", AdminCheckinLive, :index
       live "/settings", AdminSettingsLive, :index

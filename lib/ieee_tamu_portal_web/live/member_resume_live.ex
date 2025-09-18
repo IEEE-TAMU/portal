@@ -161,7 +161,7 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
           <p class="text-gray-500">No resume uploaded</p>
         </div>
       <% end %>
-      <div class="mt-4">
+      <div class="my-4">
         <.input
           name="looking_for"
           type="select"
