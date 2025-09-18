@@ -514,7 +514,7 @@ let
 
       gettext =
         let
-          version = "0.26.2";
+          version = "1.0.0";
           drv = buildMix {
             inherit version;
             name = "gettext";
@@ -523,7 +523,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "gettext";
-              sha256 = "aa978504bcf76511efdc22d580ba08e2279caab1066b76bb9aa81c4a1e0a32a5";
+              sha256 = "cc8196640756894a4fd75606067bed41a9863c0db09d6d6cc576e6170cffaa74";
             };
 
             beamDeps = [
@@ -807,7 +807,7 @@ let
 
       phoenix_live_view =
         let
-          version = "1.1.12";
+          version = "1.1.13";
           drv = buildMix {
             inherit version;
             name = "phoenix_live_view";
@@ -816,7 +816,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "phoenix_live_view";
-              sha256 = "02bc806601562e157b05e66e8146bf24c170037b5005d6614035e789ae732209";
+              sha256 = "9d06e93573b8419ef8ee832b4a9bfe0def10b15f7c129ea477dfa54f0136f7ec";
             };
 
             beamDeps = [
