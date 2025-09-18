@@ -207,16 +207,34 @@ defmodule IeeeTamuPortal.Accounts.Member do
   end
 
   def put_resume(%__MODULE__{} = member, %Phoenix.LiveView.UploadEntry{} = entry) do
+    put_resume(member, entry, :either)
+  end
+
+  def put_resume(%__MODULE__{} = member, %Phoenix.LiveView.UploadEntry{} = entry, looking_for)
+      when looking_for in [:full_time, :internship, :either] or is_binary(looking_for) do
     alias IeeeTamuPortal.Members.Resume
 
     existing_resume = member |> IeeeTamuPortal.Repo.preload(:resume) |> Map.get(:resume)
 
     resume = existing_resume || Ecto.build_assoc(member, :resume)
 
+    looking_for =
+      case looking_for do
+        lf when lf in [:full_time, :internship, :either] -> lf
+        "Full-Time" -> :full_time
+        "Internship" -> :internship
+        "Either" -> :either
+        "full_time" -> :full_time
+        "internship" -> :internship
+        "either" -> :either
+        _ -> :either
+      end
+
     changeset =
       Resume.changeset(resume, %{
         original_filename: entry.client_name,
-        key: Resume.key(member, entry)
+        key: Resume.key(member, entry),
+        looking_for: looking_for
       })
 
     case IeeeTamuPortal.Repo.insert_or_update(changeset) do
@@ -235,6 +253,35 @@ defmodule IeeeTamuPortal.Accounts.Member do
       resume ->
         {:ok, _} = Resume.delete(resume)
         {:ok, %__MODULE__{member | resume: nil}}
+    end
+  end
+
+  def update_resume_looking_for(%__MODULE__{} = member, looking_for) do
+    alias IeeeTamuPortal.Members.Resume
+
+    case member.resume do
+      nil ->
+        {:ok, member}
+
+      %Resume{} = resume ->
+        looking_for =
+          case looking_for do
+            lf when lf in [:full_time, :internship, :either] -> lf
+            "Full-Time" -> :full_time
+            "Internship" -> :internship
+            "Either" -> :either
+            "full_time" -> :full_time
+            "internship" -> :internship
+            "either" -> :either
+            _ -> :either
+          end
+
+        changeset = Resume.changeset(resume, %{looking_for: looking_for})
+
+        case IeeeTamuPortal.Repo.update(changeset) do
+          {:ok, updated} -> {:ok, %__MODULE__{member | resume: updated}}
+          {:error, cs} -> {:error, cs}
+        end
     end
   end
 

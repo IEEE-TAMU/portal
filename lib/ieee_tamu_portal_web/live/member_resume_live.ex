@@ -21,10 +21,19 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
           url
       end
 
+    looking_for_value =
+      case member.resume && member.resume.looking_for do
+        nil -> "Either"
+        :either -> "Either"
+        :full_time -> "Full-Time"
+        :internship -> "Internship"
+      end
+
     socket =
       socket
       |> assign(:current_member, member)
       |> assign(:resume_url, resume_url)
+      |> assign(:looking_for, looking_for_value)
       |> allow_upload(:member_resume,
         accept: ~w(.pdf),
         max_file_size: 5_000_000,
@@ -57,8 +66,9 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
   end
 
   @impl true
-  def handle_event("validate", %{"_target" => ["member_resume"]}, socket) do
-    {:noreply, socket}
+  def handle_event("validate", params, socket) do
+    looking_for = Map.get(params, "looking_for", socket.assigns.looking_for)
+    {:noreply, assign(socket, :looking_for, looking_for)}
   end
 
   @impl true
@@ -67,18 +77,35 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
   end
 
   @impl true
-  def handle_event("save", _params, socket) do
+  def handle_event("save", params, socket) do
     {completed, []} = uploaded_entries(socket, :member_resume)
 
     socket =
       case completed do
         [] ->
-          socket
+          looking_for = Map.get(params, "looking_for", socket.assigns.looking_for)
+
+          case Accounts.Member.update_resume_looking_for(
+                 socket.assigns.current_member,
+                 looking_for
+               ) do
+            {:ok, member} ->
+              socket
+              |> assign(:current_member, member)
+              |> assign(:looking_for, looking_for)
+              |> Phoenix.LiveView.put_flash(:info, "Preferences updated")
+
+            {:error, _cs} ->
+              socket
+              |> Phoenix.LiveView.put_flash(:error, "Could not update preference")
+          end
 
         [entry] ->
+          looking_for = Map.get(params, "looking_for", socket.assigns.looking_for)
+
           {:ok, member} =
             socket.assigns.current_member
-            |> Accounts.Member.put_resume(entry)
+            |> Accounts.Member.put_resume(entry, looking_for)
 
           # sign the GET request for the resume
           {:ok, url} =
@@ -90,6 +117,7 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
           socket
           |> assign(:current_member, member)
           |> assign(:resume_url, url)
+          |> assign(:looking_for, looking_for)
           |> cancel_upload(:member_resume, entry.ref)
           |> Phoenix.LiveView.put_flash(:info, "Resume uploaded successfully")
       end
@@ -107,6 +135,7 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
       socket
       |> assign(:current_member, member)
       |> assign(:resume_url, nil)
+      |> assign(:looking_for, "Either")
       |> Phoenix.LiveView.put_flash(:info, "Resume deleted successfully")
 
     {:noreply, socket}
@@ -132,6 +161,16 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
           <p class="text-gray-500">No resume uploaded</p>
         </div>
       <% end %>
+      <div class="mt-4">
+        <.input
+          name="looking_for"
+          type="select"
+          label="Looking for"
+          options={["Full-Time", "Internship", "Either"]}
+          value={@looking_for}
+          required
+        />
+      </div>
       <div class="flex border-t border-gray-200 pt-5 justify-evenly items-center">
         <.upload_zone
           upload={@uploads.member_resume}

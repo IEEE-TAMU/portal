@@ -9,6 +9,7 @@ defmodule IeeeTamuPortal.Members.Resume do
       autogenerate: {IeeeTamuPortalWeb.Upload.SimpleS3Upload, :bucket_url, []}
 
     field :key, :string
+    field :looking_for, Ecto.Enum, values: [:full_time, :internship, :either], default: :either
 
     timestamps(type: :utc_datetime)
     belongs_to :member, IeeeTamuPortal.Accounts.Member
@@ -16,8 +17,8 @@ defmodule IeeeTamuPortal.Members.Resume do
 
   def changeset(resume, attrs) do
     resume
-    |> cast(attrs, [:original_filename, :bucket_url, :key])
-    |> validate_required([:original_filename, :key])
+    |> cast(attrs, [:original_filename, :bucket_url, :key, :looking_for])
+    |> validate_required([:original_filename, :key, :looking_for])
     |> unique_constraint(:member_id)
   end
 
