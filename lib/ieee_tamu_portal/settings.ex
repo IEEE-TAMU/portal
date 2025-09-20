@@ -33,6 +33,9 @@ defmodule IeeeTamuPortal.Settings do
     Repo.get_by(Setting, key: key)
   end
 
+  # Expose a public getter by key when needed by UIs.
+  def get_setting_by_key(key), do: get_setting(key)
+
   @doc """
   Fetches all settings from the database.
 
@@ -185,6 +188,35 @@ defmodule IeeeTamuPortal.Settings do
   end
 
   def default_current_event, do: @default_current_event
+
+  @doc """
+  Sets the current event name (string) used for check-ins.
+
+  Creates or updates the `current_event` setting. Returns `{:ok, %Setting{}}` or `{:error, changeset}`.
+  """
+  def set_current_event(event_name) when is_binary(event_name) do
+    upsert_setting("current_event", event_name)
+  end
+
+  @doc """
+  Stops the current event by resetting it to the default value ("NONE").
+
+  Returns `{:ok, %Setting{}}` or `{:error, changeset}`.
+  """
+  def stop_current_event do
+    upsert_setting("current_event", @default_current_event)
+  end
+
+  # Creates or updates a setting by key with the provided value.
+  defp upsert_setting(key, value) do
+    case get_setting(key) do
+      nil ->
+        create_setting(%{key: key, value: value})
+
+      %Setting{} = setting ->
+        update_setting(setting, %{value: value})
+    end
+  end
 
   @doc """
   Returns a changeset for creating a new setting.

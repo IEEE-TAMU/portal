@@ -21,7 +21,8 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
 
     year = Settings.get_registration_year!()
     events = EventCheckin.list_event_names_for_year(year)
-    scanning_enabled = Settings.get_current_event!() != Settings.default_current_event()
+    current_event = Settings.get_current_event!()
+    scanning_enabled = current_event != Settings.default_current_event()
 
     {:ok,
      socket
@@ -31,6 +32,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
      |> assign(:error, nil)
      |> assign(:scanner_active, false)
      |> assign(:scanning_enabled, scanning_enabled)
+     |> assign(:current_event, current_event)
      |> assign(:year, year)
      |> assign(:events, events)
      |> assign(:selected_event, "")}
@@ -90,6 +92,42 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
        |> push_event("start_scanner", %{})}
     else
       {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("set_event", %{"event_name" => event_name}, socket) do
+    case Settings.set_current_event(String.trim(event_name || "")) do
+      {:ok, _setting} ->
+        {:noreply,
+         socket
+         |> assign(
+           current_event: Settings.get_current_event!(),
+           scanning_enabled: true,
+           scanner_active: false
+         )
+         |> put_flash(:info, "Event started")}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Failed to start event")}
+    end
+  end
+
+  @impl true
+  def handle_event("stop_event", _params, socket) do
+    case Settings.stop_current_event() do
+      {:ok, _setting} ->
+        {:noreply,
+         socket
+         |> assign(
+           current_event: Settings.get_current_event!(),
+           scanning_enabled: false,
+           scanner_active: false
+         )
+         |> put_flash(:info, "Event stopped")}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Failed to stop event")}
     end
   end
 
@@ -206,6 +244,44 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
         </div>
 
         <div class="space-y-4">
+          <div class="grid gap-6 mb-6">
+            <div class="bg-white p-4 rounded-lg shadow">
+              <h2 class="text-lg font-semibold mb-2">Event Controls</h2>
+              <p class="text-sm text-gray-600 mb-3" hidden={!@scanning_enabled}>
+                Current: <span class="font-medium">{@current_event}</span>
+              </p>
+              <.form for={%{}} phx-submit="set_event" class="flex flex-wrap items-center gap-2">
+                <input
+                  type="text"
+                  name="event_name"
+                  placeholder="e.g., general_meeting"
+                  hidden={@scanning_enabled}
+                  class="flex-1 min-w-[14rem] px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  value={
+                    if @current_event == Settings.default_current_event(),
+                      do: "",
+                      else: @current_event
+                  }
+                />
+                <.button
+                  type="submit"
+                  class="bg-green-600 hover:bg-green-700 text-sm"
+                  hidden={@scanning_enabled}
+                >
+                  Start Event
+                </.button>
+                <.button
+                  type="button"
+                  phx-click="stop_event"
+                  class="bg-red-600 hover:bg-red-700 text-sm"
+                  hidden={!@scanning_enabled}
+                >
+                  Stop Event
+                </.button>
+              </.form>
+            </div>
+          </div>
+
           <div :if={@scanning_enabled} class="bg-white p-4 rounded-lg shadow">
             <h2 class="text-lg font-semibold mb-2">Status</h2>
             <p class={status_color(@status)}>{@last_result || "Idle"}</p>
