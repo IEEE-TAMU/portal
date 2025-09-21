@@ -70,7 +70,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:flop_phoenix, "== 0.25.3"},
       {:lazy_html, "== 0.1.8", only: :test},
       {:mox, "== 1.2.0", only: :test},
-      {:igniter, "== 0.6.28", only: [:dev, :test]},
+      {:igniter, "== 0.6.29", only: [:dev, :test]},
       {:igniter_new, "== 0.5.31", only: :dev},
       {:nimble_csv, "== 1.3.0"},
       {:eqrcode, "== 0.2.1"},
