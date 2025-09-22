@@ -38,6 +38,9 @@ defmodule IeeeTamuPortalWeb.MemberInfoLive do
     %{"info" => info_params} = params
     member = socket.assigns.current_member
 
+    # Check if this is a first-time user (no existing info)
+    is_first_time = is_nil(member.info)
+
     case MembershipService.update_or_create_member_info(member, info_params) do
       {:ok, info} ->
         member = %Accounts.Member{member | info: info}
@@ -49,9 +52,19 @@ defmodule IeeeTamuPortalWeb.MemberInfoLive do
 
         socket =
           socket
-          |> Phoenix.LiveView.put_flash(:info, "Your information has been updated.")
           |> assign(:current_member, member)
           |> assign(:info_form, info_form)
+
+        # Redirect first-time users to registration page
+        socket =
+          if is_first_time do
+            socket
+            |> Phoenix.LiveView.put_flash(:info, "Your information has been saved.")
+            |> Phoenix.LiveView.push_navigate(to: ~p"/members/registration")
+          else
+            socket
+            |> Phoenix.LiveView.put_flash(:info, "Your information has been updated.")
+          end
 
         {:noreply, socket}
 
