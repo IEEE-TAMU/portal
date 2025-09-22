@@ -249,7 +249,7 @@ let
 
       db_connection =
         let
-          version = "2.8.0";
+          version = "2.8.1";
           drv = buildMix {
             inherit version;
             name = "db_connection";
@@ -258,7 +258,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "db_connection";
-              sha256 = "008399dae5eee1bf5caa6e86d204dcb44242c82b1ed5e22c881f2c34da201b15";
+              sha256 = "a61a3d489b239d76f326e03b98794fb8e45168396c925ef25feb405ed09da8fd";
             };
 
             beamDeps = [
@@ -304,7 +304,7 @@ let
 
       ecto =
         let
-          version = "3.13.2";
+          version = "3.13.3";
           drv = buildMix {
             inherit version;
             name = "ecto";
@@ -313,7 +313,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "ecto";
-              sha256 = "669d9291370513ff56e7b7e7081b7af3283d02e046cf3d403053c557894a0b3e";
+              sha256 = "1927db768f53a88843ff25b6ba7946599a8ca8a055f69ad8058a1432a399af94";
             };
 
             beamDeps = [
@@ -952,7 +952,7 @@ let
 
       swoosh =
         let
-          version = "1.19.5";
+          version = "1.19.6";
           drv = buildMix {
             inherit version;
             name = "swoosh";
@@ -961,7 +961,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "swoosh";
-              sha256 = "c953f51ee0a8b237e0f4307c9cefd3eb1eb751c35fcdda2a8bccb991766473be";
+              sha256 = "dd42a5fb9a682df2383559d912b2ed987c455e242cd2ee4a2a4256e1f05e8568";
             };
 
             beamDeps = [
