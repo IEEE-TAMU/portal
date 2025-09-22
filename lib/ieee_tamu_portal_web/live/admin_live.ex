@@ -81,38 +81,26 @@ defmodule IeeeTamuPortalWeb.AdminLive do
       <div class="mt-8 bg-white rounded-lg shadow p-6">
         <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <.link
-            navigate={~p"/admin/settings"}
-            class="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 text-left block"
-          >
-            <div class="flex items-center">
-              <.icon name="hero-cog-6-tooth" class="w-5 h-5 text-gray-500 mr-3" />
-              <span class="text-sm font-medium text-gray-700">Global Settings</span>
-            </div>
-            <p class="text-xs text-gray-500 mt-1">Manage application-wide settings</p>
-          </.link>
+          <.quick_action_card
+            title="Global Settings"
+            description="Manage application-wide settings"
+            icon="hero-cog-6-tooth"
+            href={~p"/admin/settings"}
+          />
 
-          <.link
-            navigate={~p"/admin/api-keys"}
-            class="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 text-left block"
-          >
-            <div class="flex items-center">
-              <.icon name="hero-key" class="w-5 h-5 text-gray-500 mr-3" />
-              <span class="text-sm font-medium text-gray-700">API Keys</span>
-            </div>
-            <p class="text-xs text-gray-500 mt-1">Manage API access keys</p>
-          </.link>
+          <.quick_action_card
+            title="API Keys"
+            description="Manage API access keys"
+            icon="hero-key"
+            href={~p"/admin/api-keys"}
+          />
 
-          <.link
-            navigate={~p"/admin/resumes"}
-            class="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 text-left block"
-          >
-            <div class="flex items-center">
-              <.icon name="hero-document-text" class="w-5 h-5 text-gray-500 mr-3" />
-              <span class="text-sm font-medium text-gray-700">Resumes</span>
-            </div>
-            <p class="text-xs text-gray-500 mt-1">Browse and manage resumes</p>
-          </.link>
+          <.quick_action_card
+            title="Resumes"
+            description="Browse and manage resumes"
+            icon="hero-document-text"
+            href={~p"/admin/resumes"}
+          />
         </div>
       </div>
     </div>
@@ -195,6 +183,42 @@ defmodule IeeeTamuPortalWeb.AdminLive do
         </div>
       </div>
     </div>
+    """
+  end
+
+  @doc """
+  Quick action card for navigation to admin functions.
+
+  ## Assigns
+
+    * `:title` - the main title/label for the action
+    * `:description` - a brief description of what the action does
+    * `:icon` - hero icon name (e.g. "hero-cog-6-tooth")
+    * `:href` - the URL to navigate to when clicked
+    * `:disabled` - boolean to disable the action (default: false)
+
+  """
+  attr :title, :string, required: true
+  attr :description, :string, required: true
+  attr :icon, :string, required: true
+  attr :href, :string, required: true
+  attr :disabled, :boolean, default: false
+
+  def quick_action_card(assigns) do
+    ~H"""
+    <.link
+      navigate={@href}
+      class={[
+        "p-4 border border-gray-300 rounded-lg text-left block",
+        if(@disabled, do: "opacity-50 cursor-not-allowed", else: "hover:bg-gray-50")
+      ]}
+    >
+      <div class="flex items-center">
+        <.icon name={@icon} class="w-5 h-5 text-gray-500 mr-3" />
+        <span class="text-sm font-medium text-gray-700">{@title}</span>
+      </div>
+      <p class="text-xs text-gray-500 mt-1">{@description}</p>
+    </.link>
     """
   end
 end
