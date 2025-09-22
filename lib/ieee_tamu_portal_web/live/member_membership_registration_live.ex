@@ -214,7 +214,13 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
                 <h2 class="text-green-800 font-medium">Registration Complete!</h2>
               </div>
               <p class="text-green-700 mt-2">
-                Your registration and payment have been processed successfully.
+                Your registration and payment have been processed successfully. To get the member role in the discord, link your discord account in the
+                <.link
+                  navigate={~p"/members/settings"}
+                  class="text-blue-500 hover:underline whitespace-nowrap"
+                >
+                  settings page <.icon name="hero-arrow-top-right-on-square" class="w-4 h-5" />.
+                </.link>
               </p>
             </div>
 
