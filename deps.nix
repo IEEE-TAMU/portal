@@ -514,7 +514,7 @@ let
 
       gettext =
         let
-          version = "1.0.0";
+          version = "0.26.2";
           drv = buildMix {
             inherit version;
             name = "gettext";
@@ -523,7 +523,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "gettext";
-              sha256 = "cc8196640756894a4fd75606067bed41a9863c0db09d6d6cc576e6170cffaa74";
+              sha256 = "aa978504bcf76511efdc22d580ba08e2279caab1066b76bb9aa81c4a1e0a32a5";
             };
 
             beamDeps = [
