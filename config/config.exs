@@ -61,6 +61,11 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# Register text/calendar for .ics
+config :mime, :types, %{
+  "text/calendar" => ["ics"]
+}
+
 config :flop, repo: IeeeTamuPortal.Repo
 
 # Import environment specific config. This must remain at the bottom

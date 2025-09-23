@@ -14,7 +14,7 @@ defmodule IeeeTamuPortalWeb.Router do
   end
 
   pipeline :api do
-    plug :accepts, ["json"]
+    plug :accepts, ["json", "ics"]
     plug Plug.Parsers, parsers: [{:json, json_decoder: Jason}]
     plug OpenApiSpex.Plug.PutApiSpec, module: IeeeTamuPortalWeb.Api.Spec
   end
@@ -25,6 +25,8 @@ defmodule IeeeTamuPortalWeb.Router do
     get "/openapi", RenderSpec, []
 
     scope "/v1", V1 do
+      # Unsecured ICS calendar feed
+      get "/calendar", CalendarController, :index
       resources "/ping", PingController, only: [:show], singleton: true
       resources "/payments", PaymentController, only: [:index, :show, :create]
       # Discord role management (admin-only via ApiController macro)
