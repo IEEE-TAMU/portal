@@ -50,3 +50,7 @@ config :ieee_tamu_portal, IeeeTamuPortalWeb.Upload.SimpleS3Upload,
   access_key_id: "test_access_key",
   secret_access_key: "test_secret_key",
   url: "https://test-bucket.s3.amazonaws.com"
+
+config :ieee_tamu_portal,
+       :frontend_time_zone,
+       "America/Chicago"

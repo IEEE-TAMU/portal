@@ -3,21 +3,33 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
 
   alias IeeeTamuPortal.Events
   alias IeeeTamuPortal.Events.Event
+  alias Phoenix.LiveView.JS
 
   @impl true
   def mount(_params, _session, socket) do
     events = Events.list_events()
     create_changeset = Events.change_event(%Event{})
+    default_tz = Application.fetch_env!(:ieee_tamu_portal, :frontend_time_zone)
+
+    time_zone =
+      if connected?(socket) do
+        get_connect_params(socket)["timeZone"] || default_tz
+      else
+        default_tz
+      end
 
     {:ok,
      assign(socket,
        events: events,
        create_form: to_form(create_changeset),
+       create_local_params: %{},
        show_create_form: false,
        edit_event: nil,
        edit_form: nil,
+       edit_local_params: %{},
        show_edit_form: false,
-       page_title: "Manage Events"
+       page_title: "Manage Events",
+       time_zone: time_zone
      )}
   end
 
@@ -29,23 +41,35 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
   @impl true
   def handle_event("hide_create_form", _params, socket) do
     create_changeset = Events.change_event(%Event{})
-    {:noreply, assign(socket, show_create_form: false, create_form: to_form(create_changeset))}
+
+    {:noreply,
+     assign(socket,
+       show_create_form: false,
+       create_form: to_form(create_changeset),
+       create_local_params: %{}
+     )}
   end
 
   @impl true
   def handle_event("validate_create", %{"event" => event_params}, socket) do
+    tz = socket.assigns.time_zone
+    utc_params = convert_datetime_params(event_params, tz)
+
     create_form =
       %Event{}
-      |> Events.change_event(event_params)
+      |> Events.change_event(utc_params)
       |> Map.put(:action, :validate)
       |> to_form()
 
-    {:noreply, assign(socket, create_form: create_form)}
+    {:noreply, assign(socket, create_form: create_form, create_local_params: event_params)}
   end
 
   @impl true
   def handle_event("create_event", %{"event" => event_params}, socket) do
-    case Events.create_event(event_params) do
+    tz = socket.assigns.time_zone
+    utc_params = convert_datetime_params(event_params, tz)
+
+    case Events.create_event(utc_params) do
       {:ok, _new_event} ->
         events = Events.list_events()
         create_changeset = Events.change_event(%Event{})
@@ -54,11 +78,13 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
          socket
          |> assign(:events, events)
          |> assign(:create_form, to_form(create_changeset))
+         |> assign(:create_local_params, %{})
          |> assign(:show_create_form, false)
          |> put_flash(:info, "Event created successfully")}
 
       {:error, changeset} ->
-        {:noreply, assign(socket, create_form: to_form(changeset))}
+        {:noreply,
+         assign(socket, create_form: to_form(changeset), create_local_params: event_params)}
     end
   end
 
@@ -67,28 +93,46 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
     event = Events.get_event!(uid)
     edit_form = Events.change_event(event) |> to_form()
 
-    {:noreply, assign(socket, edit_event: event, edit_form: edit_form, show_edit_form: true)}
+    {:noreply,
+     assign(socket,
+       edit_event: event,
+       edit_form: edit_form,
+       edit_local_params: %{},
+       show_edit_form: true
+     )}
   end
 
   @impl true
   def handle_event("cancel_edit", _params, socket) do
-    {:noreply, assign(socket, edit_event: nil, edit_form: nil, show_edit_form: false)}
+    {:noreply,
+     assign(socket,
+       edit_event: nil,
+       edit_form: nil,
+       edit_local_params: %{},
+       show_edit_form: false
+     )}
   end
 
   @impl true
   def handle_event("validate_edit", %{"event" => event_params}, socket) do
+    tz = socket.assigns.time_zone
+    utc_params = convert_datetime_params(event_params, tz)
+
     edit_form =
       socket.assigns.edit_event
-      |> Events.change_event(event_params)
+      |> Events.change_event(utc_params)
       |> Map.put(:action, :validate)
       |> to_form()
 
-    {:noreply, assign(socket, edit_form: edit_form)}
+    {:noreply, assign(socket, edit_form: edit_form, edit_local_params: event_params)}
   end
 
   @impl true
   def handle_event("update_event", %{"event" => event_params}, socket) do
-    case Events.update_event(socket.assigns.edit_event, event_params) do
+    tz = socket.assigns.time_zone
+    utc_params = convert_datetime_params(event_params, tz)
+
+    case Events.update_event(socket.assigns.edit_event, utc_params) do
       {:ok, _updated_event} ->
         events = Events.list_events()
 
@@ -97,11 +141,12 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
          |> assign(:events, events)
          |> assign(:edit_event, nil)
          |> assign(:edit_form, nil)
+         |> assign(:edit_local_params, %{})
          |> assign(:show_edit_form, false)
          |> put_flash(:info, "Event updated successfully")}
 
       {:error, changeset} ->
-        {:noreply, assign(socket, edit_form: to_form(changeset))}
+        {:noreply, assign(socket, edit_form: to_form(changeset), edit_local_params: event_params)}
     end
   end
 
@@ -174,9 +219,15 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
                   field={@create_form[:dtstart]}
                   type="datetime-local"
                   label="Start Date & Time"
+                  value={@create_local_params["dtstart"]}
                   required
                 />
-                <.input field={@create_form[:dtend]} type="datetime-local" label="End Date & Time" />
+                <.input
+                  field={@create_form[:dtend]}
+                  type="datetime-local"
+                  label="End Date & Time"
+                  value={@create_local_params["dtend"]}
+                />
               </div>
 
               <.input field={@create_form[:location]} type="text" label="Location" />
@@ -222,8 +273,24 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <.input field={@edit_form[:dtstart]} type="datetime-local" label="Start Date & Time" />
-                <.input field={@edit_form[:dtend]} type="datetime-local" label="End Date & Time" />
+                <.input
+                  field={@edit_form[:dtstart]}
+                  type="datetime-local"
+                  label="Start Date & Time"
+                  value={
+                    @edit_local_params["dtstart"] ||
+                      to_local_naive_input(@edit_event && @edit_event.dtstart, @time_zone)
+                  }
+                />
+                <.input
+                  field={@edit_form[:dtend]}
+                  type="datetime-local"
+                  label="End Date & Time"
+                  value={
+                    @edit_local_params["dtend"] ||
+                      to_local_naive_input(@edit_event && @edit_event.dtend, @time_zone)
+                  }
+                />
               </div>
 
               <.input field={@edit_form[:location]} type="text" label="Location" />
@@ -282,10 +349,10 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
                       <.icon name="hero-calendar" class="w-4 h-4 mr-2" />
                       <span>
                         <%= if event.dtstart do %>
-                          {Calendar.strftime(event.dtstart, "%B %d, %Y at %I:%M %p")}
+                          {format_local(event.dtstart, @time_zone, "%B %d, %Y at %I:%M %p")}
                         <% end %>
                         <%= if event.dtend do %>
-                          - {Calendar.strftime(event.dtend, "%I:%M %p")}
+                          - {format_local(event.dtend, @time_zone, "%I:%M %p")}
                         <% end %>
                       </span>
                     </div>
@@ -338,5 +405,72 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
       </div>
     </div>
     """
+  end
+
+  # -- Timezone helpers --
+  defp convert_datetime_params(params, tz) do
+    params
+    |> convert_one("dtstart", tz)
+    |> convert_one("dtend", tz)
+  end
+
+  defp convert_one(params, key, tz) do
+    case Map.get(params, key) do
+      nil ->
+        params
+
+      "" ->
+        params
+
+      value when is_binary(value) ->
+        case parse_local_to_utc(value, tz) do
+          {:ok, dt_utc} -> Map.put(params, key, dt_utc)
+          {:error, _} -> params
+        end
+    end
+  end
+
+  defp parse_local_to_utc(str, tz) do
+    naive_result =
+      case NaiveDateTime.from_iso8601(str) do
+        {:ok, naive} -> {:ok, naive}
+        _ -> NaiveDateTime.from_iso8601(str <> ":00")
+      end
+
+    with {:ok, naive} <- naive_result,
+         {:ok, local} <- DateTime.from_naive(naive, tz) do
+      DateTime.shift_zone(local, "Etc/UTC")
+    else
+      {:ambiguous, first, _second} -> DateTime.shift_zone(first, "Etc/UTC")
+      {:gap, _naive, _} -> {:error, :time_gap}
+      other -> other
+    end
+  end
+
+  defp to_local_naive_input(nil, _tz), do: nil
+
+  defp to_local_naive_input(%DateTime{} = dt, tz) do
+    case DateTime.shift_zone(dt, tz) do
+      {:ok, local} ->
+        local
+        |> DateTime.to_naive()
+        |> naive_to_input_string()
+
+      _ ->
+        nil
+    end
+  end
+
+  defp naive_to_input_string(%NaiveDateTime{} = naive) do
+    # HTML datetime-local expects YYYY-MM-DDTHH:MM
+    NaiveDateTime.to_iso8601(naive)
+    |> String.slice(0, 16)
+  end
+
+  defp format_local(%DateTime{} = dt, tz, pattern) do
+    case DateTime.shift_zone(dt, tz) do
+      {:ok, local} -> Calendar.strftime(local, pattern)
+      _ -> Calendar.strftime(dt, pattern)
+    end
   end
 end

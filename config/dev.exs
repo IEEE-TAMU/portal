@@ -125,3 +125,7 @@ config :ieee_tamu_portal, :google_oauth,
 config :ieee_tamu_portal,
        :discord_bot_url,
        System.get_env("DISCORD_BOT_URL", "http://localhost:3000")
+
+config :ieee_tamu_portal,
+       :frontend_time_zone,
+       System.get_env("FRONTEND_TIME_ZONE", "America/Chicago")
