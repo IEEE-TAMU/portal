@@ -19,7 +19,7 @@ defmodule IeeeTamuPortal.EventsTest do
       )
     end
 
-    test "list_events/0 returns events ordered by dtstart desc" do
+    test "list_events/1 returns events ordered by dtstart desc when including past via after: far past" do
       {:ok, e1} =
         Events.create_event(
           valid_attrs(%{dtstart: DateTime.add(DateTime.utc_now(), -7200, :second)})
@@ -30,7 +30,8 @@ defmodule IeeeTamuPortal.EventsTest do
           valid_attrs(%{dtstart: DateTime.add(DateTime.utc_now(), -3600, :second)})
         )
 
-      assert [e2.uid, e1.uid] == Events.list_events() |> Enum.map(& &1.uid)
+      past = DateTime.add(DateTime.utc_now(), -365 * 24 * 3600, :second)
+      assert [e2.uid, e1.uid] == Events.list_events(after: past) |> Enum.map(& &1.uid)
     end
 
     test "get_event!/1 returns the event by uid" do
@@ -81,6 +82,34 @@ defmodule IeeeTamuPortal.EventsTest do
       start_count = Events.count_events()
       {:ok, _} = Events.create_event(valid_attrs())
       assert Events.count_events() == start_count + 1
+    end
+
+    test "list_events/1 default only returns ongoing or future events (day granularity)" do
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+      {:ok, _past_over} =
+        Events.create_event(valid_attrs(%{dtstart: DateTime.add(now, -7200, :second), dtend: DateTime.add(now, -3600, :second), summary: "Past Over"}))
+
+      {:ok, _ongoing} =
+        Events.create_event(valid_attrs(%{dtstart: DateTime.add(now, -3600, :second), dtend: DateTime.add(now, 1800, :second), summary: "Ongoing"}))
+
+      {:ok, _future} =
+        Events.create_event(valid_attrs(%{dtstart: DateTime.add(now, 7200, :second), dtend: DateTime.add(now, 10800, :second), summary: "Future"}))
+
+      # Default should exclude strictly past, include ongoing and future
+      titles = Events.list_events() |> Enum.map(& &1.summary)
+      assert "Past Over" not in titles
+      assert "Ongoing" in titles
+      assert "Future" in titles
+
+      # Events without dtend are included only if start >= now
+      {:ok, _past_no_end} =
+        Events.create_event(valid_attrs(%{dtstart: DateTime.add(now, -60, :second), dtend: nil, summary: "PastNoEnd"}))
+      {:ok, _future_no_end} =
+        Events.create_event(valid_attrs(%{dtstart: DateTime.add(now, 60, :second), dtend: nil, summary: "FutureNoEnd"}))
+
+      titles2 = Events.list_events() |> Enum.map(& &1.summary)
+      assert "PastNoEnd" not in titles2
+      assert "FutureNoEnd" in titles2
     end
   end
 end
