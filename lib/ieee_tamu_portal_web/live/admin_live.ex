@@ -89,6 +89,13 @@ defmodule IeeeTamuPortalWeb.AdminLive do
           />
 
           <.quick_action_card
+            title="Events"
+            description="Create and manage events"
+            icon="hero-calendar-days"
+            href={~p"/admin/events"}
+          />
+
+          <.quick_action_card
             title="API Keys"
             description="Manage API access keys"
             icon="hero-key"
