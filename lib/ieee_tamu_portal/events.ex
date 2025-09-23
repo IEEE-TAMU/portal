@@ -9,16 +9,30 @@ defmodule IeeeTamuPortal.Events do
   alias IeeeTamuPortal.Events.Event
 
   @doc """
-  Returns the list of events.
+  Returns events, filtered and ordered.
 
-  ## Examples
+  Options:
+  - `:after` (DateTime or Date): default `DateTime.utc_now()`; returns events that overlap or occur after this moment.
 
-      iex> list_events()
-      [%Event{}, ...]
-
+  Overlap semantics ensure currently-running events are included.
   """
-  def list_events do
-    Repo.all(from(e in Event, order_by: [desc: e.dtstart]))
+  def list_events(opts \\ []) do
+    cutoff =
+      case Keyword.get(opts, :after, DateTime.utc_now()) do
+        %DateTime{} = dt -> dt
+        %Date{} = d -> DateTime.new!(d, ~T[00:00:00], "Etc/UTC")
+        other when is_binary(other) -> other |> DateTime.from_iso8601() |> elem(1)
+        _ -> DateTime.utc_now()
+      end
+
+    query =
+      from e in Event,
+        where:
+          (is_nil(e.dtend) and e.dtstart >= ^cutoff) or
+            (not is_nil(e.dtend) and e.dtend >= ^cutoff),
+        order_by: [desc: e.dtstart]
+
+    Repo.all(query)
   end
 
   @doc """
