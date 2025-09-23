@@ -75,7 +75,8 @@ defmodule IeeeTamuPortal.MixProject do
       {:nimble_csv, "== 1.3.0"},
       {:eqrcode, "== 0.2.1"},
       {:live_debugger, "== 0.4.1", only: [:dev]},
-      {:icalendar, "== 1.1.2"}
+      {:icalendar, "== 1.1.2"},
+      {:tzdata, "== 1.1.3"}
     ]
   end
 

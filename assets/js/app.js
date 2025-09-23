@@ -175,9 +175,10 @@ Uploaders.S3 = function (entries, onViewError) {
 };
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
+let timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
-  params: { _csrf_token: csrfToken },
+  params: {_csrf_token: csrfToken, timeZone: timeZone},
   hooks: Hooks,
   uploaders: Uploaders,
 })

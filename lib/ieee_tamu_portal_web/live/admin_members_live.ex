@@ -6,6 +6,12 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   @impl true
   def mount(_params, _session, socket) do
     current_year = Settings.get_registration_year!()
+    default_tz = Application.get_env(:ieee_tamu_portal, :default_time_zone, "America/Chicago")
+
+    time_zone =
+      if connected?(socket),
+        do: get_connect_params(socket)["timeZone"] || default_tz,
+        else: default_tz
 
     socket =
       socket
@@ -19,6 +25,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
       |> assign(:member_info_form, nil)
       |> assign(:view_only_mode, false)
       |> assign(year: current_year)
+      |> assign(:time_zone, time_zone)
 
     {:ok, socket}
   end
@@ -402,7 +409,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                   field={:inserted_at}
                   tbody_td_attrs={[class: "whitespace-nowrap px-3 py-4 text-sm text-gray-500"]}
                 >
-                  {Calendar.strftime(member.inserted_at, "%b %d, %Y")}
+                  {format_local_any(member.inserted_at, @time_zone, "%b %d, %Y")}
                 </:col>
 
                 <:col
@@ -847,6 +854,23 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
       <% end %>
     </div>
     """
+  end
+
+  # -- Timezone helpers --
+  defp format_local_any(nil, _tz, _pattern), do: ""
+
+  defp format_local_any(%DateTime{} = dt, tz, pattern) do
+    case DateTime.shift_zone(dt, tz) do
+      {:ok, local} -> Calendar.strftime(local, pattern)
+      _ -> Calendar.strftime(dt, pattern)
+    end
+  end
+
+  defp format_local_any(%NaiveDateTime{} = naive, tz, pattern) do
+    case DateTime.from_naive(naive, "Etc/UTC") do
+      {:ok, dt} -> format_local_any(dt, tz, pattern)
+      _ -> Calendar.strftime(naive, pattern)
+    end
   end
 
   defp pagination(assigns) do

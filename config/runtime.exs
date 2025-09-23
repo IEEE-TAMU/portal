@@ -195,4 +195,8 @@ if config_env() == :prod and System.get_env("NIX_BUILD_ENV") not in ~w(true 1) d
          :discord_bot_url,
          System.get_env("DISCORD_BOT_URL") ||
            raise("environment variable DISCORD_BOT_URL is missing.")
+
+  config :ieee_tamu_portal,
+         :frontend_time_zone,
+         System.get_env("FRONTEND_TIME_ZONE") || "America/Chicago"
 end
