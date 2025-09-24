@@ -42,6 +42,7 @@ defmodule IeeeTamuPortal.Accounts.Member do
     has_many :event_checkins, IeeeTamuPortal.Members.EventCheckin
     has_many :api_keys, IeeeTamuPortal.Api.ApiKey
     has_many :secondary_auth_methods, IeeeTamuPortal.Accounts.AuthMethod
+    has_many :rsvps, IeeeTamuPortal.Events.RSVP
   end
 
   def list_members(params) do

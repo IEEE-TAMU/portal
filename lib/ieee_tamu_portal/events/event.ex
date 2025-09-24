@@ -15,6 +15,8 @@ defmodule IeeeTamuPortal.Events.Event do
     field :rsvp_limit, :integer
 
     timestamps(type: :utc_datetime)
+
+    has_many :rsvps, IeeeTamuPortal.Events.RSVP
   end
 
   @doc false
