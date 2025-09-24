@@ -58,6 +58,10 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
       |> Enum.sort(fn a, b ->
         DateTime.compare(a.dtstart, b.dtstart) != :gt
       end)
+      |> Enum.map(fn event ->
+        rsvp_info = Events.get_event_with_rsvp_info(event.uid, current_member.id)
+        Map.put(event, :rsvp_info, rsvp_info)
+      end)
 
     socket =
       socket
@@ -70,6 +74,8 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
       |> assign(:time_zone, time_zone)
       |> assign(:upcoming_week_events, upcoming_week_events)
       |> assign(:show_upcoming_events, false)
+      |> assign(:rsvp_modal_open, false)
+      |> assign(:selected_event, nil)
 
     if connected?(socket) and not already_checked_in? do
       Phoenix.PubSub.subscribe(IeeeTamuPortal.PubSub, "checkins")
@@ -88,6 +94,66 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
   def handle_event("toggle_upcoming_events", _params, socket) do
     {:noreply,
      assign(socket, :show_upcoming_events, !(socket.assigns[:show_upcoming_events] || false))}
+  end
+
+  @impl true
+  def handle_event("open_rsvp", %{"uid" => uid}, socket) do
+    event = Events.get_event!(uid)
+    rsvp_info = Events.get_event_with_rsvp_info(uid, socket.assigns.current_member.id)
+
+    selected_event = Map.put(event, :rsvp_info, rsvp_info)
+
+    {:noreply,
+     socket
+     |> assign(:rsvp_modal_open, true)
+     |> assign(:selected_event, selected_event)}
+  end
+
+  @impl true
+  def handle_event("submit_rsvp", %{"uid" => uid, "response" => response}, socket) do
+    current_member = socket.assigns.current_member
+
+    result =
+      case response do
+        "yes" -> Events.create_rsvp(current_member.id, uid)
+        "no" -> Events.delete_rsvp(current_member.id, uid)
+      end
+
+    case result do
+      {:ok, _} ->
+        # Refresh the events list with updated RSVP info
+        updated_events =
+          refresh_upcoming_events(socket.assigns.upcoming_week_events, current_member.id)
+
+        flash_message =
+          if response == "yes",
+            do: "Successfully RSVPed to the event!",
+            else: "RSVP cancelled successfully."
+
+        {:noreply,
+         socket
+         |> assign(:upcoming_week_events, updated_events)
+         |> assign(:rsvp_modal_open, false)
+         |> assign(:selected_event, nil)
+         |> put_flash(:info, flash_message)}
+
+      {:error, changeset} ->
+        error_message =
+          case changeset.errors do
+            [{_, {msg, _}} | _] -> msg
+            _ -> "Unable to update RSVP. Please try again."
+          end
+
+        {:noreply, put_flash(socket, :error, error_message)}
+    end
+  end
+
+  @impl true
+  def handle_event("close_rsvp", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:rsvp_modal_open, false)
+     |> assign(:selected_event, nil)}
   end
 
   @impl true
@@ -262,16 +328,44 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
                     <% else %>
                       <ul class="space-y-4">
                         <li :for={event <- @upcoming_week_events} class="border-b last:border-0 pb-4">
-                          <div class="flex-1">
-                            <div class="text-sm text-gray-600">
-                              {format_local(event.dtstart, @time_zone, "%A, %B %d at %I:%M %p")}
+                          <div class="flex items-start justify-between gap-4">
+                            <div class="flex-1">
+                              <div class="text-sm text-gray-600">
+                                {format_local(event.dtstart, @time_zone, "%A, %B %d at %I:%M %p")}
+                              </div>
+                              <div class="text-base font-medium text-gray-900">{event.summary}</div>
+                              <div :if={event.description} class="text-sm text-gray-700 mt-1">
+                                {event.description}
+                              </div>
+                              <div class="text-sm text-gray-600 mt-1">
+                                Location: {event.location || "TBD"}
+                              </div>
                             </div>
-                            <div class="text-base font-medium text-gray-900">{event.summary}</div>
-                            <div :if={event.description} class="text-sm text-gray-700 mt-1">
-                              {event.description}
-                            </div>
-                            <div class="text-sm text-gray-600 mt-1">
-                              Location: {event.location || "TBD"}
+                            <div class="shrink-0 mt-1">
+                              <%= cond do %>
+                                <% event.rsvp_info.at_capacity and not event.rsvp_info.member_rsvped -> %>
+                                  <div class="bg-gray-100 text-gray-600 px-3 py-2 text-sm rounded-md">
+                                    Event Full
+                                  </div>
+                                <% event.rsvp_info.member_rsvped -> %>
+                                  <.button
+                                    type="button"
+                                    phx-click="open_rsvp"
+                                    phx-value-uid={event.uid}
+                                    class="bg-red-600 hover:bg-red-700 text-white text-sm"
+                                  >
+                                    Cancel RSVP
+                                  </.button>
+                                <% true -> %>
+                                  <.button
+                                    type="button"
+                                    phx-click="open_rsvp"
+                                    phx-value-uid={event.uid}
+                                    class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm"
+                                  >
+                                    RSVP
+                                  </.button>
+                              <% end %>
                             </div>
                           </div>
                         </li>
@@ -360,6 +454,86 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
         <% end %>
       </div>
     </div>
+
+    <!-- RSVP Modal -->
+    <div
+      :if={@rsvp_modal_open and @selected_event}
+      id="rsvp-modal"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+      phx-click="close_rsvp"
+    >
+      <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+          <h3 class="text-lg font-medium text-gray-900" id="modal-title">
+            RSVP to Event
+          </h3>
+          <div class="mt-4 text-left">
+            <h4 class="font-semibold text-gray-900">{@selected_event.summary}</h4>
+            <p class="text-sm text-gray-600 mt-1">
+              {format_local(@selected_event.dtstart, @time_zone, "%A, %B %d at %I:%M %p")}
+            </p>
+            <p :if={@selected_event.location} class="text-sm text-gray-600">
+              Location: {@selected_event.location}
+            </p>
+          </div>
+
+          <div class="mt-6">
+            <%= if @selected_event.rsvp_info.member_rsvped do %>
+              <p class="text-sm text-gray-600 mb-4">You are currently RSVPed to this event.</p>
+              <div class="flex justify-center gap-3">
+                <.button
+                  type="button"
+                  phx-click="submit_rsvp"
+                  phx-value-uid={@selected_event.uid}
+                  phx-value-response="no"
+                  class="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Cancel RSVP
+                </.button>
+                <.button
+                  type="button"
+                  phx-click="close_rsvp"
+                  class="bg-gray-300 hover:bg-gray-400 text-gray-700"
+                >
+                  Keep RSVP
+                </.button>
+              </div>
+            <% else %>
+              <%= if @selected_event.rsvp_info.at_capacity do %>
+                <p class="text-sm text-red-600 mb-4">This event is at capacity.</p>
+                <.button
+                  type="button"
+                  phx-click="close_rsvp"
+                  class="bg-gray-300 hover:bg-gray-400 text-gray-700"
+                >
+                  Close
+                </.button>
+              <% else %>
+                <p class="text-sm text-gray-600 mb-4">Would you like to RSVP to this event?</p>
+                <div class="flex justify-center gap-3">
+                  <.button
+                    type="button"
+                    phx-click="submit_rsvp"
+                    phx-value-uid={@selected_event.uid}
+                    phx-value-response="yes"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white"
+                  >
+                    Yes, RSVP
+                  </.button>
+                  <.button
+                    type="button"
+                    phx-click="close_rsvp"
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-700"
+                  >
+                    Cancel
+                  </.button>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
     """
   end
 
@@ -400,5 +574,12 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
       {:ok, local} -> Calendar.strftime(local, pattern)
       _ -> Calendar.strftime(dt, pattern)
     end
+  end
+
+  defp refresh_upcoming_events(events, member_id) do
+    Enum.map(events, fn event ->
+      rsvp_info = Events.get_event_with_rsvp_info(event.uid, member_id)
+      Map.put(event, :rsvp_info, rsvp_info)
+    end)
   end
 end

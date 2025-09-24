@@ -118,6 +118,8 @@ defmodule IeeeTamuPortalWeb.Router do
     get "/download-resumes", AdminResumeZipController, :download
     get "/download-members", AdminMemberExportController, :download
     get "/download-checkins", AdminCheckinsExportController, :download
+    get "/download-event-rsvps/:event_uid", AdminEventExportController, :download_rsvps
+    get "/download-event-checkins/:event_uid", AdminEventExportController, :download_checkins
     get "/check-in", AdminCheckinController, :create
 
     live_session :admin_auth,

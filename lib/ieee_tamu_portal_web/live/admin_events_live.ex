@@ -7,7 +7,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    events = Events.list_events()
+    events_with_rsvps = events_with_rsvp_counts()
     create_changeset = Events.change_event(%Event{})
     default_tz = Application.fetch_env!(:ieee_tamu_portal, :frontend_time_zone)
 
@@ -20,7 +20,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
 
     {:ok,
      assign(socket,
-       events: events,
+       events: events_with_rsvps,
        create_form: to_form(create_changeset),
        create_local_params: %{},
        show_create_form: false,
@@ -28,6 +28,11 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
        edit_form: nil,
        edit_local_params: %{},
        show_edit_form: false,
+       show_rsvp_list: false,
+       show_checkin_list: false,
+       selected_event: nil,
+       event_rsvps: [],
+       event_checkins: [],
        page_title: "Manage Events",
        time_zone: time_zone
      )}
@@ -71,12 +76,12 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
 
     case Events.create_event(utc_params) do
       {:ok, _new_event} ->
-        events = Events.list_events()
+        events_with_rsvps = events_with_rsvp_counts()
         create_changeset = Events.change_event(%Event{})
 
         {:noreply,
          socket
-         |> assign(:events, events)
+         |> assign(:events, events_with_rsvps)
          |> assign(:create_form, to_form(create_changeset))
          |> assign(:create_local_params, %{})
          |> assign(:show_create_form, false)
@@ -91,11 +96,15 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
   @impl true
   def handle_event("edit_event", %{"uid" => uid}, socket) do
     event = Events.get_event!(uid)
+    # Add current RSVP count to the event
+    rsvp_count = Events.count_rsvps(event.uid)
+    event_with_rsvp = Map.put(event, :rsvp_count, rsvp_count)
+
     edit_form = Events.change_event(event) |> to_form()
 
     {:noreply,
      assign(socket,
-       edit_event: event,
+       edit_event: event_with_rsvp,
        edit_form: edit_form,
        edit_local_params: %{},
        show_edit_form: true
@@ -118,6 +127,9 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
     tz = socket.assigns.time_zone
     utc_params = convert_datetime_params(event_params, tz)
 
+    # Validate RSVP limit against current count
+    utc_params = validate_rsvp_limit(utc_params, socket.assigns.edit_event)
+
     edit_form =
       socket.assigns.edit_event
       |> Events.change_event(utc_params)
@@ -132,13 +144,16 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
     tz = socket.assigns.time_zone
     utc_params = convert_datetime_params(event_params, tz)
 
+    # Validate RSVP limit against current count
+    utc_params = validate_rsvp_limit(utc_params, socket.assigns.edit_event)
+
     case Events.update_event(socket.assigns.edit_event, utc_params) do
       {:ok, _updated_event} ->
-        events = Events.list_events()
+        events_with_rsvps = events_with_rsvp_counts()
 
         {:noreply,
          socket
-         |> assign(:events, events)
+         |> assign(:events, events_with_rsvps)
          |> assign(:edit_event, nil)
          |> assign(:edit_form, nil)
          |> assign(:edit_local_params, %{})
@@ -156,16 +171,56 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
 
     case Events.delete_event(event) do
       {:ok, _} ->
-        events = Events.list_events()
+        events_with_rsvps = events_with_rsvp_counts()
 
         {:noreply,
          socket
-         |> assign(:events, events)
+         |> assign(:events, events_with_rsvps)
          |> put_flash(:info, "Event deleted successfully")}
 
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Failed to delete event")}
     end
+  end
+
+  @impl true
+  def handle_event("show_event_rsvps", %{"uid" => uid}, socket) do
+    event = Events.get_event!(uid)
+    rsvps = Events.list_event_rsvps(uid)
+
+    {:noreply,
+     assign(socket,
+       show_rsvp_list: true,
+       selected_event: event,
+       event_rsvps: rsvps,
+       show_checkin_list: false
+     )}
+  end
+
+  @impl true
+  def handle_event("show_event_checkins", %{"uid" => uid}, socket) do
+    event = Events.get_event!(uid)
+    checkins = Events.list_event_checkins(event.summary)
+
+    {:noreply,
+     assign(socket,
+       show_checkin_list: true,
+       selected_event: event,
+       event_checkins: checkins,
+       show_rsvp_list: false
+     )}
+  end
+
+  @impl true
+  def handle_event("close_lists", _params, socket) do
+    {:noreply,
+     assign(socket,
+       show_rsvp_list: false,
+       show_checkin_list: false,
+       selected_event: nil,
+       event_rsvps: [],
+       event_checkins: []
+     )}
   end
 
   @impl true
@@ -186,14 +241,14 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
           </.link>
         </div>
       </div>
-
+      
     <!-- Create Event Form -->
       <div class="flex justify-end mb-6">
         <.button phx-click="show_create_form" class="bg-blue-600 hover:bg-blue-700">
           <.icon name="hero-plus" class="w-4 h-4 mr-2" /> Create New Event
         </.button>
       </div>
-
+      
     <!-- Create Event Modal -->
       <div :if={@show_create_form}>
         <.modal
@@ -255,7 +310,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
           </div>
         </.modal>
       </div>
-
+      
     <!-- Edit Event Modal -->
       <div :if={@show_edit_form}>
         <.modal id="edit-event-modal" on_cancel={JS.push("cancel_edit")} show={@show_edit_form}>
@@ -295,12 +350,23 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
 
               <.input field={@edit_form[:location]} type="text" label="Location" />
               <.input field={@edit_form[:description]} type="textarea" label="Description" rows="3" />
-              <.input
-                field={@edit_form[:rsvp_limit]}
-                type="number"
-                label="RSVP Limit (optional)"
-                placeholder="Leave blank for unlimited"
-              />
+
+              <div>
+                <.input
+                  field={@edit_form[:rsvp_limit]}
+                  type="number"
+                  label="RSVP Limit (optional)"
+                  placeholder="Leave blank for unlimited"
+                />
+                <%= if @edit_event.rsvp_count > 0 do %>
+                  <p class="mt-1 text-sm text-gray-600">
+                    Current RSVPs: <strong>{@edit_event.rsvp_count}</strong>
+                    <%= if @edit_event.rsvp_limit do %>
+                      (limit cannot be set below this number)
+                    <% end %>
+                  </p>
+                <% end %>
+              </div>
 
               <div class="flex justify-end space-x-3">
                 <.button
@@ -318,7 +384,119 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
           </div>
         </.modal>
       </div>
-
+      
+    <!-- RSVPs List Modal -->
+      <div :if={@show_rsvp_list}>
+        <.modal id="rsvps-modal" on_cancel={JS.push("close_lists")} show={@show_rsvp_list}>
+          <div class="p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">
+              RSVPs for "{@selected_event.summary}"
+            </h2>
+            <div :if={@event_rsvps == []} class="text-center text-gray-500 py-8">
+              No RSVPs found for this event.
+            </div>
+            <div :if={@event_rsvps != []} class="space-y-3 max-h-96 overflow-y-auto">
+              <div
+                :for={rsvp <- @event_rsvps}
+                class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
+                <div>
+                  <div class="font-medium text-gray-900">
+                    <%= if rsvp.preferred_name && rsvp.preferred_name != "" do %>
+                      {rsvp.preferred_name} ({rsvp.first_name} {rsvp.last_name})
+                    <% else %>
+                      {rsvp.first_name} {rsvp.last_name}
+                    <% end %>
+                  </div>
+                  <div class="text-sm text-gray-600">{rsvp.email}</div>
+                </div>
+                <div class="text-sm text-gray-500">
+                  {format_local(rsvp.inserted_at, @time_zone, "%B %d, %Y at %I:%M %p")}
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center mt-6">
+              <div class="text-sm text-gray-600">
+                Total RSVPs: <strong>{length(@event_rsvps)}</strong>
+              </div>
+              <div class="flex space-x-3">
+                <.link
+                  :if={length(@event_rsvps) > 0}
+                  href={~p"/admin/download-event-rsvps/#{@selected_event.uid}"}
+                  target="_blank"
+                  class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+                >
+                  <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download CSV
+                </.link>
+                <.button
+                  type="button"
+                  phx-click="close_lists"
+                  class="bg-gray-200 text-gray-800 hover:bg-gray-300"
+                >
+                  Close
+                </.button>
+              </div>
+            </div>
+          </div>
+        </.modal>
+      </div>
+      
+    <!-- Checkins List Modal -->
+      <div :if={@show_checkin_list}>
+        <.modal id="checkins-modal" on_cancel={JS.push("close_lists")} show={@show_checkin_list}>
+          <div class="p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">
+              Checkins for "{@selected_event.summary}"
+            </h2>
+            <div :if={@event_checkins == []} class="text-center text-gray-500 py-8">
+              No checkins found for this event.
+            </div>
+            <div :if={@event_checkins != []} class="space-y-3 max-h-96 overflow-y-auto">
+              <div
+                :for={checkin <- @event_checkins}
+                class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
+                <div>
+                  <div class="font-medium text-gray-900">
+                    <%= if checkin.preferred_name && checkin.preferred_name != "" do %>
+                      {checkin.preferred_name} ({checkin.first_name} {checkin.last_name})
+                    <% else %>
+                      {checkin.first_name} {checkin.last_name}
+                    <% end %>
+                  </div>
+                  <div class="text-sm text-gray-600">{checkin.email}</div>
+                </div>
+                <div class="text-sm text-gray-500">
+                  {format_local(checkin.inserted_at, @time_zone, "%B %d, %Y at %I:%M %p")}
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center mt-6">
+              <div class="text-sm text-gray-600">
+                Total Checkins: <strong>{length(@event_checkins)}</strong>
+              </div>
+              <div class="flex space-x-3">
+                <.link
+                  :if={length(@event_checkins) > 0}
+                  href={~p"/admin/download-event-checkins/#{@selected_event.uid}"}
+                  target="_blank"
+                  class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
+                >
+                  <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download CSV
+                </.link>
+                <.button
+                  type="button"
+                  phx-click="close_lists"
+                  class="bg-gray-200 text-gray-800 hover:bg-gray-300"
+                >
+                  Close
+                </.button>
+              </div>
+            </div>
+          </div>
+        </.modal>
+      </div>
+      
     <!-- Events List -->
       <div class="bg-white rounded-lg shadow">
         <div class="px-6 py-4 border-b border-gray-200">
@@ -342,6 +520,11 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       Event
                     </span>
+                    <%= if event.rsvp_limit && event.rsvp_count >= event.rsvp_limit do %>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        At Capacity
+                      </span>
+                    <% end %>
                   </div>
 
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
@@ -369,7 +552,12 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
 
                     <div :if={event.rsvp_limit} class="flex items-center">
                       <.icon name="hero-users" class="w-4 h-4 mr-2" />
-                      <span>Limit: {event.rsvp_limit} attendees</span>
+                      <span>RSVPs: {event.rsvp_count}/{event.rsvp_limit}</span>
+                    </div>
+
+                    <div :if={!event.rsvp_limit && event.rsvp_count > 0} class="flex items-center">
+                      <.icon name="hero-users" class="w-4 h-4 mr-2" />
+                      <span>RSVPs: {event.rsvp_count} (unlimited)</span>
                     </div>
                   </div>
 
@@ -379,6 +567,25 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
                 </div>
 
                 <div class="flex items-center space-x-2 ml-4">
+                  <.button
+                    type="button"
+                    phx-click="show_event_rsvps"
+                    phx-value-uid={event.uid}
+                    class="bg-green-600 hover:bg-green-700 text-sm px-3 py-1"
+                  >
+                    <.icon name="hero-users" class="w-4 h-4 mr-1" /> RSVPs ({event.rsvp_count})
+                  </.button>
+
+                  <.button
+                    type="button"
+                    phx-click="show_event_checkins"
+                    phx-value-uid={event.uid}
+                    class="bg-purple-600 hover:bg-purple-700 text-sm px-3 py-1"
+                  >
+                    <.icon name="hero-check-circle" class="w-4 h-4 mr-1" />
+                    Checkins ({event.checkin_count})
+                  </.button>
+
                   <.button
                     type="button"
                     phx-click="edit_event"
@@ -472,5 +679,46 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
       {:ok, local} -> Calendar.strftime(local, pattern)
       _ -> Calendar.strftime(dt, pattern)
     end
+  end
+
+  # Validates that RSVP limit is not set below current RSVP count
+  defp validate_rsvp_limit(params, event) do
+    case {Map.get(params, "rsvp_limit"), event.rsvp_count} do
+      {nil, _} ->
+        params
+
+      {"", _} ->
+        params
+
+      {limit_str, current_count} when is_binary(limit_str) ->
+        case Integer.parse(limit_str) do
+          {limit, ""} when limit < current_count ->
+            # Set a custom error - we'll handle this in the changeset
+            Map.put(
+              params,
+              "rsvp_limit_error",
+              "Cannot set limit below current RSVP count (#{current_count})"
+            )
+
+          _ ->
+            params
+        end
+
+      _ ->
+        params
+    end
+  end
+
+  # Helper to get events with RSVP counts
+  defp events_with_rsvp_counts do
+    Events.list_events()
+    |> Enum.map(fn event ->
+      rsvp_count = Events.count_rsvps(event.uid)
+      checkin_count = Events.count_event_checkins(event.summary)
+
+      event
+      |> Map.put(:rsvp_count, rsvp_count)
+      |> Map.put(:checkin_count, checkin_count)
+    end)
   end
 end
