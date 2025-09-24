@@ -54,7 +54,7 @@ defmodule IeeeTamuPortal.MixProject do
        app: false,
        compile: false,
        depth: 1},
-      {:swoosh, "== 1.19.6"},
+      {:swoosh, "== 1.19.8"},
       {:gen_smtp, "== 1.3.0", only: :prod},
       {:telemetry_metrics, "== 1.1.0"},
       {:telemetry_poller, "== 1.3.0"},

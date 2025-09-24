@@ -557,6 +557,26 @@ let
         in
         drv;
 
+      idna =
+        let
+          version = "6.1.1";
+          drv = buildRebar3 {
+            inherit version;
+            name = "idna";
+
+            src = fetchHex {
+              inherit version;
+              pkg = "idna";
+              sha256 = "92376eb7894412ed19ac475e4a86f7b413c1b9fbb5bd16dccd57934157944cea";
+            };
+
+            beamDeps = [
+              unicode_util_compat
+            ];
+          };
+        in
+        drv;
+
       jason =
         let
           version = "1.4.4";
@@ -952,7 +972,7 @@ let
 
       swoosh =
         let
-          version = "1.19.6";
+          version = "1.19.8";
           drv = buildMix {
             inherit version;
             name = "swoosh";
@@ -961,13 +981,14 @@ let
             src = fetchHex {
               inherit version;
               pkg = "swoosh";
-              sha256 = "dd42a5fb9a682df2383559d912b2ed987c455e242cd2ee4a2a4256e1f05e8568";
+              sha256 = "d7503c2daf0f9899afd8eba9923eeddef4b62e70816e1d3b6766e4d6c60e94ad";
             };
 
             beamDeps = [
               bandit
               finch
               gen_smtp
+              idna
               jason
               mime
               plug
@@ -1069,6 +1090,22 @@ let
             beamDeps = [
               telemetry
             ];
+          };
+        in
+        drv;
+
+      unicode_util_compat =
+        let
+          version = "0.7.1";
+          drv = buildRebar3 {
+            inherit version;
+            name = "unicode_util_compat";
+
+            src = fetchHex {
+              inherit version;
+              pkg = "unicode_util_compat";
+              sha256 = "b3a917854ce3ae233619744ad1e0102e05673136776fb2fa76234f3e03b23642";
+            };
           };
         in
         drv;
