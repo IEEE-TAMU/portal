@@ -952,7 +952,7 @@ let
 
       swoosh =
         let
-          version = "1.19.6";
+          version = "1.19.7";
           drv = buildMix {
             inherit version;
             name = "swoosh";
@@ -961,7 +961,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "swoosh";
-              sha256 = "dd42a5fb9a682df2383559d912b2ed987c455e242cd2ee4a2a4256e1f05e8568";
+              sha256 = "549709a556ec18e9d51be4bcfd7da615c3ab282be16637607a46cec4a27b6011";
             };
 
             beamDeps = [
