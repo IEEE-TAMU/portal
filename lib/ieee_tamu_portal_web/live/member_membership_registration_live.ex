@@ -2,6 +2,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
   use IeeeTamuPortalWeb, :live_view
 
   alias IeeeTamuPortal.{Settings, Members}
+  alias IeeeTamuPortal.Events
   alias IeeeTamuPortal.Accounts.Member
 
   @impl true
@@ -10,6 +11,12 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
 
     # Get current registration year from settings
     current_year = Settings.get_registration_year!()
+    default_tz = Application.get_env(:ieee_tamu_portal, :default_time_zone, "America/Chicago")
+
+    time_zone =
+      if connected?(socket),
+        do: get_connect_params(socket)["timeZone"] || default_tz,
+        else: default_tz
 
     # Look for existing registration for this member in the current year
     registration =
@@ -39,6 +46,19 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
         nil
       end
 
+    # Compute next week's events (upcoming/ongoing limited to next 7 days)
+    now = DateTime.utc_now()
+    week_end = DateTime.add(now, 7 * 24 * 3600, :second)
+
+    upcoming_week_events =
+      Events.list_events()
+      |> Enum.filter(fn e ->
+        e.dtstart && DateTime.compare(e.dtstart, week_end) in [:lt, :eq]
+      end)
+      |> Enum.sort(fn a, b ->
+        DateTime.compare(a.dtstart, b.dtstart) != :gt
+      end)
+
     socket =
       socket
       |> assign(:registration, registration)
@@ -47,6 +67,9 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
       |> assign(:current_event, current_event)
       |> assign(:already_checked_in?, already_checked_in?)
       |> assign(:checkin_qr_svg, checkin_qr_svg)
+      |> assign(:time_zone, time_zone)
+      |> assign(:upcoming_week_events, upcoming_week_events)
+      |> assign(:show_upcoming_events, false)
 
     if connected?(socket) and not already_checked_in? do
       Phoenix.PubSub.subscribe(IeeeTamuPortal.PubSub, "checkins")
@@ -59,6 +82,12 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
   def handle_event("copy_confirmation_code", %{"code" => _code}, socket) do
     # This will be handled by JavaScript on the client side
     {:noreply, put_flash(socket, :info, "Confirmation code copied to clipboard!")}
+  end
+
+  @impl true
+  def handle_event("toggle_upcoming_events", _params, socket) do
+    {:noreply,
+     assign(socket, :show_upcoming_events, !(socket.assigns[:show_upcoming_events] || false))}
   end
 
   @impl true
@@ -208,6 +237,51 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
               <% end %>
             <% end %>
 
+            <%= if @current_event == Settings.default_current_event() do %>
+              <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                <button
+                  type="button"
+                  phx-click="toggle_upcoming_events"
+                  class="w-full flex items-center justify-between text-left"
+                  aria-expanded={@show_upcoming_events}
+                >
+                  <span>
+                    <h2 class="text-lg font-semibold text-gray-900">Upcoming Events</h2>
+                    <span class="text-xs text-gray-500">Next 7 days</span>
+                  </span>
+                  <.icon
+                    name={if @show_upcoming_events, do: "hero-chevron-up", else: "hero-chevron-down"}
+                    class="w-5 h-5 text-gray-500"
+                  />
+                </button>
+
+                <%= if @show_upcoming_events do %>
+                  <div class="mt-4">
+                    <%= if @upcoming_week_events == [] do %>
+                      <p class="text-sm text-gray-600">No events scheduled in the next week.</p>
+                    <% else %>
+                      <ul class="space-y-4">
+                        <li :for={event <- @upcoming_week_events} class="border-b last:border-0 pb-4">
+                          <div class="flex-1">
+                            <div class="text-sm text-gray-600">
+                              {format_local(event.dtstart, @time_zone, "%A, %B %d at %I:%M %p")}
+                            </div>
+                            <div class="text-base font-medium text-gray-900">{event.summary}</div>
+                            <div :if={event.description} class="text-sm text-gray-700 mt-1">
+                              {event.description}
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">
+                              Location: {event.location || "TBD"}
+                            </div>
+                          </div>
+                        </li>
+                      </ul>
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+
             <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
               <div class="flex items-center">
                 <.icon name="hero-check-circle" class="w-5 h-5 text-green-600 mr-2" />
@@ -319,5 +393,12 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
       <p>You are checked into {@event_name}.</p>
     </div>
     """
+  end
+
+  defp format_local(%DateTime{} = dt, tz, pattern) do
+    case DateTime.shift_zone(dt, tz) do
+      {:ok, local} -> Calendar.strftime(local, pattern)
+      _ -> Calendar.strftime(dt, pattern)
+    end
   end
 end
