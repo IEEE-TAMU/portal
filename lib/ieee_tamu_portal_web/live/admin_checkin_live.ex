@@ -11,6 +11,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
 
   alias Phoenix.PubSub
   alias IeeeTamuPortal.Settings
+  alias IeeeTamuPortal.Events
   alias IeeeTamuPortal.Members.EventCheckin
 
   @impl true
@@ -24,6 +25,17 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
     current_event = Settings.get_current_event!()
     scanning_enabled = current_event != Settings.default_current_event()
 
+    suggested_event =
+      if scanning_enabled do
+        nil
+      else
+        Events.next_event()
+        |> case do
+          nil -> nil
+          e -> e.summary
+        end
+      end
+
     {:ok,
      socket
      |> assign(:page_title, "Check-in")
@@ -35,7 +47,8 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
      |> assign(:current_event, current_event)
      |> assign(:year, year)
      |> assign(:events, events)
-     |> assign(:selected_event, "")}
+     |> assign(:selected_event, "")
+     |> assign(:suggested_event, suggested_event)}
   end
 
   @impl true
@@ -258,9 +271,11 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
                   hidden={@scanning_enabled}
                   class="flex-1 min-w-[14rem] px-3 py-2 border border-gray-300 rounded-md text-sm"
                   value={
-                    if @current_event == Settings.default_current_event(),
-                      do: "",
-                      else: @current_event
+                    if @scanning_enabled do
+                      @current_event
+                    else
+                      @suggested_event || ""
+                    end
                   }
                 />
                 <.button
