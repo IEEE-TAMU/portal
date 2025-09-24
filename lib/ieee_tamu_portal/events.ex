@@ -128,4 +128,13 @@ defmodule IeeeTamuPortal.Events do
   def count_events do
     Repo.aggregate(Event, :count, :uid)
   end
+
+  def next_event do
+    from(e in Event,
+      where: e.dtstart >= ^DateTime.utc_now(),
+      order_by: [asc: e.dtstart],
+      limit: 1
+    )
+    |> Repo.one()
+  end
 end
