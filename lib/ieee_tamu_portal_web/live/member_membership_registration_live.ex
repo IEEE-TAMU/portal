@@ -85,6 +85,54 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
   end
 
   @impl true
+  def handle_params(params, _url, socket) do
+    socket =
+      case Map.get(params, "rsvp") do
+        nil ->
+          socket
+
+        "" ->
+          socket
+
+        event_uid when is_binary(event_uid) ->
+          try do
+            event = Events.get_event!(event_uid)
+
+            rsvp_info =
+              Events.get_event_with_rsvp_info(event_uid, socket.assigns.current_member.id)
+
+            if rsvp_info.member_rsvped do
+              # Member is already RSVPed, show flash message instead of opening modal
+              socket
+              |> put_flash(:info, "You are already RSVPed to \"#{event.summary}\"")
+              |> push_patch(to: ~p"/members/registration")
+            else
+              # Member not RSVPed yet, open the modal
+              selected_event = Map.put(event, :rsvp_info, rsvp_info)
+
+              socket
+              |> assign(:rsvp_modal_open, true)
+              |> assign(:selected_event, selected_event)
+              # Show the events section
+              |> assign(:show_upcoming_events, true)
+            end
+          rescue
+            Ecto.NoResultsError ->
+              # Event not found, show error and clear URL
+              socket
+              |> put_flash(:error, "Event not found")
+              |> push_patch(to: ~p"/members/registration")
+
+            _ ->
+              # Any other error, ignore the parameter
+              socket
+          end
+      end
+
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event("copy_confirmation_code", %{"code" => _code}, socket) do
     # This will be handled by JavaScript on the client side
     {:noreply, put_flash(socket, :info, "Confirmation code copied to clipboard!")}
@@ -135,6 +183,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
          |> assign(:upcoming_week_events, updated_events)
          |> assign(:rsvp_modal_open, false)
          |> assign(:selected_event, nil)
+         |> push_patch(to: ~p"/members/registration")
          |> put_flash(:info, flash_message)}
 
       {:error, changeset} ->
@@ -153,7 +202,8 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
     {:noreply,
      socket
      |> assign(:rsvp_modal_open, false)
-     |> assign(:selected_event, nil)}
+     |> assign(:selected_event, nil)
+     |> push_patch(to: ~p"/members/registration")}
   end
 
   @impl true
