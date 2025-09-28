@@ -916,7 +916,7 @@ let
 
       phoenix_html =
         let
-          version = "4.2.1";
+          version = "4.3.0";
           drv = buildMix {
             inherit version;
             name = "phoenix_html";
@@ -925,7 +925,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "phoenix_html";
-              sha256 = "cff108100ae2715dd959ae8f2a8cef8e20b593f8dfd031c9cba92702cf23e053";
+              sha256 = "3eaa290a78bab0f075f791a46a981bbe769d94bc776869f4f3063a14f30497ad";
             };
           };
         in
