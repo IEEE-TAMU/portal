@@ -171,7 +171,7 @@ let
 
       aws_signature =
         let
-          version = "0.4.0";
+          version = "0.4.1";
           drv = buildRebar3 {
             inherit version;
             name = "aws_signature";
@@ -179,7 +179,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "aws_signature";
-              sha256 = "1e02cc39234e84a083570e0a437ba301792f58928b677e8fd01a44ae8d5c6ee8";
+              sha256 = "69e641476d3a88ae91c0b697fe23739ffdf46e5a39fa6a45100dc33ab18ec38a";
             };
           };
         in
