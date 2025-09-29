@@ -31,6 +31,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
        show_rsvp_list: false,
        show_checkin_list: false,
        selected_event: nil,
+       show_rsvp_qr: false,
        event_rsvps: [],
        event_checkins: [],
        page_title: "Manage Events",
@@ -220,6 +221,32 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
        selected_event: nil,
        event_rsvps: [],
        event_checkins: []
+     )}
+  end
+
+  @impl true
+  def handle_event("show_rsvp_qr", %{"uid" => uid}, socket) do
+    event = Events.get_event!(uid)
+
+    # Generate QR code URL for RSVP
+    rsvp_url = url(~p"/members/registration?rsvp=#{uid}")
+    rsvp_qr_svg = EQRCode.encode(rsvp_url) |> EQRCode.svg()
+
+    {:noreply,
+     assign(socket,
+       show_rsvp_qr: true,
+       rsvp_qr_event: event,
+       rsvp_qr_svg: rsvp_qr_svg
+     )}
+  end
+
+  @impl true
+  def handle_event("close_rsvp_qr", _params, socket) do
+    {:noreply,
+     assign(socket,
+       show_rsvp_qr: false,
+       rsvp_qr_event: nil,
+       rsvp_qr_svg: nil
      )}
   end
 
@@ -416,8 +443,9 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
               </div>
             </div>
             <div class="flex justify-between items-center mt-6">
-              <div class="text-sm text-gray-600">
-                Total RSVPs: <strong>{length(@event_rsvps)}</strong>
+              <div class="text-sm text-gray-600 whitespace-nowrap">
+                <span class="invisible md:visible">Total</span>
+                RSVPs: <strong>{length(@event_rsvps)}</strong>
               </div>
               <div class="flex space-x-3">
                 <.link
@@ -426,7 +454,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
                   target="_blank"
                   class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
                 >
-                  <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download CSV
+                  <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download
                 </.link>
                 <.button
                   type="button"
@@ -473,7 +501,8 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
             </div>
             <div class="flex justify-between items-center mt-6">
               <div class="text-sm text-gray-600">
-                Total Checkins: <strong>{length(@event_checkins)}</strong>
+                <span class="invisible md:visible">Total</span>Checkins:
+                <strong>{length(@event_checkins)}</strong>
               </div>
               <div class="flex space-x-3">
                 <.link
@@ -497,6 +526,48 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
         </.modal>
       </div>
       
+    <!-- RSVP QR Code Modal -->
+      <div :if={@show_rsvp_qr}>
+        <.modal id="rsvp-qr-modal" on_cancel={JS.push("close_rsvp_qr")} show={@show_rsvp_qr}>
+          <div class="p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">
+              RSVP QR Code for "{@rsvp_qr_event.summary}"
+            </h2>
+            <p class="text-gray-600 mb-4">
+              Members can scan this QR code to quickly RSVP to the event.
+            </p>
+            <div class="flex justify-center mb-6">
+              <div
+                id="rsvp-qrcode"
+                phx-update="ignore"
+                aria-label="RSVP QR Code"
+                class="p-2 sm:p-4 bg-white border border-gray-200 rounded-lg w-full max-w-[250px] sm:max-w-xs [&>svg]:w-full [&>svg]:h-auto [&>svg]:max-w-full"
+              >
+                {Phoenix.HTML.raw(@rsvp_qr_svg)}
+              </div>
+            </div>
+            <div class="bg-gray-50 rounded-md p-3 mb-4">
+              <p class="text-sm text-gray-600">
+                <strong>QR Code URL:</strong>
+                <br />
+                <code class="text-xs break-all">
+                  {url(~p"/members/registration?rsvp=#{@rsvp_qr_event.uid}")}
+                </code>
+              </p>
+            </div>
+            <div class="flex justify-end">
+              <.button
+                type="button"
+                phx-click="close_rsvp_qr"
+                class="bg-gray-200 text-gray-800 hover:bg-gray-300"
+              >
+                Close
+              </.button>
+            </div>
+          </div>
+        </.modal>
+      </div>
+      
     <!-- Events List -->
       <div class="bg-white rounded-lg shadow">
         <div class="px-6 py-4 border-b border-gray-200">
@@ -513,7 +584,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
           <div :for={event <- @events} class="p-6">
             <div>
               <!-- Display Event -->
-              <div class="flex items-start justify-between">
+              <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                 <div class="flex-1">
                   <div class="flex items-center gap-4 mb-2">
                     <h3 class="text-lg font-medium text-gray-900">{event.summary}</h3>
@@ -566,33 +637,45 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
                   </div>
                 </div>
 
-                <div class="flex items-center space-x-2 ml-4">
+                <div class="flex flex-wrap items-center gap-2 lg:space-x-2 lg:ml-4">
                   <.button
                     type="button"
                     phx-click="show_event_rsvps"
                     phx-value-uid={event.uid}
-                    class="bg-green-600 hover:bg-green-700 text-sm px-3 py-1"
+                    class="bg-green-600 hover:bg-green-700 text-xs sm:text-sm px-2 sm:px-3 py-1"
                   >
-                    <.icon name="hero-users" class="w-4 h-4 mr-1" /> RSVPs ({event.rsvp_count})
+                    <.icon name="hero-users" class="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span class="hidden sm:inline">RSVPs </span>({event.rsvp_count})
                   </.button>
 
                   <.button
                     type="button"
                     phx-click="show_event_checkins"
                     phx-value-uid={event.uid}
-                    class="bg-purple-600 hover:bg-purple-700 text-sm px-3 py-1"
+                    class="bg-purple-600 hover:bg-purple-700 text-xs sm:text-sm px-2 sm:px-3 py-1"
                   >
-                    <.icon name="hero-check-circle" class="w-4 h-4 mr-1" />
-                    Checkins ({event.checkin_count})
+                    <.icon name="hero-check-circle" class="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span class="hidden sm:inline">Checkins </span>({event.checkin_count})
+                  </.button>
+
+                  <.button
+                    type="button"
+                    phx-click="show_rsvp_qr"
+                    phx-value-uid={event.uid}
+                    class="bg-indigo-600 hover:bg-indigo-700 text-xs sm:text-sm px-2 sm:px-3 py-1"
+                  >
+                    <.icon name="hero-qr-code" class="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span class="hidden sm:inline">RSVP </span>QR
                   </.button>
 
                   <.button
                     type="button"
                     phx-click="edit_event"
                     phx-value-uid={event.uid}
-                    class="bg-blue-600 hover:bg-blue-700 text-sm px-3 py-1"
+                    class="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm px-2 sm:px-3 py-1"
                   >
-                    <.icon name="hero-pencil" class="w-4 h-4 mr-1" /> Edit
+                    <.icon name="hero-pencil" class="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span class="hidden sm:inline">Edit</span>
                   </.button>
 
                   <.button
@@ -600,9 +683,10 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
                     phx-click="delete_event"
                     phx-value-uid={event.uid}
                     data-confirm="Are you sure you want to delete this event?"
-                    class="bg-red-600 hover:bg-red-700 text-sm px-3 py-1"
+                    class="bg-red-600 hover:bg-red-700 text-xs sm:text-sm px-2 sm:px-3 py-1"
                   >
-                    <.icon name="hero-trash" class="w-4 h-4 mr-1" /> Delete
+                    <.icon name="hero-trash" class="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span class="hidden sm:inline">Delete</span>
                   </.button>
                 </div>
               </div>
