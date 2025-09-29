@@ -144,6 +144,7 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
     ~H"""
     <.header class="text-center">
       Account Settings
+      <:subtitle>Settings for {@current_member.email}</:subtitle>
     </.header>
 
     <div class="space-y-12 divide-y">
