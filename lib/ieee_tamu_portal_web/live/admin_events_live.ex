@@ -251,6 +251,22 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
   end
 
   @impl true
+  def handle_event("download_rsvp_qr_png", %{"uid" => uid}, socket) do
+    event = Events.get_event!(uid)
+
+    # Create filename-safe event name
+    safe_event_name =
+      event.summary
+      |> String.replace(~r/\W+/, "-")
+      |> String.downcase()
+
+    filename = "rsvp_qr_#{safe_event_name}_#{Date.utc_today() |> Date.to_iso8601()}.png"
+
+    # Push event to the QRDownload hook to trigger the download
+    {:noreply, push_event(socket, "download_qr_png", %{filename: filename})}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -540,12 +556,66 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
               <div
                 id="rsvp-qrcode"
                 phx-update="ignore"
+                phx-hook=".QRDownload"
                 aria-label="RSVP QR Code"
                 class="p-2 sm:p-4 bg-white border border-gray-200 rounded-lg w-full max-w-[250px] sm:max-w-xs [&>svg]:w-full [&>svg]:h-auto [&>svg]:max-w-full"
               >
                 {Phoenix.HTML.raw(@rsvp_qr_svg)}
               </div>
             </div>
+            <script :type={Phoenix.LiveView.ColocatedHook} name=".QRDownload">
+              export default {
+                mounted() {
+                  this.handleEvent('download_qr_png', ({filename}) => {
+                    const svgElement = this.el.querySelector('svg')
+                    if (!svgElement) return
+
+                    // Create a canvas element
+                    const canvas = document.createElement('canvas')
+                    const ctx = canvas.getContext('2d')
+
+                    // Get SVG dimensions
+                    const svgData = new XMLSerializer().serializeToString(svgElement)
+                    const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'})
+                    const url = URL.createObjectURL(svgBlob)
+
+                    const img = new Image()
+                    img.onload = function() {
+                      // Set canvas size to match image
+                      canvas.width = img.naturalWidth || 512
+                      canvas.height = img.naturalHeight || 512
+
+                      // Fill canvas with white background
+                      ctx.fillStyle = 'white'
+                      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+                      // Draw the SVG image
+                      ctx.drawImage(img, 0, 0)
+
+                      // Convert to PNG and download
+                      canvas.toBlob(function(blob) {
+                        const link = document.createElement('a')
+                        link.download = filename || 'qr-code.png'
+                        link.href = URL.createObjectURL(blob)
+                        document.body.appendChild(link)
+                        link.click()
+                        document.body.removeChild(link)
+                        URL.revokeObjectURL(link.href)
+                      }, 'image/png')
+
+                      URL.revokeObjectURL(url)
+                    }
+
+                    img.onerror = function() {
+                      console.error('Failed to load SVG for PNG conversion')
+                      URL.revokeObjectURL(url)
+                    }
+
+                    img.src = url
+                  })
+                }
+              }
+            </script>
             <div class="bg-gray-50 rounded-md p-3 mb-4">
               <p class="text-sm text-gray-600">
                 <strong>QR Code URL:</strong>
@@ -555,7 +625,15 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
                 </code>
               </p>
             </div>
-            <div class="flex justify-end">
+            <div class="flex justify-between">
+              <.button
+                type="button"
+                phx-click="download_rsvp_qr_png"
+                phx-value-uid={@rsvp_qr_event.uid}
+                class="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download PNG
+              </.button>
               <.button
                 type="button"
                 phx-click="close_rsvp_qr"
