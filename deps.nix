@@ -620,16 +620,17 @@ let
 
       icalendar =
         let
-          version = "1.1.2";
+          version = "1033d922c82a7223db0ec138e2316557b70ff49f";
           drv = buildMix {
             inherit version;
             name = "icalendar";
             appConfigPath = ./config;
 
-            src = fetchHex {
-              inherit version;
-              pkg = "icalendar";
-              sha256 = "2060f8e353fdf3047e95a3f012583dc3c0bbd7ca1010e32ed9e9fc5760ad4292";
+            src = pkgs.fetchFromGitHub {
+              owner = "tcitworld";
+              repo = "icalendar";
+              rev = "1033d922c82a7223db0ec138e2316557b70ff49f";
+              hash = "sha256-N3bJZznNazLewHS4c2B7LP1lgxd1wev+EWVlQ7rOwfU=";
             };
 
             beamDeps = [
