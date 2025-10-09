@@ -260,7 +260,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
           </p>
         </div>
       </div>
-      
+
     <!-- Filter Form -->
       <div class="mt-6 bg-white shadow rounded-lg p-4">
         <.form for={to_form(@meta)} class="space-y-4" phx-change="filter" phx-submit="filter">
@@ -496,7 +496,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                   <.icon name="hero-users" class="mx-auto h-12 w-12 text-gray-400" />
                   <h3 class="mt-2 text-sm font-semibold text-gray-900">No members</h3>
                   <p class="mt-1 text-sm text-gray-500">
-                    No members match your search criteria.`
+                    No members match your search criteria.
                   </p>
                 </div>
               <% end %>
