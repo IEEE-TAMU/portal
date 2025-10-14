@@ -873,7 +873,9 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
 
   # Helper to get events with RSVP counts
   defp events_with_rsvp_counts do
-    Events.list_events()
+    one_week_ago = DateTime.add(DateTime.utc_now(), -7, :day)
+
+    Events.list_events(after: one_week_ago)
     |> Enum.map(fn event ->
       rsvp_count = Events.count_rsvps(event.uid)
       checkin_count = Events.count_event_checkins(event.summary)
