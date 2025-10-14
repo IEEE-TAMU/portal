@@ -224,8 +224,8 @@ defmodule IeeeTamuPortalWeb.MemberInfoLive do
             />
           </div>
           <:actions>
-            <.button phx-disable-with="Saving...">Save</.button>
             <.button phx-click="reset_info" phx-disable-with="Resetting...">Reset</.button>
+            <.button phx-disable-with="Saving...">Save</.button>
           </:actions>
         </.simple_form>
       </div>
