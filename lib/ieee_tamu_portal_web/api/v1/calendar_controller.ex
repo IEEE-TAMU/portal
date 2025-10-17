@@ -26,6 +26,7 @@ defmodule IeeeTamuPortalWeb.Api.V1.CalendarController do
           |> put_if(:organizer, e.organizer)
           |> put_if(:created, e.inserted_at)
           |> put_if(:modified, e.updated_at)
+          |> put_if(:"x-rsvp-url", url(~p"/members/registration?rsvp=#{e.uid}"))
         end
 
       # Generate ICS with custom serialization for RFC 5545 compliance
