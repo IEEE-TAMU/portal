@@ -958,7 +958,7 @@ let
 
       phoenix_live_view =
         let
-          version = "1.1.14";
+          version = "1.1.16";
           drv = buildMix {
             inherit version;
             name = "phoenix_live_view";
@@ -967,7 +967,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "phoenix_live_view";
-              sha256 = "b827980e2bc00fddd8674e3b567519a4e855b5de04bf8607140414f1101e2627";
+              sha256 = "f2a0093895b8ef4880af76d41de4a9cf7cff6c66ad130e15a70bdabc4d279feb";
             };
 
             beamDeps = [
@@ -984,7 +984,7 @@ let
 
       phoenix_pubsub =
         let
-          version = "2.1.3";
+          version = "2.2.0";
           drv = buildMix {
             inherit version;
             name = "phoenix_pubsub";
@@ -993,7 +993,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "phoenix_pubsub";
-              sha256 = "bba06bc1dcfd8cb086759f0edc94a8ba2bc8896d5331a1e2c2902bf8e36ee502";
+              sha256 = "adc313a5bf7136039f63cfd9668fde73bba0765e0614cba80c06ac9460ff3e96";
             };
           };
         in
@@ -1224,7 +1224,7 @@ let
 
       thousand_island =
         let
-          version = "1.4.1";
+          version = "1.4.2";
           drv = buildMix {
             inherit version;
             name = "thousand_island";
@@ -1233,7 +1233,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "thousand_island";
-              sha256 = "204a8640e5d2818589b87286ae66160978628d7edf6095181cbe0440765fb6c1";
+              sha256 = "1c7637f16558fc1c35746d5ee0e83b18b8e59e18d28affd1f2fa1645f8bc7473";
             };
 
             beamDeps = [
