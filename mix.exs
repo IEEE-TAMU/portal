@@ -46,7 +46,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:aws_signature, "== 0.4.1"},
       {:phoenix_live_dashboard, "== 0.8.7"},
       {:esbuild, "== 0.10.0", runtime: Mix.env() == :dev},
-      {:tailwind, "== 0.4.0", runtime: Mix.env() == :dev},
+      {:tailwind, "== 0.4.1", runtime: Mix.env() == :dev},
       {:heroicons,
        github: "tailwindlabs/heroicons",
        tag: "v2.2.0",
