@@ -161,5 +161,31 @@ defmodule IeeeTamuPortal.EventsTest do
       {:error, changeset} = Events.create_event(valid_attrs(%{rsvp_limit: -5}))
       assert %{rsvp_limit: ["must be greater than 0"]} = errors_on(changeset)
     end
+
+    test "delete_event/1 deletes the event and associated RSVPs" do
+      # Import the accounts fixtures to create a member
+      import IeeeTamuPortal.AccountsFixtures
+
+      # Create an event
+      {:ok, event} = Events.create_event(valid_attrs())
+
+      # Create a member for RSVP
+      member = member_fixture()
+
+      # Create an RSVP for the event
+      {:ok, _rsvp} = Events.create_rsvp(member.id, event.uid)
+
+      # Verify the RSVP exists
+      assert Events.count_rsvps(event.uid) == 1
+
+      # Delete the event
+      assert {:ok, %Event{}} = Events.delete_event(event)
+
+      # Verify event is deleted
+      assert_raise Ecto.NoResultsError, fn -> Events.get_event!(event.uid) end
+
+      # Verify RSVPs are also deleted (cascade delete)
+      assert Events.count_rsvps(event.uid) == 0
+    end
   end
 end

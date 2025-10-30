@@ -16,7 +16,7 @@ defmodule IeeeTamuPortal.Events.Event do
 
     timestamps(type: :utc_datetime)
 
-    has_many :rsvps, IeeeTamuPortal.Events.RSVP
+    has_many :rsvps, IeeeTamuPortal.Events.RSVP, on_delete: :delete_all
   end
 
   @doc false
