@@ -339,7 +339,7 @@ let
 
       ecto =
         let
-          version = "3.13.3";
+          version = "3.13.4";
           drv = buildMix {
             inherit version;
             name = "ecto";
@@ -348,7 +348,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "ecto";
-              sha256 = "1927db768f53a88843ff25b6ba7946599a8ca8a055f69ad8058a1432a399af94";
+              sha256 = "5ad7d1505685dfa7aaf86b133d54f5ad6c42df0b4553741a1ff48796736e88b2";
             };
 
             beamDeps = [
@@ -441,7 +441,7 @@ let
 
       expo =
         let
-          version = "1.1.0";
+          version = "1.1.1";
           drv = buildMix {
             inherit version;
             name = "expo";
@@ -450,7 +450,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "expo";
-              sha256 = "fbadf93f4700fb44c331362177bdca9eeb8097e8b0ef525c9cc501cb9917c960";
+              sha256 = "5fb308b9cb359ae200b7e23d37c76978673aa1b06e2b3075d814ce12c5811640";
             };
           };
         in
