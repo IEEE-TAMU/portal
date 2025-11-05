@@ -958,7 +958,7 @@ let
 
       phoenix_live_view =
         let
-          version = "1.1.16";
+          version = "1.1.17";
           drv = buildMix {
             inherit version;
             name = "phoenix_live_view";
@@ -967,7 +967,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "phoenix_live_view";
-              sha256 = "f2a0093895b8ef4880af76d41de4a9cf7cff6c66ad130e15a70bdabc4d279feb";
+              sha256 = "fa82307dd9305657a8236d6b48e60ef2e8d9f742ee7ed832de4b8bcb7e0e5ed2";
             };
 
             beamDeps = [
@@ -1322,7 +1322,7 @@ let
 
       websock_adapter =
         let
-          version = "0.5.8";
+          version = "0.5.9";
           drv = buildMix {
             inherit version;
             name = "websock_adapter";
@@ -1331,7 +1331,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "websock_adapter";
-              sha256 = "315b9a1865552212b5f35140ad194e67ce31af45bcee443d4ecb96b5fd3f3782";
+              sha256 = "5534d5c9adad3c18a0f58a9371220d75a803bf0b9a3d87e6fe072faaeed76a08";
             };
 
             beamDeps = [
