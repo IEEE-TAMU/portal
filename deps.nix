@@ -914,7 +914,7 @@ let
 
       phoenix_ecto =
         let
-          version = "4.6.5";
+          version = "4.7.0";
           drv = buildMix {
             inherit version;
             name = "phoenix_ecto";
@@ -923,7 +923,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "phoenix_ecto";
-              sha256 = "26ec3208eef407f31b748cadd044045c6fd485fbff168e35963d2f9dfff28d4b";
+              sha256 = "1d75011e4254cb4ddf823e81823a9629559a1be93b4321a6a5f11a5306fbf4cc";
             };
 
             beamDeps = [
