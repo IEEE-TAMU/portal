@@ -43,7 +43,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:phoenix_html, "== 4.3.0"},
       {:phoenix_live_reload, "== 1.6.1", only: :dev},
       {:phoenix_live_view, "== 1.1.17"},
-      {:aws_signature, "== 0.4.1"},
+      {:aws_signature, "== 0.4.2"},
       {:phoenix_live_dashboard, "== 0.8.7"},
       {:esbuild, "== 0.10.0", runtime: Mix.env() == :dev},
       {:tailwind, "== 0.4.1", runtime: Mix.env() == :dev},
