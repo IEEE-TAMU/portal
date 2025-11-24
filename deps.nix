@@ -359,7 +359,7 @@ let
 
       ecto =
         let
-          version = "3.13.4";
+          version = "3.13.5";
           drv = buildMix {
             inherit version;
             name = "ecto";
@@ -368,7 +368,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "ecto";
-              sha256 = "5ad7d1505685dfa7aaf86b133d54f5ad6c42df0b4553741a1ff48796736e88b2";
+              sha256 = "df9efebf70cf94142739ba357499661ef5dbb559ef902b68ea1f3c1fabce36de";
             };
 
             beamDeps = [
