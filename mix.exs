@@ -37,7 +37,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:bcrypt_elixir, "3.3.2"},
       {:phoenix, "1.8.1"},
       {:phoenix_ecto, "4.7.0"},
-      {:ecto_sql, "3.13.2"},
+      {:ecto_sql, "== 3.13.3"},
       {:myxql, "0.8.0"},
       {:ecto_mysql_extras, "0.6.3", only: :dev},
       {:phoenix_html, "4.3.0"},
