@@ -13,7 +13,7 @@ jobs:
     - uses: actions/checkout@v6
       with:
         fetch-depth: 0
-    - uses: DeterminateSystems/nix-installer-action@v20
+    - uses: DeterminateSystems/nix-installer-action@v21
     - uses: DeterminateSystems/magic-nix-cache-action@v13
     - name: build image
       run: nix build --extra-experimental-features "nix-command flakes" .#packages.x86_64-linux.docker
