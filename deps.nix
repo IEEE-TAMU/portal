@@ -67,7 +67,12 @@ let
           mkdir -p priv/native
           for lib in ${native}/lib/*
           do
-            ln -s "$lib" "priv/native/$(basename "$lib")"
+            dest="$(basename "$lib")"
+            if [[ "''${dest##*.}" = "dylib" ]]
+            then
+              dest="''${dest%.dylib}.so"
+            fi
+            ln -s "$lib" "priv/native/$dest"
           done
         '';
 
@@ -207,7 +212,7 @@ let
 
       bandit =
         let
-          version = "1.9.0";
+          version = "1.10.0";
           drv = buildMix {
             inherit version;
             name = "bandit";
@@ -216,7 +221,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "bandit";
-              sha256 = "2538aaa1663b40ca9cbd8ca1f8a540cb49e5baf34c6ffef068369cc45f9146f2";
+              sha256 = "43ebceb7060a4d8273e47d83e703d01b112198624ba0826980caa3f5091243c4";
             };
 
             beamDeps = [
@@ -382,7 +387,7 @@ let
 
       ecto_sql =
         let
-          version = "3.13.3";
+          version = "3.13.4";
           drv = buildMix {
             inherit version;
             name = "ecto_sql";
@@ -391,7 +396,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "ecto_sql";
-              sha256 = "5751caea36c8f5dd0d1de6f37eceffea19d10bd53f20e5bbe31c45f2efc8944a";
+              sha256 = "2b38cf0749ca4d1c5a8bcbff79bbe15446861ca12a61f9fba604486cb6b62a14";
             };
 
             beamDeps = [
@@ -640,7 +645,7 @@ let
 
       icalendar =
         let
-          version = "1033d922c82a7223db0ec138e2316557b70ff49f";
+          version = "1.1.2";
           drv = buildMix {
             inherit version;
             name = "icalendar";
@@ -1140,7 +1145,7 @@ let
 
       swoosh =
         let
-          version = "1.19.9";
+          version = "1.20.0";
           drv = buildMix {
             inherit version;
             name = "swoosh";
@@ -1149,7 +1154,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "swoosh";
-              sha256 = "516898263a64925c31723c56bc7999a26e97b04e869707f681f4c9bca7ee1688";
+              sha256 = "13e610f709bae54851d68afb6862882aa646e5c974bf49e3bf5edd84a73cf213";
             };
 
             beamDeps = [
