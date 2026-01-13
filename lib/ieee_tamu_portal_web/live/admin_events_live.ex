@@ -331,6 +331,12 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
               <.input field={@create_form[:location]} type="text" label="Location" />
               <.input field={@create_form[:description]} type="textarea" label="Description" rows="4" />
               <.input
+                field={@create_form[:rsvpable]}
+                type="checkbox"
+                label="Allow RSVPs"
+              />
+              <.input
+                :if={@create_local_params["rsvpable"] != "false"}
                 field={@create_form[:rsvp_limit]}
                 type="number"
                 label="RSVP Limit (optional)"
@@ -394,7 +400,15 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
               <.input field={@edit_form[:location]} type="text" label="Location" />
               <.input field={@edit_form[:description]} type="textarea" label="Description" rows="3" />
 
-              <div>
+              <.input
+                field={@edit_form[:rsvpable]}
+                type="checkbox"
+                label="Allow RSVPs"
+              />
+              <div :if={
+                @edit_local_params["rsvpable"] != "false" and
+                  (@edit_local_params["rsvpable"] == "true" or @edit_event.rsvpable)
+              }>
                 <.input
                   field={@edit_form[:rsvp_limit]}
                   type="number"
@@ -737,6 +751,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
                   </.button>
 
                   <.button
+                    :if={event.rsvpable}
                     type="button"
                     phx-click="show_rsvp_qr"
                     phx-value-uid={event.uid}

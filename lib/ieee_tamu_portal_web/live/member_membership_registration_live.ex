@@ -98,23 +98,30 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
           try do
             event = Events.get_event!(event_uid)
 
-            rsvp_info =
-              Events.get_event_with_rsvp_info(event_uid, socket.assigns.current_member.id)
-
-            if rsvp_info.member_rsvped do
-              # Member is already RSVPed, show flash message instead of opening modal
+            if not event.rsvpable do
+              # Event does not allow RSVPs
               socket
-              |> put_flash(:info, "You are already RSVPed to \"#{event.summary}\"")
+              |> put_flash(:error, "RSVPs are not available for this event")
               |> push_patch(to: ~p"/members/registration")
             else
-              # Member not RSVPed yet, open the modal
-              selected_event = Map.put(event, :rsvp_info, rsvp_info)
+              rsvp_info =
+                Events.get_event_with_rsvp_info(event_uid, socket.assigns.current_member.id)
 
-              socket
-              |> assign(:rsvp_modal_open, true)
-              |> assign(:selected_event, selected_event)
-              # Show the events section
-              |> assign(:show_upcoming_events, true)
+              if rsvp_info.member_rsvped do
+                # Member is already RSVPed, show flash message instead of opening modal
+                socket
+                |> put_flash(:info, "You are already RSVPed to \"#{event.summary}\"")
+                |> push_patch(to: ~p"/members/registration")
+              else
+                # Member not RSVPed yet, open the modal
+                selected_event = Map.put(event, :rsvp_info, rsvp_info)
+
+                socket
+                |> assign(:rsvp_modal_open, true)
+                |> assign(:selected_event, selected_event)
+                # Show the events section
+                |> assign(:show_upcoming_events, true)
+              end
             end
           rescue
             Ecto.NoResultsError ->
@@ -392,29 +399,31 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
                               </div>
                             </div>
                             <div class="shrink-0 mt-1">
-                              <%= cond do %>
-                                <% event.rsvp_info.at_capacity and not event.rsvp_info.member_rsvped -> %>
-                                  <div class="bg-gray-100 text-gray-600 px-3 py-2 text-sm rounded-md">
-                                    Event Full
-                                  </div>
-                                <% event.rsvp_info.member_rsvped -> %>
-                                  <.button
-                                    type="button"
-                                    phx-click="open_rsvp"
-                                    phx-value-uid={event.uid}
-                                    class="bg-red-600 hover:bg-red-700 text-white text-sm"
-                                  >
-                                    Cancel RSVP
-                                  </.button>
-                                <% true -> %>
-                                  <.button
-                                    type="button"
-                                    phx-click="open_rsvp"
-                                    phx-value-uid={event.uid}
-                                    class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm"
-                                  >
-                                    RSVP
-                                  </.button>
+                              <%= if event.rsvpable do %>
+                                <%= cond do %>
+                                  <% event.rsvp_info.at_capacity and not event.rsvp_info.member_rsvped -> %>
+                                    <div class="bg-gray-100 text-gray-600 px-3 py-2 text-sm rounded-md">
+                                      Event Full
+                                    </div>
+                                  <% event.rsvp_info.member_rsvped -> %>
+                                    <.button
+                                      type="button"
+                                      phx-click="open_rsvp"
+                                      phx-value-uid={event.uid}
+                                      class="bg-red-600 hover:bg-red-700 text-white text-sm"
+                                    >
+                                      Cancel RSVP
+                                    </.button>
+                                  <% true -> %>
+                                    <.button
+                                      type="button"
+                                      phx-click="open_rsvp"
+                                      phx-value-uid={event.uid}
+                                      class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm"
+                                    >
+                                      RSVP
+                                    </.button>
+                                <% end %>
                               <% end %>
                             </div>
                           </div>

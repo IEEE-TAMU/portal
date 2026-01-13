@@ -13,6 +13,7 @@ defmodule IeeeTamuPortal.Events.Event do
     field :location, :string
     field :organizer, :string
     field :rsvp_limit, :integer
+    field :rsvpable, :boolean, default: true
 
     timestamps(type: :utc_datetime)
 
@@ -22,7 +23,16 @@ defmodule IeeeTamuPortal.Events.Event do
   @doc false
   def changeset(event, attrs) do
     event
-    |> cast(attrs, [:dtstart, :dtend, :summary, :description, :location, :organizer, :rsvp_limit])
+    |> cast(attrs, [
+      :dtstart,
+      :dtend,
+      :summary,
+      :description,
+      :location,
+      :organizer,
+      :rsvp_limit,
+      :rsvpable
+    ])
     |> validate_required([:dtstart, :summary])
     |> validate_length(:summary, min: 1, max: 255)
     |> validate_length(:description, max: 10000)
