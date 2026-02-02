@@ -46,7 +46,7 @@
             inherit mixNixDeps;
             pname = "ieee-tamu-portal";
             src = ./.;
-            version = "0.2.8";
+            version = "0.2.9";
 
             stripDebug = true;
 
