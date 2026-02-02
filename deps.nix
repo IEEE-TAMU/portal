@@ -309,7 +309,7 @@ let
 
       db_connection =
         let
-          version = "2.8.1";
+          version = "2.9.0";
           drv = buildMix {
             inherit version;
             name = "db_connection";
@@ -318,7 +318,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "db_connection";
-              sha256 = "a61a3d489b239d76f326e03b98794fb8e45168396c925ef25feb405ed09da8fd";
+              sha256 = "17d502eacaf61829db98facf6f20808ed33da6ccf495354a41e64fe42f9c509c";
             };
 
             beamDeps = [
@@ -483,7 +483,7 @@ let
 
       finch =
         let
-          version = "0.20.0";
+          version = "0.21.0";
           drv = buildMix {
             inherit version;
             name = "finch";
@@ -492,7 +492,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "finch";
-              sha256 = "2658131a74d051aabfcba936093c903b8e89da9a1b63e430bee62045fa9b2ee2";
+              sha256 = "87dc6e169794cb2570f75841a19da99cfde834249568f2a5b121b809588a4377";
             };
 
             beamDeps = [
