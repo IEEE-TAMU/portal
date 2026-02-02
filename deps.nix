@@ -1,9 +1,15 @@
 {
-  pkgs,
   lib,
   beamPackages,
+  cmake,
+  extend,
+  lexbor,
+  fetchFromGitHub,
   overrides ? (x: y: { }),
   overrideFenixOverlay ? null,
+  pkg-config,
+  vips,
+  writeText,
 }:
 
 let
@@ -12,7 +18,7 @@ let
 
   workarounds = {
     portCompiler = _unusedArgs: old: {
-      buildPlugins = [ pkgs.beamPackages.pc ];
+      buildPlugins = [ beamPackages.pc ];
     };
 
     rustlerPrecompiled =
@@ -22,13 +28,13 @@ let
       }:
       old:
       let
-        extendedPkgs = pkgs.extend fenixOverlay;
+        extendedPkgs = extend fenixOverlay;
         fenixOverlay =
           if overrideFenixOverlay == null then
             import "${
               fetchTarball {
-                url = "https://github.com/nix-community/fenix/archive/056c9393c821a4df356df6ce7f14c722dc8717ec.tar.gz";
-                sha256 = "sha256:1cdfh6nj81gjmn689snigidyq7w98gd8hkl5rvhly6xj7vyppmnd";
+                url = "https://github.com/nix-community/fenix/archive/6399553b7a300c77e7f07342904eb696a5b6bf9d.tar.gz";
+                sha256 = "sha256-C6tT7K1Lx6VsYw1BY5S3OavtapUvEnDQtmQB5DSgbCc=";
               }
             }/overlay.nix"
           else
@@ -118,7 +124,7 @@ let
       '';
 
       preBuild = ''
-        install -Dm644           -t _build/c/third_party/lexbor/$LEXBOR_GIT_SHA/build           ${pkgs.lexbor}/lib/liblexbor_static.a
+        install -Dm644           -t _build/c/third_party/lexbor/$LEXBOR_GIT_SHA/build           ${lexbor}/lib/liblexbor_static.a
       '';
     };
   };
@@ -137,8 +143,8 @@ let
           {
             name = "rustlerPrecompiled";
             toolchain = {
-              name = "nightly-2024-11-01";
-              sha256 = "sha256-wq7bZ1/IlmmLkSa3GUJgK17dTWcKyf5A+ndS9yRwB88=";
+              name = "nightly-2025-06-23";
+              sha256 = "sha256-UAoZcxg3iWtS+2n8TFNfANFt/GmkuOMDf7QAE0fRxeA=";
             };
           }
         ];
@@ -212,7 +218,7 @@ let
 
       bandit =
         let
-          version = "1.10.0";
+          version = "1.10.2";
           drv = buildMix {
             inherit version;
             name = "bandit";
@@ -221,7 +227,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "bandit";
-              sha256 = "43ebceb7060a4d8273e47d83e703d01b112198624ba0826980caa3f5091243c4";
+              sha256 = "27b2a61b647914b1726c2ced3601473be5f7aa6bb468564a688646a689b3ee45";
             };
 
             beamDeps = [
@@ -619,7 +625,7 @@ let
         in
         drv;
 
-      heroicons = pkgs.fetchFromGitHub {
+      heroicons = fetchFromGitHub {
         owner = "tailwindlabs";
         repo = "heroicons";
         rev = "0435d4ca364a608cc75e2f8683d374e55abbae26";
@@ -651,7 +657,7 @@ let
             name = "icalendar";
             appConfigPath = ./config;
 
-            src = pkgs.fetchFromGitHub {
+            src = fetchFromGitHub {
               owner = "tcitworld";
               repo = "icalendar";
               rev = "1033d922c82a7223db0ec138e2316557b70ff49f";
@@ -852,7 +858,7 @@ let
 
       open_api_spex =
         let
-          version = "3.22.1";
+          version = "3.22.2";
           drv = buildMix {
             inherit version;
             name = "open_api_spex";
@@ -861,7 +867,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "open_api_spex";
-              sha256 = "fa51ecd04ececbad89a8ede55ebd9db7aa9e55cc7ddbb46455522e0f3c098290";
+              sha256 = "0a4fc08472d75e9cfe96e0748c6b1565b3b4398f97bf43fcce41b41b6fd3fb33";
             };
 
             beamDeps = [
@@ -983,7 +989,7 @@ let
 
       phoenix_live_view =
         let
-          version = "1.1.19";
+          version = "1.1.22";
           drv = buildMix {
             inherit version;
             name = "phoenix_live_view";
@@ -992,7 +998,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "phoenix_live_view";
-              sha256 = "d5ad357d6b21562a5b431f0ad09dfe76db9ce5648c6949f1aac334c8c4455d32";
+              sha256 = "e1395d5622d8bf02113cb58183589b3da6f1751af235768816e90cc3ec5f1188";
             };
 
             beamDeps = [
@@ -1103,7 +1109,7 @@ let
 
       req =
         let
-          version = "0.5.16";
+          version = "0.5.17";
           drv = buildMix {
             inherit version;
             name = "req";
@@ -1112,7 +1118,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "req";
-              sha256 = "974a7a27982b9b791df84e8f6687d21483795882a7840e8309abdbe08bb06f09";
+              sha256 = "0b8bc6ffdfebbc07968e59d3ff96d52f2202d0536f10fef4dc11dc02a2a43e39";
             };
 
             beamDeps = [
@@ -1145,7 +1151,7 @@ let
 
       swoosh =
         let
-          version = "1.20.0";
+          version = "1.21.0";
           drv = buildMix {
             inherit version;
             name = "swoosh";
@@ -1154,7 +1160,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "swoosh";
-              sha256 = "13e610f709bae54851d68afb6862882aa646e5c974bf49e3bf5edd84a73cf213";
+              sha256 = "9127157bfb33b7e154d0f1ba4e888e14b08ede84e81dedcb318a2f33dbc6db51";
             };
 
             beamDeps = [
