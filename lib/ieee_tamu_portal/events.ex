@@ -52,6 +52,19 @@ defmodule IeeeTamuPortal.Events do
   """
   def get_event!(uid), do: Repo.get!(Event, uid)
 
+
+
+  @doc """
+  Gets a single event by name.
+  Raises `Ecto.NoResultsError` if the Event does not exist.
+  """
+  def get_event_by_name!(name) when is_binary(name) do
+    from(e in Event,
+      where: e.summary == ^name
+    )
+    |> Repo.one!()
+  end
+
   @doc """
   Creates a event.
 
@@ -283,7 +296,7 @@ defmodule IeeeTamuPortal.Events do
 
   @doc """
   Gets emails and names for RSVPs of a specific event for CSV export.
-  Returns a list of {email, name, event_title} tuples.
+  Returns a list of {created, email, name, event_title} tuples.
   """
   def emails_and_names_for_event_rsvps(event_uid) do
     from(r in RSVP,
@@ -292,10 +305,12 @@ defmodule IeeeTamuPortal.Events do
       join: e in assoc(r, :event),
       where: r.event_uid == ^event_uid,
       select: {
+        r.inserted_at,
         m.email,
         fragment(
-          "COALESCE(NULLIF(?, ''), CONCAT(?, ' ', ?))",
+          "COALESCE(CONCAT(?, ' ', ?), CONCAT(?, ' ', ?))",
           i.preferred_name,
+          i.last_name,
           i.first_name,
           i.last_name
         ),
@@ -308,7 +323,7 @@ defmodule IeeeTamuPortal.Events do
 
   @doc """
   Gets emails and names for checkins of a specific event for CSV export.
-  Returns a list of {email, name, event_name} tuples.
+  Returns a list of {created, email, name, event_name} tuples.
   """
   def emails_and_names_for_event_checkins(event_name, year \\ nil) do
     year = year || IeeeTamuPortal.Settings.get_registration_year!()
@@ -318,10 +333,12 @@ defmodule IeeeTamuPortal.Events do
       join: i in assoc(m, :info),
       where: c.event_name == ^event_name and c.event_year == ^year,
       select: {
+        c.inserted_at,
         m.email,
         fragment(
-          "COALESCE(NULLIF(?, ''), CONCAT(?, ' ', ?))",
+          "COALESCE(CONCAT(?, ' ', ?), CONCAT(?, ' ', ?))",
           i.preferred_name,
+          i.last_name,
           i.first_name,
           i.last_name
         ),

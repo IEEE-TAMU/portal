@@ -18,8 +18,8 @@ defmodule IeeeTamuPortalWeb.AdminCheckinsExportController do
 
     csv =
       rows
-      |> Enum.map(fn {email, event_name} -> [email, event_name] end)
-      |> then(fn rs -> CSV.dump_to_iodata([["email", "event_name"] | rs]) end)
+      |> Enum.map(fn {created, email, event_name} -> [created, email, event_name] end)
+      |> then(fn rs -> CSV.dump_to_iodata([["date", "email", "event_name"] | rs]) end)
 
     suffix =
       if is_binary(event_name) and event_name != "",
@@ -30,7 +30,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinsExportController do
 
     conn
     |> put_resp_content_type("text/csv")
-    |> put_resp_header("content-disposition", ~s(attachment; filename=#{filename}))
+    |> put_resp_header("content-disposition", ~s(attachment; filename="#{filename}"))
     |> send_resp(200, csv)
   end
 end

@@ -12,6 +12,9 @@
 
 alias IeeeTamuPortal.Accounts
 alias IeeeTamuPortal.Members
+alias IeeeTamuPortal.Events
+alias IeeeTamuPortal.Settings
+alias IeeeTamuPortal.Members.EventCheckin
 
 # Helper functions for generating random data
 defmodule SeedHelpers do
@@ -318,6 +321,47 @@ defmodule SeedHelpers do
   end
 end
 
+# seed 2 events
+event_params = [
+  %{
+    "summary" => "Welcome Back Social",
+    "description" => "Kick off the semester with fellow IEEE members!",
+    "location" => "IEEE Lounge, ENGR Bldg",
+    "dtstart" => DateTime.utc_now(),
+    "dtend" => DateTime.add(DateTime.utc_now(), 720, :day),
+    "rsvp_limit" => 100
+  },
+  %{
+    "summary" => "Tech Talk: AI in Modern Applications",
+    "description" => "Explore the impact of AI in today's technology landscape.",
+    "location" => "Room 101, ENGR Bldg",
+    "dtstart" => DateTime.utc_now(),
+    "dtend" => DateTime.add(DateTime.utc_now(), 720, :day),
+    "rsvp_limit" => 50
+  }
+]
+
+{ failed, success } =
+  Enum.reduce(event_params, {0, 0}, fn params, {fail_count, success_count} ->
+    case Events.create_event(params) do
+      {:ok, _event} ->
+        IO.puts("✓ Created event: #{params["summary"]}")
+        {fail_count, success_count + 1}
+
+      {:error, changeset} ->
+        IO.puts("✗ Failed to create event: #{params["summary"]}")
+        IO.inspect(changeset.errors)
+        {fail_count + 1, success_count}
+    end
+  end)
+
+IO.puts("\n📊 Event Creation Summary:")
+IO.puts("  Success: #{success}")
+IO.puts("  Failed: #{failed}")
+
+# start the first event in the list
+Settings.set_current_event(event_params |> hd() |> Map.get("summary"))
+
 # Create a test user
 case Accounts.register_member(%{
        email: "test@tamu.edu",
@@ -358,11 +402,11 @@ case Accounts.register_member(%{
     IO.inspect(changeset.errors)
 end
 
-# Generate 500 random users
-IO.puts("\n🚀 Generating 500 random users...")
+# Generate 100 random users
+IO.puts("\n🚀 Generating 100 random users...")
 
 {created_count, failed_count, unconfirmed_count, confirmed_no_info_count} =
-  Enum.reduce(1..500, {0, 0, 0, 0}, fn i, {created, failed, unconfirmed, confirmed_no_info} ->
+  Enum.reduce(1..100, {0, 0, 0, 0}, fn i, {created, failed, unconfirmed, confirmed_no_info} ->
     first_name = SeedHelpers.random_first_name()
     last_name = SeedHelpers.random_last_name()
     email = SeedHelpers.generate_email(first_name, last_name)
@@ -448,6 +492,11 @@ IO.puts("\n🚀 Generating 500 random users...")
 
           case Members.create_member_info(final_member, member_info_attrs) do
             {:ok, _info} ->
+              # RSVP and check-in the user to the current event
+              # TODO: error handling
+              current_event = Events.get_event_by_name!(Settings.get_current_event!()).uid
+              Events.create_rsvp(final_member.id, current_event.uid)
+              EventCheckin.insert_for_member_id(final_member.id)
               if rem(i, 10) == 0 do
                 IO.puts("  ✓ Created #{i}/100 users...")
               end
@@ -488,6 +537,8 @@ IO.puts("\n🚀 Generating 500 random users...")
         {created, failed + 1, unconfirmed, confirmed_no_info}
     end
   end)
+
+
 
 IO.puts("\n📊 Summary:")
 IO.puts("  ✓ Successfully created with full info: #{created_count} users")
