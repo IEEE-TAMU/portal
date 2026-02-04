@@ -294,7 +294,7 @@ defmodule IeeeTamuPortal.Events do
 
   @doc """
   Gets emails and names for RSVPs of a specific event for CSV export.
-  Returns a list of {created, email, name, event_title} tuples.
+  Returns a list of {created, email, name, uin, event_title} tuples.
   """
   def emails_and_names_for_event_rsvps(event_uid) do
     from(r in RSVP,
@@ -312,6 +312,7 @@ defmodule IeeeTamuPortal.Events do
           i.first_name,
           i.last_name
         ),
+        i.uin,
         e.summary
       },
       order_by: [desc: r.inserted_at]
@@ -321,7 +322,7 @@ defmodule IeeeTamuPortal.Events do
 
   @doc """
   Gets emails and names for checkins of a specific event for CSV export.
-  Returns a list of {created, email, name, event_name} tuples.
+  Returns a list of {created, email, name, uin, event_name} tuples.
   """
   def emails_and_names_for_event_checkins(event_name, year \\ nil) do
     year = year || IeeeTamuPortal.Settings.get_registration_year!()
@@ -340,6 +341,7 @@ defmodule IeeeTamuPortal.Events do
           i.first_name,
           i.last_name
         ),
+        i.uin,
         c.event_name
       },
       order_by: [desc: c.inserted_at]

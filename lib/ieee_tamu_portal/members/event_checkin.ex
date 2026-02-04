@@ -44,28 +44,35 @@ defmodule IeeeTamuPortal.Members.EventCheckin do
   end
 
   @doc """
-  Returns list of {created, email, event_name} tuples for all check-ins in the given year.
+  Returns list of {created, email, uin, event_name} tuples for all check-ins in the given year.
 
   Used by admin CSV export.
   """
   def emails_and_event_names_for_year(year) when is_integer(year) do
     from(e in __MODULE__,
       join: m in assoc(e, :member),
+      join: i in assoc(m, :info),
       where: e.event_year == ^year,
-      select: {e.inserted_at, m.email, e.event_name}
+      select: {
+        e.inserted_at,
+        m.email,
+        i.uin,
+        e.event_name
+      }
     )
     |> Repo.all()
   end
 
   @doc """
-  Returns list of {created, email, event_name} tuples for all check-ins in the given year for a specific event.
+  Returns list of {created, email, uin, event_name} tuples for all check-ins in the given year for a specific event.
   """
   def emails_and_event_names_for_year(year, event_name)
       when is_integer(year) and is_binary(event_name) do
     from(e in __MODULE__,
       join: m in assoc(e, :member),
+      join: i in assoc(m, :info),
       where: e.event_year == ^year and e.event_name == ^event_name,
-      select: {e.inserted_at, m.email, e.event_name}
+      select: {e.inserted_at, m.email, i.uin, e.event_name}
     )
     |> Repo.all()
   end

@@ -18,8 +18,8 @@ defmodule IeeeTamuPortalWeb.AdminCheckinsExportController do
 
     csv =
       rows
-      |> Enum.map(fn {created, email, event_name} -> [created, email, event_name] end)
-      |> then(fn rs -> CSV.dump_to_iodata([["date", "email", "event_name"] | rs]) end)
+      |> Enum.map(fn {created, email, uin, event_name} -> [created, email, uin, event_name] end)
+      |> then(fn rs -> CSV.dump_to_iodata([["date", "email", "uin", "event_name"] | rs]) end)
 
     suffix =
       if is_binary(event_name) and event_name != "",
