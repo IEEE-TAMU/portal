@@ -52,8 +52,6 @@ defmodule IeeeTamuPortal.Events do
   """
   def get_event!(uid), do: Repo.get!(Event, uid)
 
-
-
   @doc """
   Gets a single event by name.
   Raises `Ecto.NoResultsError` if the Event does not exist.

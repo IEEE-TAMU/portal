@@ -284,14 +284,14 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
           </.link>
         </div>
       </div>
-
+      
     <!-- Create Event Form -->
       <div class="flex justify-end mb-6">
         <.button phx-click="show_create_form" class="bg-blue-600 hover:bg-blue-700">
           <.icon name="hero-plus" class="w-4 h-4 mr-2" /> Create New Event
         </.button>
       </div>
-
+      
     <!-- Create Event Modal -->
       <div :if={@show_create_form}>
         <.modal
@@ -359,7 +359,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
           </div>
         </.modal>
       </div>
-
+      
     <!-- Edit Event Modal -->
       <div :if={@show_edit_form}>
         <.modal id="edit-event-modal" on_cancel={JS.push("cancel_edit")} show={@show_edit_form}>
@@ -441,7 +441,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
           </div>
         </.modal>
       </div>
-
+      
     <!-- RSVPs List Modal -->
       <div :if={@show_rsvp_list}>
         <.modal id="rsvps-modal" on_cancel={JS.push("close_lists")} show={@show_rsvp_list}>
@@ -498,7 +498,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
           </div>
         </.modal>
       </div>
-
+      
     <!-- Checkins List Modal -->
       <div :if={@show_checkin_list}>
         <.modal id="checkins-modal" on_cancel={JS.push("close_lists")} show={@show_checkin_list}>
@@ -555,7 +555,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
           </div>
         </.modal>
       </div>
-
+      
     <!-- RSVP QR Code Modal -->
       <div :if={@show_rsvp_qr}>
         <.modal id="rsvp-qr-modal" on_cancel={JS.push("close_rsvp_qr")} show={@show_rsvp_qr}>
@@ -659,7 +659,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
           </div>
         </.modal>
       </div>
-
+      
     <!-- Events List -->
       <div class="bg-white rounded-lg shadow">
         <div class="px-6 py-4 border-b border-gray-200">

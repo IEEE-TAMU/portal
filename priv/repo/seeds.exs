@@ -341,7 +341,7 @@ event_params = [
   }
 ]
 
-{ failed, success } =
+{failed, success} =
   Enum.reduce(event_params, {0, 0}, fn params, {fail_count, success_count} ->
     case Events.create_event(params) do
       {:ok, _event} ->
@@ -497,6 +497,7 @@ IO.puts("\n🚀 Generating 100 random users...")
               current_event = Events.get_event_by_name!(Settings.get_current_event!()).uid
               Events.create_rsvp(final_member.id, current_event.uid)
               EventCheckin.insert_for_member_id(final_member.id)
+
               if rem(i, 10) == 0 do
                 IO.puts("  ✓ Created #{i}/100 users...")
               end
@@ -537,8 +538,6 @@ IO.puts("\n🚀 Generating 100 random users...")
         {created, failed + 1, unconfirmed, confirmed_no_info}
     end
   end)
-
-
 
 IO.puts("\n📊 Summary:")
 IO.puts("  ✓ Successfully created with full info: #{created_count} users")
