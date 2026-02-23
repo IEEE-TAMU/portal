@@ -35,7 +35,7 @@ defmodule IeeeTamuPortal.MixProject do
   defp deps do
     [
       {:bcrypt_elixir, "3.3.2"},
-      {:phoenix, "1.8.3"},
+      {:phoenix, "== 1.8.4"},
       {:phoenix_ecto, "4.7.0"},
       {:ecto_sql, "3.13.4"},
       {:myxql, "0.8.0"},
