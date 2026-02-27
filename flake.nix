@@ -105,7 +105,7 @@
                   ...
                 }:
                 {
-                  packages = lib.optional pkgs.stdenv.isLinux pkgs.inotify-tools;
+                  packages = (lib.optional pkgs.stdenv.isLinux pkgs.inotify-tools) ++ [ pkgs.nodejs ];
                   languages.elixir.enable = true;
                   services.mysql = {
                     enable = true;
