@@ -239,7 +239,7 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
                 </div>
                 <div>
                   <p class="text-sm font-medium text-gray-900">Google</p>
-                  <p class="text-sm text-gray-500">Not connected (Must use @tamu.edu account)</p>
+                  <p class="text-sm text-gray-500">Not connected (Must use Texas A&M account)</p>
                 </div>
               </div>
               <.link

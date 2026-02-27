@@ -591,4 +591,13 @@ defmodule IeeeTamuPortal.Members do
   def has_payment_override?(member, year) do
     get_payment_status(member, year) == :override
   end
+
+  # tamut uses @ace.tamut.edu as their email subdomain so we can't add the '@'
+  @tamu_email_domains ["@tamu.edu", "tamut.edu"]
+
+  def valid_tamu_email?(email) when is_binary(email) do
+    Enum.any?(@tamu_email_domains, &String.ends_with?(email, &1))
+  end
+
+  def valid_tamu_email?(_), do: false
 end

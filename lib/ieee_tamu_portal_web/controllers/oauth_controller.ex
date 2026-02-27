@@ -152,12 +152,11 @@ defmodule IeeeTamuPortalWeb.OAuthController do
   end
 
   defp handle_google_linking(conn, %{user: user_info}) do
-    # Check if the email ends with @tamu.edu
     email = user_info["email"] || ""
 
-    if !String.ends_with?(email, "@tamu.edu") do
+    if !IeeeTamuPortal.Members.valid_tamu_email?(email) do
       conn
-      |> put_flash(:error, "You must use a @tamu.edu Google account to link your account.")
+      |> put_flash(:error, "You must use a Texas A&M Google account to link your account.")
       |> redirect(to: ~p"/members/settings")
     else
       handle_successful_auth(conn, %{user: user_info}, :google)
@@ -223,12 +222,11 @@ defmodule IeeeTamuPortalWeb.OAuthController do
   end
 
   defp handle_google_login(conn, %{user: user_info}) do
-    # Check if the email ends with @tamu.edu
     email = user_info["email"] || ""
 
-    if !String.ends_with?(email, "@tamu.edu") do
+    if !IeeeTamuPortal.Members.valid_tamu_email?(email) do
       conn
-      |> put_flash(:error, "You must use a @tamu.edu Google account to log in.")
+      |> put_flash(:error, "You must use a Texas A&M Google account to log in.")
       |> redirect(to: ~p"/members/login")
     else
       google_sub = user_info["sub"]

@@ -93,9 +93,21 @@ defmodule IeeeTamuPortal.Accounts.Member do
   defp validate_email(changeset, opts) do
     changeset
     |> validate_required([:email])
-    |> validate_format(:email, ~r/^[^\s]+@tamu\.edu$/i, message: "must be a TAMU email")
+    # not techically full email verification
+    |> validate_format(:email, ~r/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, message: "must be a valid email")
+    |> validate_tamu_email()
     |> validate_length(:email, max: 160)
     |> maybe_validate_unique_email(opts)
+  end
+
+  defp validate_tamu_email(changeset) do
+    email = get_change(changeset, :email)
+
+    if email && !IeeeTamuPortal.Members.valid_tamu_email?(email) do
+      add_error(changeset, :email, "must be a Texas A&M email")
+    else
+      changeset
+    end
   end
 
   defp validate_password(changeset, opts) do
