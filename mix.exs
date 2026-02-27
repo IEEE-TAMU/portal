@@ -4,7 +4,7 @@ defmodule IeeeTamuPortal.MixProject do
   def project do
     [
       app: :ieee_tamu_portal,
-      version: "0.2.11",
+      version: "0.2.12",
       elixir: "1.18.4",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
