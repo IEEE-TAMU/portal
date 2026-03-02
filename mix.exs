@@ -71,7 +71,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:lazy_html, "0.1.8", only: :test},
       {:mox, "1.2.0", only: :test},
       {:igniter, "0.7.2", only: [:dev, :test]},
-      {:igniter_new, "0.5.32", only: :dev},
+      {:igniter_new, "== 0.5.33", only: :dev},
       {:nimble_csv, "1.3.0"},
       {:eqrcode, "0.2.1"},
       {:live_debugger, "0.5.1", only: [:dev]},
