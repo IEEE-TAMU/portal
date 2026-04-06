@@ -494,7 +494,7 @@ IO.puts("\n🚀 Generating 100 random users...")
             {:ok, _info} ->
               # RSVP and check-in the user to the current event
               # TODO: error handling
-              current_event = Events.get_event_by_name!(Settings.get_current_event!()).uid
+              current_event = Events.get_event_by_name!(Settings.get_current_event!())
               Events.create_rsvp(final_member.id, current_event.uid)
               EventCheckin.insert_for_member_id(final_member.id)
 
