@@ -38,7 +38,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:phoenix, "== 1.8.5"},
       {:phoenix_ecto, "4.7.0"},
       {:ecto_sql, "== 3.13.5"},
-      {:myxql, "0.8.0"},
+      {:myxql, "== 0.8.1"},
       {:ecto_mysql_extras, "0.6.3", only: :dev},
       {:phoenix_html, "4.3.0"},
       {:phoenix_live_reload, "1.6.2", only: :dev},
