@@ -94,7 +94,9 @@ defmodule IeeeTamuPortal.Accounts.Member do
     changeset
     |> validate_required([:email])
     # not techically full email verification
-    |> validate_format(:email, ~r/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, message: "must be a valid email")
+    |> validate_format(:email, ~r/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      message: "must be a valid email"
+    )
     |> validate_tamu_email()
     |> validate_length(:email, max: 160)
     |> maybe_validate_unique_email(opts)
