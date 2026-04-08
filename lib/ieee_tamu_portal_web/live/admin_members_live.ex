@@ -599,7 +599,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                       </div>
                     </div>
                     <div>
-                      <label class="block text-sm font-medium text-gray-700">Preferred name</label>
+                      <label class="block text-sm font-medium text-gray-700">Preferred first name</label>
                       <div class="mt-1 text-sm text-gray-900">
                         {(@current_member.info && @current_member.info.preferred_name) ||
                           "Not provided"}
@@ -736,7 +736,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                       />
                       <.input
                         field={@member_info_form[:preferred_name]}
-                        label="Preferred name"
+                        label="Preferred first name"
                         type="text"
                       />
                       <.input

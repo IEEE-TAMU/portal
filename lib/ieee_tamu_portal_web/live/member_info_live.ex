@@ -101,7 +101,7 @@ defmodule IeeeTamuPortalWeb.MemberInfoLive do
             <.input field={@info_form[:last_name]} label="Last name *" type="text" required />
             <.input
               field={@info_form[:preferred_name]}
-              label="Preferred name"
+              label="Preferred first name"
               type="text"
               placeholder={@info_form[:first_name].value}
             />
