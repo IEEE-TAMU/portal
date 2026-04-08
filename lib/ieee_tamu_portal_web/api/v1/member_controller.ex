@@ -18,13 +18,13 @@ defmodule IeeeTamuPortalWeb.Api.V1.MemberController do
     fn conn, _params, api_key ->
       case api_key.context do
         :admin ->
-          members = Accounts.list_members()
+          members = Accounts.get_all_members_with_info()
           members = Enum.map(members, &Schemas.Member.from_struct/1)
           json(conn, members)
 
         :member ->
           if api_key.member_id do
-            case Accounts.get_member(api_key.member_id) do
+            case Accounts.get_member_with_info(api_key.member_id) do
               nil ->
                 json(conn, [])
 
@@ -60,7 +60,7 @@ defmodule IeeeTamuPortalWeb.Api.V1.MemberController do
 
       case api_key.context do
         :admin ->
-          case Accounts.get_member(member_id) do
+          case Accounts.get_member_with_info(member_id) do
             nil ->
               conn
               |> put_status(:not_found)
@@ -73,7 +73,7 @@ defmodule IeeeTamuPortalWeb.Api.V1.MemberController do
 
         :member ->
           if api_key.member_id == member_id do
-            member = Accounts.get_member(member_id)
+            member = Accounts.get_member_with_info(member_id)
             json(conn, Schemas.Member.from_struct(member))
           else
             conn

@@ -232,7 +232,20 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
           format: :datetime,
           description: "Confirmation timestamp"
         },
-        inserted_at: %Schema{type: :string, format: :datetime, description: "Creation timestamp"}
+        inserted_at: %Schema{type: :string, format: :datetime, description: "Creation timestamp"},
+        info: %Schema{
+          type: :object,
+          description: "Member information",
+          properties: %{
+            first_name: %Schema{type: :string},
+            last_name: %Schema{type: :string},
+            preferred_name: %Schema{type: :string},
+            uin: %Schema{type: :integer},
+            major: %Schema{type: :string},
+            graduation_year: %Schema{type: :integer},
+            tshirt_size: %Schema{type: :string}
+          }
+        }
       },
       required: [:id, :email]
     })
@@ -242,7 +255,23 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
         id: member.id,
         email: member.email,
         confirmed_at: member.confirmed_at && to_string(member.confirmed_at),
-        inserted_at: member.inserted_at && to_string(member.inserted_at)
+        inserted_at: member.inserted_at && to_string(member.inserted_at),
+        info:
+          case member.info do
+            nil ->
+              nil
+
+            info ->
+              %{
+                first_name: info.first_name,
+                last_name: info.last_name,
+                preferred_name: info.preferred_name,
+                uin: info.uin,
+                major: info.major,
+                graduation_year: info.graduation_year,
+                tshirt_size: info.tshirt_size && to_string(info.tshirt_size)
+              }
+          end
       }
     end
   end

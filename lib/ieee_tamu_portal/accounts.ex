@@ -84,8 +84,52 @@ defmodule IeeeTamuPortal.Accounts do
   end
 
   @doc """
+  Gets all members with their info preloaded.
+
+  ## Examples
+
+      iex> get_all_members_with_info()
+      [%Member{info: %Info{}}, ...]
+
+  """
+  def get_all_members_with_info do
+    import Ecto.Query
+
+    from(m in Member,
+      left_join: info in assoc(m, :info),
+      as: :info,
+      preload: [info: info]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets a member by ID with info preloaded.
+
+  ## Examples
+
+      iex> get_member_with_info(1)
+      %Member{info: %Info{}}
+
+      iex> get_member_with_info(999)
+      nil
+
+  """
+  def get_member_with_info(id) do
+    import Ecto.Query
+
+    from(m in Member,
+      where: m.id == ^id,
+      left_join: info in assoc(m, :info),
+      as: :info,
+      preload: [info: info]
+    )
+    |> Repo.one()
+  end
+
+  @doc """
   Gets a member by ID.
-  
+
   """
   def get_member(id), do: Repo.get(Member, id)
 
