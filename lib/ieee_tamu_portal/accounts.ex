@@ -84,6 +84,12 @@ defmodule IeeeTamuPortal.Accounts do
   end
 
   @doc """
+  Gets a member by ID.
+  
+  """
+  def get_member(id), do: Repo.get(Member, id)
+
+  @doc """
   Gets all members with their registrations for a specific year.
   This is optimized to avoid N+1 queries when checking payment status.
 

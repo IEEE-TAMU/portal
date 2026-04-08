@@ -29,6 +29,7 @@ defmodule IeeeTamuPortalWeb.Router do
       get "/calendar", CalendarController, :index
       resources "/ping", PingController, only: [:show], singleton: true
       resources "/payments", PaymentController, only: [:index, :show, :create]
+      resources "/members", MemberController, only: [:index, :show]
       # Discord role management (admin-only via ApiController macro)
       # resources "/discord/roles", DiscordRolesController, only: [:index, :create]
       get "/discord/roles", DiscordRolesController, :index

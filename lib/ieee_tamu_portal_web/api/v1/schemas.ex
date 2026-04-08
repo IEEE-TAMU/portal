@@ -218,4 +218,42 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
       %{success: success, message: Map.get(body, "message")}
     end
   end
+
+  defmodule Member do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      type: :object,
+      properties: %{
+        id: %Schema{type: :integer, description: "Member ID"},
+        email: %Schema{type: :string, format: :email, description: "Member email"},
+        confirmed_at: %Schema{
+          type: :string,
+          format: :datetime,
+          description: "Confirmation timestamp"
+        },
+        inserted_at: %Schema{type: :string, format: :datetime, description: "Creation timestamp"}
+      },
+      required: [:id, :email]
+    })
+
+    def from_struct(%IeeeTamuPortal.Accounts.Member{} = member) do
+      %{
+        id: member.id,
+        email: member.email,
+        confirmed_at: member.confirmed_at && to_string(member.confirmed_at),
+        inserted_at: member.inserted_at && to_string(member.inserted_at)
+      }
+    end
+  end
+
+  defmodule MemberListResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      type: :array,
+      items: Member,
+      description: "List of members"
+    })
+  end
 end
