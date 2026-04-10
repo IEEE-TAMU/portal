@@ -18,6 +18,8 @@ defmodule IeeeTamuPortal.Members.Payment do
 
   @doc false
   def changeset(payment, attrs) do
+    attrs = trim_name_field(attrs)
+
     payment
     |> cast(attrs, [:id, :amount, :confirmation_code, :tshirt_size, :name])
     |> validate_required([:id, :amount, :tshirt_size, :name])
@@ -25,6 +27,14 @@ defmodule IeeeTamuPortal.Members.Payment do
     # unique constraint named PRIMARY due to priv/repo/migrations/20250731185436_update_payments_table.exs:30
     |> unique_constraint(:id, name: "PRIMARY")
   end
+
+  defp trim_name_field(attrs) when is_map(attrs) do
+    Map.update(attrs, :name, nil, &trim_if_string/1)
+  end
+
+  defp trim_if_string(nil), do: nil
+  defp trim_if_string(val) when is_binary(val), do: String.trim(val)
+  defp trim_if_string(val), do: val
 
   def registration_changeset(payment, attrs) do
     payment

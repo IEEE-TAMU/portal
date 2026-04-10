@@ -24,6 +24,8 @@ defmodule IeeeTamuPortal.Members.Info do
   end
 
   def personal_info_changeset(info, attrs, opts \\ []) do
+    attrs = trim_name_fields(attrs)
+
     info
     |> cast(attrs, [
       :uin,
@@ -47,6 +49,8 @@ defmodule IeeeTamuPortal.Members.Info do
   end
 
   def academic_info_changeset(info, attrs, _opts \\ []) do
+    attrs = trim_name_fields(attrs)
+
     info
     |> cast(attrs, [
       :graduation_year,
@@ -67,6 +71,8 @@ defmodule IeeeTamuPortal.Members.Info do
 
   @doc false
   def changeset(info, attrs, opts \\ []) do
+    attrs = trim_name_fields(attrs)
+
     info
     |> cast(attrs, [
       :first_name,
@@ -178,4 +184,27 @@ defmodule IeeeTamuPortal.Members.Info do
         changeset
     end
   end
+
+  defp trim_name_fields(attrs) when is_map(attrs) do
+    fields = [:first_name, :last_name, :preferred_name, :major_other, :gender_other, :international_country]
+
+    Enum.reduce(fields, attrs, fn field, acc ->
+      string_key = Atom.to_string(field)
+
+      cond do
+        is_map_key(acc, field) ->
+          Map.update!(acc, field, &trim_if_string/1)
+
+        is_map_key(acc, string_key) ->
+          Map.update!(acc, string_key, &trim_if_string/1)
+
+        true ->
+          acc
+      end
+    end)
+  end
+
+  defp trim_if_string(nil), do: nil
+  defp trim_if_string(val) when is_binary(val), do: String.trim(val)
+  defp trim_if_string(val), do: val
 end
