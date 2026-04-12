@@ -544,7 +544,7 @@ let
 
       flop_phoenix =
         let
-          version = "0.25.3";
+          version = "0.26.0";
           drv = buildMix {
             inherit version;
             name = "flop_phoenix";
@@ -553,7 +553,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "flop_phoenix";
-              sha256 = "912fae3c343dde43c5ea4f642275793d9dbef32989bf200013e12b85adb93b9c";
+              sha256 = "ec6312843aa5b468beb5daf7a6d40adf37b24f387953c869f677eeffc0fdfde9";
             };
 
             beamDeps = [
@@ -668,8 +668,8 @@ let
             src = fetchFromGitHub {
               owner = "tcitworld";
               repo = "icalendar";
-              rev = "1033d922c82a7223db0ec138e2316557b70ff49f";
-              hash = "sha256-N3bJZznNazLewHS4c2B7LP1lgxd1wev+EWVlQ7rOwfU=";
+              rev = "d084e515a91eb09ce0b1e7a4fec698d5e2f32901";
+              hash = "sha256-Qz654z8WuK+ALkvKkEElr5w5Bp5oUB4scm5Rlri/d1k=";
             };
 
             beamDeps = [
@@ -792,7 +792,7 @@ let
 
       myxql =
         let
-          version = "0.8.0";
+          version = "0.8.1";
           drv = buildMix {
             inherit version;
             name = "myxql";
@@ -801,7 +801,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "myxql";
-              sha256 = "1ec0ceb26fb3cd0f8756519cf4f0e4f9348177a020705223bdf4742a2c44d774";
+              sha256 = "85a4795712bbab1a0f0803d5f0c7332bb383e5f07d3443a42e17a9aa996bbddb";
             };
 
             beamDeps = [
