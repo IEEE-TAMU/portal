@@ -59,7 +59,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:telemetry_metrics, "1.1.0"},
       {:telemetry_poller, "1.3.0"},
       {:gettext, "0.26.2"},
-      {:jason, "1.4.4"},
+      {:jason, "== 1.4.5"},
       {:dns_cluster, "0.2.0"},
       {:bandit, "== 1.10.4"},
       {:open_api_spex, "3.22.2"},
