@@ -866,7 +866,7 @@ let
 
       open_api_spex =
         let
-          version = "3.22.2";
+          version = "3.22.3";
           drv = buildMix {
             inherit version;
             name = "open_api_spex";
@@ -875,7 +875,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "open_api_spex";
-              sha256 = "0a4fc08472d75e9cfe96e0748c6b1565b3b4398f97bf43fcce41b41b6fd3fb33";
+              sha256 = "5f74f1878fdc38f8e961b0b943ac7af88dcf3a82a0c0ef6680ddfd3d161aecbd";
             };
 
             beamDeps = [
@@ -905,7 +905,7 @@ let
 
       phoenix =
         let
-          version = "1.8.5";
+          version = "1.8.7";
           drv = buildMix {
             inherit version;
             name = "phoenix";
@@ -914,7 +914,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "phoenix";
-              sha256 = "83b2bb125127e02e9f475c8e3e92736325b5b01b0b9b05407bcb4083b7a32485";
+              sha256 = "47352f72d6ab31009ef77516b1b3a14745be97b54061fd458031b9d8294869d5";
             };
 
             beamDeps = [

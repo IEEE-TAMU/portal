@@ -35,7 +35,7 @@ defmodule IeeeTamuPortal.MixProject do
   defp deps do
     [
       {:bcrypt_elixir, "3.3.2"},
-      {:phoenix, "== 1.8.5"},
+      {:phoenix, "== 1.8.7"},
       {:phoenix_ecto, "4.7.0"},
       {:ecto_sql, "== 3.13.5"},
       {:myxql, "== 0.8.1"},
@@ -62,7 +62,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:jason, "== 1.4.5"},
       {:dns_cluster, "0.2.0"},
       {:bandit, "== 1.11.1"},
-      {:open_api_spex, "3.22.2"},
+      {:open_api_spex, "== 3.22.3"},
       {:deps_nix, "== 3.0.0", only: :dev},
       {:req, "0.5.17"},
       {:assent, "0.3.1"},
