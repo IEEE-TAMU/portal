@@ -323,7 +323,7 @@ let
 
       db_connection =
         let
-          version = "2.9.0";
+          version = "2.10.1";
           drv = buildMix {
             inherit version;
             name = "db_connection";
@@ -332,7 +332,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "db_connection";
-              sha256 = "17d502eacaf61829db98facf6f20808ed33da6ccf495354a41e64fe42f9c509c";
+              sha256 = "18ed94c6e627b4bf452dbd4df61b69a35a1e768525140bc1917b7a685026a6a3";
             };
 
             beamDeps = [
@@ -378,7 +378,7 @@ let
 
       ecto =
         let
-          version = "3.13.5";
+          version = "3.13.6";
           drv = buildMix {
             inherit version;
             name = "ecto";
@@ -387,7 +387,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "ecto";
-              sha256 = "df9efebf70cf94142739ba357499661ef5dbb559ef902b68ea1f3c1fabce36de";
+              sha256 = "8afa059bc16cd2c94739ec0a11e3e5df69d828125119109bef35f20a21a76af2";
             };
 
             beamDeps = [
