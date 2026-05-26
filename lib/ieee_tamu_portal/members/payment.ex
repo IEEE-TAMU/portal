@@ -29,7 +29,11 @@ defmodule IeeeTamuPortal.Members.Payment do
   end
 
   defp trim_name_field(attrs) when is_map(attrs) do
-    Map.update(attrs, :name, nil, &trim_if_string/1)
+    case attrs do
+      %{name: val} -> Map.put(attrs, :name, trim_if_string(val))
+      %{"name" => val} -> Map.put(attrs, "name", trim_if_string(val))
+      _ -> attrs
+    end
   end
 
   defp trim_if_string(nil), do: nil

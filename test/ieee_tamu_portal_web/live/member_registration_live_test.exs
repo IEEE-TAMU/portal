@@ -76,7 +76,7 @@ defmodule IeeeTamuPortalWeb.MemberRegistrationLiveTest do
 
       {:ok, conn} =
         lv
-        |> element(~s|a[title="Log in"]|)
+        |> element(~s{.overflow-x-auto a}, "Log in")
         |> render_click()
         |> follow_redirect(conn, ~p"/members/login")
 

@@ -93,7 +93,7 @@ defmodule IeeeTamuPortalWeb.MemberResetPasswordLiveTest do
 
       {:ok, conn} =
         lv
-        |> element(~s|a[title="Log in"]|)
+        |> element(~s{header a}, "Log in")
         |> render_click()
         |> follow_redirect(conn, ~p"/members/login")
 
@@ -108,7 +108,7 @@ defmodule IeeeTamuPortalWeb.MemberResetPasswordLiveTest do
 
       {:ok, conn} =
         lv
-        |> element(~s|a[title="Register"]|)
+        |> element(~s{header a}, "Register")
         |> render_click()
         |> follow_redirect(conn, ~p"/members/register")
 
