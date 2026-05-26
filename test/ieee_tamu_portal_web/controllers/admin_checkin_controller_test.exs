@@ -46,7 +46,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinControllerTest do
     assert response(conn1, 201) == "checked-in"
 
     conn2 = get(conn, ~p"/admin/check-in", member_id: member.id)
-    assert response(conn1, 201) == "checked-in"
+    assert response(conn2, 201) == "checked-in"
 
     count = Repo.aggregate(EventCheckin, :count)
     assert count == 1
