@@ -62,7 +62,7 @@ defmodule IeeeTamuPortal.AccountsTest do
       {:error, changeset} = Accounts.register_member(%{email: "not valid", password: "invalid"})
 
       assert %{
-               email: ["must be a TAMU email"],
+               email: ["must be a TAMU email", "must be a valid email"],
                password: ["should be at least 8 character(s)"]
              } = errors_on(changeset)
     end
@@ -147,7 +147,7 @@ defmodule IeeeTamuPortal.AccountsTest do
       {:error, changeset} =
         Accounts.apply_member_email(member, valid_member_password(), %{email: "not valid"})
 
-      assert %{email: ["must be a TAMU email"]} =
+      assert %{email: ["must be a TAMU email", "must be a valid email"]} =
                errors_on(changeset)
     end
 

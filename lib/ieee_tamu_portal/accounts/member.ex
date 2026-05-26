@@ -106,7 +106,7 @@ defmodule IeeeTamuPortal.Accounts.Member do
     email = get_change(changeset, :email)
 
     if email && !IeeeTamuPortal.Members.valid_tamu_email?(email) do
-      add_error(changeset, :email, "must be a Texas A&M email")
+      add_error(changeset, :email, "must be a TAMU email")
     else
       changeset
     end

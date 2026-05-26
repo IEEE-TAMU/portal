@@ -596,6 +596,7 @@ defmodule IeeeTamuPortal.Members do
   @tamu_email_domains ["@tamu.edu", "tamut.edu"]
 
   def valid_tamu_email?(email) when is_binary(email) do
+    email = String.downcase(email)
     Enum.any?(@tamu_email_domains, &String.ends_with?(email, &1))
   end
 
