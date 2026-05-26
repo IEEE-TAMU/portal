@@ -1,6 +1,7 @@
 defmodule IeeeTamuPortalWeb.Api.V1.PaymentControllerTest do
   use IeeeTamuPortalWeb.ConnCase
 
+  import ExUnit.CaptureLog
   import IeeeTamuPortal.AccountsFixtures
   import IeeeTamuPortal.ApiFixtures
   import IeeeTamuPortal.MembersFixtures
@@ -204,20 +205,22 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentControllerTest do
     test "creates payment with valid admin API key and valid data", %{conn: conn} do
       {token, _api_key} = admin_api_key_fixture()
 
-      conn =
-        conn
-        |> put_token_header(token)
-        |> put_req_header("content-type", "application/json")
-        |> post(~p"/api/v1/payments", @valid_payment_attrs)
+      capture_log(fn ->
+        conn =
+          conn
+          |> put_token_header(token)
+          |> put_req_header("content-type", "application/json")
+          |> post(~p"/api/v1/payments", @valid_payment_attrs)
 
-      assert %{
-               "id" => @valid_payment_attrs[:id],
-               "name" => @valid_payment_attrs[:name],
-               "amount" => @valid_payment_attrs[:amount],
-               "tshirt_size" => @valid_payment_attrs[:tshirt_size],
-               "confirmation_code" => nil,
-               "registration_id" => nil
-             } == json_response(conn, 201)
+        assert %{
+                 "id" => @valid_payment_attrs[:id],
+                 "name" => @valid_payment_attrs[:name],
+                 "amount" => @valid_payment_attrs[:amount],
+                 "tshirt_size" => @valid_payment_attrs[:tshirt_size],
+                 "confirmation_code" => nil,
+                 "registration_id" => nil
+               } == json_response(conn, 201)
+      end)
     end
 
     test "returns 422 with missing required fields", %{conn: conn} do
@@ -287,11 +290,13 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentControllerTest do
     test "returns 422 with duplicate id", %{conn: conn} do
       {token, _api_key} = admin_api_key_fixture()
 
-      # Create first payment
-      conn
-      |> put_token_header(token)
-      |> put_req_header("content-type", "application/json")
-      |> post(~p"/api/v1/payments", @valid_payment_attrs)
+      capture_log(fn ->
+        # Create first payment
+        conn
+        |> put_token_header(token)
+        |> put_req_header("content-type", "application/json")
+        |> post(~p"/api/v1/payments", @valid_payment_attrs)
+      end)
 
       # Try to create another payment with the same ID
       conn =
@@ -320,20 +325,22 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentControllerTest do
       {token, _api_key} = admin_api_key_fixture()
       attrs = Map.put(@valid_payment_attrs, :amount, 0.00)
 
-      conn =
-        conn
-        |> put_token_header(token)
-        |> put_req_header("content-type", "application/json")
-        |> post(~p"/api/v1/payments", attrs)
+      capture_log(fn ->
+        conn =
+          conn
+          |> put_token_header(token)
+          |> put_req_header("content-type", "application/json")
+          |> post(~p"/api/v1/payments", attrs)
 
-      assert %{
-               "id" => attrs[:id],
-               "name" => attrs[:name],
-               "amount" => 0.0,
-               "tshirt_size" => attrs[:tshirt_size],
-               "confirmation_code" => nil,
-               "registration_id" => nil
-             } == json_response(conn, 201)
+        assert %{
+                 "id" => attrs[:id],
+                 "name" => attrs[:name],
+                 "amount" => 0.0,
+                 "tshirt_size" => attrs[:tshirt_size],
+                 "confirmation_code" => nil,
+                 "registration_id" => nil
+               } == json_response(conn, 201)
+      end)
     end
 
     test "returns 422 with invalid tshirt_size", %{conn: conn} do
@@ -392,14 +399,16 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentControllerTest do
     test "accepts request with wrong content-type", %{conn: conn} do
       {token, _api_key} = admin_api_key_fixture()
 
-      conn =
-        conn
-        |> put_token_header(token)
-        |> put_req_header("content-type", "text/plain")
-        |> post(~p"/api/v1/payments", @valid_payment_attrs)
+      capture_log(fn ->
+        conn =
+          conn
+          |> put_token_header(token)
+          |> put_req_header("content-type", "text/plain")
+          |> post(~p"/api/v1/payments", @valid_payment_attrs)
 
-      # Phoenix may still accept and process the request
-      assert conn.status in [200, 201, 400, 415]
+        # Phoenix may still accept and process the request
+        assert conn.status in [200, 201, 400, 415]
+      end)
     end
 
     test "returns 403 with regular API key (non-admin)", %{conn: conn} do

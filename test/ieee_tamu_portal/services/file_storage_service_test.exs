@@ -36,6 +36,8 @@ defmodule IeeeTamuPortal.Services.FileStorageServiceTest do
 
   describe "delete_resume/1" do
     test "successfully deletes existing resume" do
+      import ExUnit.CaptureLog
+
       member = member_fixture()
 
       # Create a resume first
@@ -46,10 +48,14 @@ defmodule IeeeTamuPortal.Services.FileStorageServiceTest do
         })
 
       # Should successfully delete
-      assert {:ok, _deleted_resume} = FileStorageService.delete_resume(resume)
+      capture_log(fn ->
+        assert {:ok, _deleted_resume} = FileStorageService.delete_resume(resume)
+      end)
     end
 
     test "handles resume that doesn't exist gracefully" do
+      import ExUnit.CaptureLog
+
       resume = %Members.Resume{
         id: 999,
         original_filename: "nonexistent.pdf",
@@ -57,7 +63,9 @@ defmodule IeeeTamuPortal.Services.FileStorageServiceTest do
       }
 
       # Should handle stale entry error gracefully
-      assert {:error, :not_found} = FileStorageService.delete_resume(resume)
+      capture_log(fn ->
+        assert {:error, :not_found} = FileStorageService.delete_resume(resume)
+      end)
     end
   end
 

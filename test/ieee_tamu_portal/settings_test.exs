@@ -175,13 +175,22 @@ defmodule IeeeTamuPortal.SettingsTest do
     end
 
     test "returns default year when registration_year setting does not exist" do
+      import ExUnit.CaptureLog
+
       # Ensure no registration_year setting exists (already handled by setup)
-      assert Settings.get_registration_year!() == 2025
+      capture_log(fn ->
+        assert Settings.get_registration_year!() == 2025
+      end)
     end
 
     test "returns default year when registration_year value is invalid" do
+      import ExUnit.CaptureLog
+
       registration_year_setting_fixture("invalid_year")
-      assert Settings.get_registration_year!() == 2025
+
+      capture_log(fn ->
+        assert Settings.get_registration_year!() == 2025
+      end)
     end
 
     test "handles different valid year formats" do
