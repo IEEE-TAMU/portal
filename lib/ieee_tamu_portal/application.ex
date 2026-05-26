@@ -43,6 +43,7 @@ defmodule IeeeTamuPortal.Application do
     do: [
       IeeeTamuPortal.S3Delete,
       IeeeTamuPortal.Members.AgeUpdater,
-      IeeeTamuPortal.Discord.RoleSyncService
+      IeeeTamuPortal.Discord.RoleSyncService,
+      IeeeTamuPortal.Mautic.SyncService
     ]
 end

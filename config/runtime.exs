@@ -199,4 +199,16 @@ if config_env() == :prod and System.get_env("NIX_BUILD_ENV") not in ~w(true 1) d
   config :ieee_tamu_portal,
          :frontend_time_zone,
          System.get_env("FRONTEND_TIME_ZONE") || "America/Chicago"
+
+  # Mautic CRM configuration
+  config :ieee_tamu_portal, :mautic,
+    base_url:
+      System.get_env("MAUTIC_BASE_URL") ||
+        raise("environment variable MAUTIC_BASE_URL is missing."),
+    username:
+      System.get_env("MAUTIC_USERNAME") ||
+        raise("environment variable MAUTIC_USERNAME is missing."),
+    password:
+      System.get_env("MAUTIC_PASSWORD") ||
+        raise("environment variable MAUTIC_PASSWORD is missing.")
 end

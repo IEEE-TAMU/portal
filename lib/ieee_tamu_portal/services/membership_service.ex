@@ -32,12 +32,22 @@ defmodule IeeeTamuPortal.Services.MembershipService do
     member =
       if Ecto.assoc_loaded?(member.info), do: member, else: Accounts.preload_member_info(member)
 
-    case member.info do
-      %Members.Info{} = info ->
-        Members.update_member_info(info, info_params)
+    result =
+      case member.info do
+        %Members.Info{} = info ->
+          Members.update_member_info(info, info_params)
 
-      nil ->
-        Members.create_member_info(member, info_params)
+        nil ->
+          Members.create_member_info(member, info_params)
+      end
+
+    case result do
+      {:ok, info} ->
+        IeeeTamuPortal.Mautic.SyncService.sync_member(member.id)
+        {:ok, info}
+
+      other ->
+        other
     end
   end
 
