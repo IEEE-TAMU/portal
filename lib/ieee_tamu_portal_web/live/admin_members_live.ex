@@ -599,7 +599,9 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                       </div>
                     </div>
                     <div>
-                      <label class="block text-sm font-medium text-gray-700">Preferred first name</label>
+                      <label class="block text-sm font-medium text-gray-700">
+                        Preferred first name
+                      </label>
                       <div class="mt-1 text-sm text-gray-900">
                         {(@current_member.info && @current_member.info.preferred_name) ||
                           "Not provided"}

@@ -186,7 +186,14 @@ defmodule IeeeTamuPortal.Members.Info do
   end
 
   defp trim_name_fields(attrs) when is_map(attrs) do
-    fields = [:first_name, :last_name, :preferred_name, :major_other, :gender_other, :international_country]
+    fields = [
+      :first_name,
+      :last_name,
+      :preferred_name,
+      :major_other,
+      :gender_other,
+      :international_country
+    ]
 
     Enum.reduce(fields, attrs, fn field, acc ->
       string_key = Atom.to_string(field)
