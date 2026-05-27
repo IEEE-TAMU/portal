@@ -21,7 +21,8 @@
       ...
     }@inputs:
     let
-      forEachSystem = nixpkgs.lib.genAttrs (import systems);
+      inherit (nixpkgs) lib;
+      forEachSystem = lib.genAttrs (import systems);
     in
     {
       packages = forEachSystem (
@@ -31,6 +32,10 @@
 
           # # also see https://gist.github.com/NobbZ/1603ba65e135bf293a50c4b98eb41f71 for smaller image sizes
           mixNixDeps = pkgs.callPackages ./deps.nix { beamPackages = pkgs.beamMinimal28Packages; };
+
+          npmDeps = pkgs.importNpmLock {
+            npmRoot = ./assets;
+          };
         in
         rec {
           devenv-up = self.devShells.${system}.default.config.procfileScript;
@@ -40,13 +45,21 @@
           # https://github.com/code-supply/nix-phoenix/tree/main/flake-template
           # for more information
 
-          # luckily we have no JS deps, so we can just build the beam release
-          # and not worry about a JS package (for now at least)
+          # run with "RELEASE_COOKIE=cookie DATABASE_URL=nix run . --
+
+          # JS deps (qr-scanner) are handled via importNpmLock
           portal = pkgs.beamMinimal28Packages.mixRelease {
-            inherit mixNixDeps;
+            inherit mixNixDeps npmDeps;
+            npmRoot = "assets";
+            elixir = pkgs.beamMinimal28Packages.elixir_1_19;
             pname = "ieee-tamu-portal";
             src = ./.;
             version = "0.2.16";
+
+            nativeBuildInputs = [
+              pkgs.nodejs
+              pkgs.importNpmLock.npmConfigHook
+            ];
 
             stripDebug = true;
 
@@ -55,27 +68,29 @@
 
             postBuild = ''
               tailwind_path="$(mix do \
-                app.config --no-deps-check --no-compile, \
+                app.config --no-deps-check --no-compile + \
                 eval 'Tailwind.bin_path() |> IO.puts()')"
               esbuild_path="$(mix do \
-                app.config --no-deps-check --no-compile, \
+                app.config --no-deps-check --no-compile + \
                 eval 'Esbuild.bin_path() |> IO.puts()')"
 
               ln -sfv ${pkgs.tailwindcss}/bin/tailwindcss "$tailwind_path"
               ln -sfv ${pkgs.esbuild}/bin/esbuild "$esbuild_path"
-              ln -sfv ${mixNixDeps.heroicons} deps/heroicons
+              rm -rf deps/heroicons && ln -sfv ${mixNixDeps.heroicons} deps/heroicons
 
               mix do \
-                app.config --no-deps-check --no-compile, \
+                app.config --no-deps-check --no-compile + \
                 assets.deploy --no-deps-check
             '';
+
+            meta.mainProgram = "server";
           };
           docker = pkgs.dockerTools.buildLayeredImage {
             name = "portal";
             tag = "latest";
             # put 'server' and 'migrate' in /bin for overriding Cmd
             contents = [ portal ];
-            config.Cmd = [ "${portal}/bin/server" ];
+            config.Cmd = [ (lib.getExe portal) ];
             config.Env = [
               # locale info
               "LC_ALL=C.UTF-8"
