@@ -6,42 +6,50 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    member = Accounts.preload_member_resume(socket.assigns.current_member)
+    if IeeeTamuPortal.Features.enabled?(:s3_resume_upload) do
+      member = Accounts.preload_member_resume(socket.assigns.current_member)
 
-    # if member resume exists, sign a GET request for the resume
-    resume_url =
-      case member.resume do
-        nil ->
-          nil
+      # if member resume exists, sign a GET request for the resume
+      resume_url =
+        case member.resume do
+          nil ->
+            nil
 
-        resume ->
-          {:ok, url} =
-            Resume.signed_url(resume, method: "GET", response_content_type: "application/pdf")
+          resume ->
+            {:ok, url} =
+              Resume.signed_url(resume,
+                method: "GET",
+                response_content_type: "application/pdf"
+              )
 
-          url
-      end
+            url
+        end
 
-    looking_for_value =
-      case member.resume && member.resume.looking_for do
-        nil -> "Either"
-        :either -> "Either"
-        :full_time -> "Full-Time"
-        :internship -> "Internship"
-      end
+      looking_for =
+        case member.resume && member.resume.looking_for do
+          nil -> :either
+          atom -> atom
+        end
 
-    socket =
-      socket
-      |> assign(:current_member, member)
-      |> assign(:resume_url, resume_url)
-      |> assign(:looking_for, looking_for_value)
-      |> allow_upload(:member_resume,
-        accept: ~w(.pdf),
-        max_file_size: 5_000_000,
-        max_entries: 1,
-        external: &presign_upload/2
-      )
+      socket =
+        socket
+        |> assign(:current_member, member)
+        |> assign(:resume_url, resume_url)
+        |> assign(:looking_for, looking_for)
+        |> allow_upload(:member_resume,
+          accept: ~w(.pdf),
+          max_file_size: 5_000_000,
+          max_entries: 1,
+          external: &presign_upload/2
+        )
 
-    {:ok, socket}
+      {:ok, socket}
+    else
+      {:ok,
+       socket
+       |> Phoenix.LiveView.put_flash(:error, "Page not found")
+       |> Phoenix.LiveView.redirect(to: "/")}
+    end
   end
 
   defp presign_upload(entry, socket) do
