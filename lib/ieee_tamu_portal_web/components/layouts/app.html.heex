@@ -12,6 +12,7 @@
             icon="hero-clipboard-document-check"
           />
           <.navbar_button
+            :if={@s3_configured}
             name="Resume Drop"
             navigate={~p"/members/resume"}
             icon="hero-document-arrow-up"

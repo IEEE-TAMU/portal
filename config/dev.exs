@@ -90,47 +90,8 @@ config :phoenix_live_view,
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
 
-# ## Cloudflare R2
-
-bucket =
-  System.get_env("R2_BUCKET")
-
-account_id =
-  System.get_env("CF_ACCOUNT_ID")
-
-access_key_id =
-  System.get_env("R2_BUCKET_KEY_ID")
-
-secret_access_key =
-  System.get_env("R2_BUCKET_ACCESS_KEY")
-
-config :ieee_tamu_portal, IeeeTamuPortalWeb.Upload.SimpleS3Upload,
-  region: "auto",
-  access_key_id: access_key_id,
-  secret_access_key: secret_access_key,
-  url: "https://#{bucket}.#{account_id}.r2.cloudflarestorage.com"
-
 config :ieee_tamu_portal, IeeeTamuPortalWeb.Auth.AdminAuth,
-  username: "admin",
-  password: "password"
+  username: System.get_env("ADMIN_USERNAME", "admin"),
+  password: System.get_env("ADMIN_PASSWORD", "password")
 
 config :open_api_spex, :cache_adapter, OpenApiSpex.Plug.NoneCache
-
-# Discord OAuth configuration for development
-config :ieee_tamu_portal, :discord_oauth,
-  client_id: System.get_env("DISCORD_CLIENT_ID", "your_discord_client_id"),
-  client_secret: System.get_env("DISCORD_CLIENT_SECRET", "your_discord_client_secret")
-
-# Google OAuth configuration for development
-config :ieee_tamu_portal, :google_oauth,
-  client_id: System.get_env("GOOGLE_CLIENT_ID", "your_google_client_id"),
-  client_secret: System.get_env("GOOGLE_CLIENT_SECRET", "your_google_client_secret")
-
-# Discord Bot API configuration for development
-config :ieee_tamu_portal,
-       :discord_bot_url,
-       System.get_env("DISCORD_BOT_URL", "http://localhost:3000")
-
-config :ieee_tamu_portal,
-       :frontend_time_zone,
-       System.get_env("FRONTEND_TIME_ZONE", "America/Chicago")

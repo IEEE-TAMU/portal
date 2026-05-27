@@ -26,6 +26,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
       |> assign(:view_only_mode, false)
       |> assign(year: current_year)
       |> assign(:time_zone, time_zone)
+      |> assign(:s3_configured, IeeeTamuPortal.Features.enabled?(:s3_resume_upload))
 
     {:ok, socket}
   end
@@ -84,29 +85,33 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
         %{"email" => email, "member_id" => member_id},
         socket
       ) do
-    member_id = String.to_integer(member_id)
-    member = Enum.find(socket.assigns.members, &(&1.id == member_id))
+    if socket.assigns.s3_configured do
+      member_id = String.to_integer(member_id)
+      member = Enum.find(socket.assigns.members, &(&1.id == member_id))
 
-    case member.resume do
-      nil ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "No resume found for #{email}")}
+      case member.resume do
+        nil ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "No resume found for #{email}")}
 
-      resume ->
-        # Generate signed URL for the resume
-        {:ok, signed_url} =
-          Members.Resume.signed_url(resume,
-            method: "GET",
-            response_content_type: "application/pdf"
-          )
+        resume ->
+          # Generate signed URL for the resume
+          {:ok, signed_url} =
+            Members.Resume.signed_url(resume,
+              method: "GET",
+              response_content_type: "application/pdf"
+            )
 
-        {:noreply,
-         socket
-         |> assign(:show_resume_modal, true)
-         |> assign(:current_resume_url, signed_url)
-         |> assign(:current_member_email, email)
-         |> assign(:current_resume_member_id, member_id)}
+          {:noreply,
+           socket
+           |> assign(:show_resume_modal, true)
+           |> assign(:current_resume_url, signed_url)
+           |> assign(:current_member_email, email)
+           |> assign(:current_resume_member_id, member_id)}
+      end
+    else
+      {:noreply, put_flash(socket, :error, "Resume upload service is not configured")}
     end
   end
 
@@ -423,18 +428,24 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                   label="Resume"
                   tbody_td_attrs={[class: "whitespace-nowrap px-3 py-4 text-sm text-gray-500"]}
                 >
-                  <%= if member.resume do %>
-                    <button
-                      phx-click="show_resume"
-                      phx-value-email={member.email}
-                      phx-value-member_id={member.id}
-                      class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 hover:bg-blue-200 cursor-pointer transition-colors"
-                    >
-                      View Resume
-                    </button>
+                  <%= if @s3_configured do %>
+                    <%= if member.resume do %>
+                      <button
+                        phx-click="show_resume"
+                        phx-value-email={member.email}
+                        phx-value-member_id={member.id}
+                        class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 hover:bg-blue-200 cursor-pointer transition-colors"
+                      >
+                        View Resume
+                      </button>
+                    <% else %>
+                      <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                        Not Uploaded
+                      </span>
+                    <% end %>
                   <% else %>
-                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
-                      Not Uploaded
+                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
+                      Unavailable
                     </span>
                   <% end %>
                 </:col>
