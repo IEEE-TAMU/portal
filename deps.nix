@@ -344,7 +344,7 @@ let
 
       decimal =
         let
-          version = "3.1.0";
+          version = "3.1.1";
           drv = buildMix {
             inherit version;
             name = "decimal";
@@ -353,7 +353,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "decimal";
-              sha256 = "e8b3efb3bb3a13cb5e4268ffe128569067b1972e9dee013537c71a5b073168f9";
+              sha256 = "c5f25f2ced74a0587d03e6023f595db8e924c9d3922c8c8ffd9edfc4498cf1f6";
             };
           };
         in
@@ -378,7 +378,7 @@ let
 
       ecto =
         let
-          version = "3.13.6";
+          version = "3.14.0";
           drv = buildMix {
             inherit version;
             name = "ecto";
@@ -387,7 +387,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "ecto";
-              sha256 = "8afa059bc16cd2c94739ec0a11e3e5df69d828125119109bef35f20a21a76af2";
+              sha256 = "130d69ffb4285f9ce4792b65dfbb994fd13ea4cbc3cbea2524b199aa3de84af3";
             };
 
             beamDeps = [
@@ -401,7 +401,7 @@ let
 
       ecto_sql =
         let
-          version = "3.13.5";
+          version = "3.14.0";
           drv = buildMix {
             inherit version;
             name = "ecto_sql";
@@ -410,11 +410,12 @@ let
             src = fetchHex {
               inherit version;
               pkg = "ecto_sql";
-              sha256 = "aa36751f4e6a2b56ae79efb0e088042e010ff4935fc8684e74c23b1f49e25fdc";
+              sha256 = "f4d8d36faf294c9417b5a37ec7ac8217ee2abdef5fcf197ba690f361548d3949";
             };
 
             beamDeps = [
               db_connection
+              decimal
               ecto
               myxql
               telemetry
