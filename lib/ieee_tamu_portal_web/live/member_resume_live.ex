@@ -1,7 +1,7 @@
 defmodule IeeeTamuPortalWeb.MemberResumeLive do
   use IeeeTamuPortalWeb, :live_view
 
-  alias IeeeTamuPortal.Accounts
+  alias IeeeTamuPortal.{Accounts, Members}
   alias IeeeTamuPortal.Members.Resume
 
   @impl true
@@ -75,7 +75,12 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
 
   @impl true
   def handle_event("validate", params, socket) do
-    looking_for = Map.get(params, "looking_for", socket.assigns.looking_for)
+    looking_for =
+      case Map.get(params, "looking_for") do
+        nil -> socket.assigns.looking_for
+        str -> looking_for_atom(str)
+      end
+
     {:noreply, assign(socket, :looking_for, looking_for)}
   end
 
@@ -91,9 +96,13 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
     socket =
       case completed do
         [] ->
-          looking_for = Map.get(params, "looking_for", socket.assigns.looking_for)
+          looking_for =
+            case Map.get(params, "looking_for") do
+              nil -> socket.assigns.looking_for
+              str -> looking_for_atom(str)
+            end
 
-          case Accounts.Member.update_resume_looking_for(
+          case Members.update_resume_looking_for(
                  socket.assigns.current_member,
                  looking_for
                ) do
@@ -109,11 +118,15 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
           end
 
         [entry] ->
-          looking_for = Map.get(params, "looking_for", socket.assigns.looking_for)
+          looking_for =
+            case Map.get(params, "looking_for") do
+              nil -> socket.assigns.looking_for
+              str -> looking_for_atom(str)
+            end
 
           {:ok, member} =
             socket.assigns.current_member
-            |> Accounts.Member.put_resume(entry, looking_for)
+            |> Members.put_member_resume(entry, looking_for)
 
           # sign the GET request for the resume
           {:ok, url} =
@@ -137,13 +150,13 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
   def handle_event("delete_resume", _params, socket) do
     {:ok, member} =
       socket.assigns.current_member
-      |> Accounts.Member.delete_resume()
+      |> Members.delete_member_resume()
 
     socket =
       socket
       |> assign(:current_member, member)
       |> assign(:resume_url, nil)
-      |> assign(:looking_for, "Either")
+      |> assign(:looking_for, :either)
       |> Phoenix.LiveView.put_flash(:info, "Resume deleted successfully")
 
     {:noreply, socket}
@@ -175,7 +188,7 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
           type="select"
           label="Looking for"
           options={["Full-Time", "Internship", "Either"]}
-          value={@looking_for}
+          value={looking_for_string(@looking_for)}
           required
         />
       </div>
@@ -206,4 +219,12 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
     </form>
     """
   end
+
+  defp looking_for_atom("Full-Time"), do: :full_time
+  defp looking_for_atom("Internship"), do: :internship
+  defp looking_for_atom("Either"), do: :either
+
+  defp looking_for_string(:full_time), do: "Full-Time"
+  defp looking_for_string(:internship), do: "Internship"
+  defp looking_for_string(:either), do: "Either"
 end
