@@ -26,8 +26,11 @@ defmodule IeeeTamuPortal.AccountsFixtures do
 
   def confirmed_member_fixture(attrs \\ %{}) do
     member = member_fixture(attrs)
-    IeeeTamuPortal.Repo.update!(IeeeTamuPortal.Accounts.Member.confirm_changeset(member))
-    member
+
+    {:ok, updated} =
+      IeeeTamuPortal.Repo.update(IeeeTamuPortal.Accounts.Member.confirm_changeset(member))
+
+    updated
   end
 
   def extract_member_token(fun) do
