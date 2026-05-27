@@ -84,6 +84,24 @@ defmodule IeeeTamuPortal.Accounts do
   end
 
   @doc """
+  Paginated/filtered member listing via Flop.
+  """
+  def list_members_paginated(params) do
+    alias IeeeTamuPortal.Members.Registration
+    import Ecto.Query
+
+    query =
+      from(m in Member,
+        left_join: info in assoc(m, :info),
+        as: :info,
+        preload: [info: info]
+      )
+      |> preload([:resume, registrations: ^Registration.with_payment_status()])
+
+    Flop.validate_and_run!(query, params, for: Member, replace_invalid_params: true)
+  end
+
+  @doc """
   Gets all members with their info preloaded.
 
   ## Examples

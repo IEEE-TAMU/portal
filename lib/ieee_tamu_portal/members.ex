@@ -408,8 +408,43 @@ defmodule IeeeTamuPortal.Members do
     Repo.preload(registration, :payment)
   end
 
-  # Deletes a member resume.
+  ## Resume management
+
+  @doc """
+  Puts (creates or replaces) a member resume from a LiveView upload entry.
+  """
+
+  def put_member_resume(
+        %IeeeTamuPortal.Accounts.Member{} = member,
+        %Phoenix.LiveView.UploadEntry{} = entry,
+        looking_for \\ nil
+      ) do
+    existing_resume = member |> Repo.preload(:resume) |> Map.get(:resume)
+
+    resume = existing_resume || Ecto.build_assoc(member, :resume)
+
+    looking_for = parse_looking_for(looking_for)
+
+    changeset =
+      Resume.changeset(resume, %{
+        original_filename: entry.client_name,
+        key: Resume.key(member, entry),
+        looking_for: looking_for
+      })
+
+    case Repo.insert_or_update(changeset) do
+      {:ok, resume} -> {:ok, %{member | resume: resume}}
+      {:error, cs} -> {:error, cs}
+    end
+  end
+
+  @doc """
+  Deletes a member resume from S3 and the database.
+  Returns {:ok, member} with resume set to nil.
+  """
   def delete_member_resume(member) do
+    member = Repo.preload(member, :resume)
+
     case member.resume do
       nil ->
         {:ok, member}
@@ -418,6 +453,50 @@ defmodule IeeeTamuPortal.Members do
         with {:ok, _} <- Resume.delete(resume) do
           {:ok, %{member | resume: nil}}
         end
+    end
+  end
+
+  @doc """
+  Updates the looking_for preference on a member's existing resume.
+  Accepts atoms (:full_time, :internship, :either) or strings.
+  """
+  def update_resume_looking_for(%IeeeTamuPortal.Accounts.Member{} = member, looking_for) do
+    member = Repo.preload(member, :resume)
+
+    case member.resume do
+      nil ->
+        {:ok, member}
+
+      %Resume{} = resume ->
+        looking_for = parse_looking_for(looking_for)
+
+        changeset = Resume.changeset(resume, %{looking_for: looking_for})
+
+        case Repo.update(changeset) do
+          {:ok, updated} -> {:ok, %{member | resume: updated}}
+          {:error, cs} -> {:error, cs}
+        end
+    end
+  end
+
+  # FIXME: this seems non-idiomatic
+  defp parse_looking_for(looking_for) when is_binary(looking_for) do
+    case looking_for do
+      "Full-Time" -> :full_time
+      "Internship" -> :internship
+      "Either" -> :either
+      "full_time" -> :full_time
+      "internship" -> :internship
+      "either" -> :either
+      _ -> :either
+    end
+  end
+
+  defp parse_looking_for(looking_for) when is_atom(looking_for) do
+    if looking_for in Ecto.Enum.values(Resume, :looking_for) do
+      looking_for
+    else
+      :either
     end
   end
 
