@@ -58,3 +58,16 @@ result-*
 .env*
 
 *.csv
+.direnv/
+.envrc
+.devenv/
+.vscode/
+.env
+node_modules/
+target/
+dist/
+zig-out/
+__pycache__/
+*.swp
+*~
+~$*
