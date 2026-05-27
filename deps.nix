@@ -344,7 +344,7 @@ let
 
       decimal =
         let
-          version = "2.4.1";
+          version = "3.1.0";
           drv = buildMix {
             inherit version;
             name = "decimal";
@@ -353,7 +353,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "decimal";
-              sha256 = "7e618897933a8455f19a727d7c5e50a2c071a544b700e5e724298ecb4340187f";
+              sha256 = "e8b3efb3bb3a13cb5e4268ffe128569067b1972e9dee013537c71a5b073168f9";
             };
           };
         in
@@ -792,7 +792,7 @@ let
 
       myxql =
         let
-          version = "0.8.1";
+          version = "0.9.0";
           drv = buildMix {
             inherit version;
             name = "myxql";
@@ -801,7 +801,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "myxql";
-              sha256 = "85a4795712bbab1a0f0803d5f0c7332bb383e5f07d3443a42e17a9aa996bbddb";
+              sha256 = "3a17b38562a7a995c291570875fd96c06b7b0369d6eb0592a52a9dccbe5d144b";
             };
 
             beamDeps = [
@@ -1117,7 +1117,7 @@ let
 
       req =
         let
-          version = "0.5.17";
+          version = "0.5.18";
           drv = buildMix {
             inherit version;
             name = "req";
@@ -1126,7 +1126,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "req";
-              sha256 = "0b8bc6ffdfebbc07968e59d3ff96d52f2202d0536f10fef4dc11dc02a2a43e39";
+              sha256 = "fa03812c440a9754bf34355e0c5d4f3ed316458db62e3284b7a352ef8dc0b996";
             };
 
             beamDeps = [
@@ -1159,7 +1159,7 @@ let
 
       swoosh =
         let
-          version = "1.25.2";
+          version = "1.25.3";
           drv = buildMix {
             inherit version;
             name = "swoosh";
@@ -1168,7 +1168,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "swoosh";
-              sha256 = "0aecf65b2845f13f4d440e0945715432bbde2d815e2302adf7df549cd9bdafed";
+              sha256 = "cc5d2cd7f24a3ee4249e02a60a0a5c2519d396a8b8798e1ec44ea78714d68d85";
             };
 
             beamDeps = [
