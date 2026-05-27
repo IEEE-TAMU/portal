@@ -146,11 +146,19 @@ defmodule IeeeTamuPortalWeb.Auth.MemberAuth do
       end
   """
   def on_mount(:mount_current_member, _params, session, socket) do
-    {:cont, mount_current_member(socket, session)}
+    socket =
+      socket
+      |> mount_current_member(session)
+      |> mount_feature_flags()
+
+    {:cont, socket}
   end
 
   def on_mount(:ensure_authenticated, _params, session, socket) do
-    socket = mount_current_member(socket, session)
+    socket =
+      socket
+      |> mount_current_member(session)
+      |> mount_feature_flags()
 
     if socket.assigns.current_member do
       {:cont, socket}
@@ -165,7 +173,10 @@ defmodule IeeeTamuPortalWeb.Auth.MemberAuth do
   end
 
   def on_mount(:ensure_confirmed, _params, session, socket) do
-    socket = mount_current_member(socket, session)
+    socket =
+      socket
+      |> mount_current_member(session)
+      |> mount_feature_flags()
 
     if socket.assigns.current_member.confirmed_at != nil do
       {:cont, socket}
@@ -180,7 +191,11 @@ defmodule IeeeTamuPortalWeb.Auth.MemberAuth do
   end
 
   def on_mount(:ensure_info_submitted, _params, session, socket) do
-    socket = mount_current_member(socket, session)
+    socket =
+      socket
+      |> mount_current_member(session)
+      |> mount_feature_flags()
+
     member = socket.assigns.current_member
     member = Accounts.preload_member_info(member)
 
@@ -200,7 +215,10 @@ defmodule IeeeTamuPortalWeb.Auth.MemberAuth do
   end
 
   def on_mount(:redirect_if_member_is_authenticated, _params, session, socket) do
-    socket = mount_current_member(socket, session)
+    socket =
+      socket
+      |> mount_current_member(session)
+      |> mount_feature_flags()
 
     if socket.assigns.current_member do
       {:halt, Phoenix.LiveView.redirect(socket, to: signed_in_path(socket))}
@@ -210,10 +228,24 @@ defmodule IeeeTamuPortalWeb.Auth.MemberAuth do
   end
 
   defp mount_current_member(socket, session) do
-    Phoenix.Component.assign_new(socket, :current_member, fn ->
+    socket
+    |> Phoenix.Component.assign_new(:current_member, fn ->
       if member_token = session["member_token"] do
         Accounts.get_member_by_session_token(member_token)
       end
+    end)
+  end
+
+  defp mount_feature_flags(socket) do
+    socket
+    |> Phoenix.Component.assign_new(:s3_configured, fn ->
+      IeeeTamuPortal.Features.enabled?(:s3_resume_upload)
+    end)
+    |> Phoenix.Component.assign_new(:discord_oauth_enabled, fn ->
+      IeeeTamuPortal.Features.enabled?(:discord_oauth)
+    end)
+    |> Phoenix.Component.assign_new(:google_oauth_enabled, fn ->
+      IeeeTamuPortal.Features.enabled?(:google_oauth)
     end)
   end
 
