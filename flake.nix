@@ -30,7 +30,7 @@
           pkgs = nixpkgs.legacyPackages.${system};
 
           # # also see https://gist.github.com/NobbZ/1603ba65e135bf293a50c4b98eb41f71 for smaller image sizes
-          mixNixDeps = pkgs.callPackages ./deps.nix { beamPackages = pkgs.beamMinimalPackages; };
+          mixNixDeps = pkgs.callPackages ./deps.nix { beamPackages = pkgs.beamMinimal28Packages; };
         in
         rec {
           devenv-up = self.devShells.${system}.default.config.procfileScript;
@@ -40,9 +40,9 @@
           # https://github.com/code-supply/nix-phoenix/tree/main/flake-template
           # for more information
 
-          # lockily we have no JS deps, so we can just build the beam release
+          # luckily we have no JS deps, so we can just build the beam release
           # and not worry about a JS package (for now at least)
-          portal = pkgs.beamMinimalPackages.mixRelease {
+          portal = pkgs.beamMinimal28Packages.mixRelease {
             inherit mixNixDeps;
             pname = "ieee-tamu-portal";
             src = ./.;
@@ -107,6 +107,7 @@
                 {
                   packages = (lib.optional pkgs.stdenv.isLinux pkgs.inotify-tools) ++ [ pkgs.nodejs ];
                   languages.elixir.enable = true;
+                  languages.elixir.package = pkgs.beamMinimal28Packages.elixir_1_19;
                   services.mysql = {
                     enable = true;
                     ensureUsers = [

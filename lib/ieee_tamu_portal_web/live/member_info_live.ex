@@ -36,14 +36,14 @@ defmodule IeeeTamuPortalWeb.MemberInfoLive do
   @impl true
   def handle_event("update_info", params, socket) do
     %{"info" => info_params} = params
-    member = socket.assigns.current_member
+    %Accounts.Member{} = member = socket.assigns.current_member
 
     # Check if this is a first-time user (no existing info)
     is_first_time = is_nil(member.info)
 
     case MembershipService.update_or_create_member_info(member, info_params) do
       {:ok, info} ->
-        member = %Accounts.Member{member | info: info}
+        member = %{member | info: info}
 
         info_form =
           info
