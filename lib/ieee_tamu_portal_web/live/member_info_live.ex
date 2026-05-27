@@ -145,7 +145,7 @@ defmodule IeeeTamuPortalWeb.MemberInfoLive do
               required
             />
             <.input
-              :if={@info_form[:gender].value |> to_string == "Other"}
+              :if={@info_form[:gender].value |> to_string() == "Other"}
               field={@info_form[:gender_other]}
               label="Please specify"
               type="text"
