@@ -3,7 +3,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
 
   alias IeeeTamuPortal.{Settings, Members}
   alias IeeeTamuPortal.Events
-  alias IeeeTamuPortal.Accounts.Member
+  alias IeeeTamuPortal.Members.EventCheckin
 
   @impl true
   def mount(_params, _session, socket) do
@@ -35,7 +35,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
 
     # Build QR code or show message depending on check-in state
     current_event = Settings.get_current_event!()
-    already_checked_in? = Member.member_is_checked_in?(current_member.id)
+    already_checked_in? = EventCheckin.member_is_checked_in?(current_member.id)
 
     checkin_qr_svg =
       if paid? and not already_checked_in? and is_binary(current_event) and
