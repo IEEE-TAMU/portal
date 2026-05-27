@@ -5,10 +5,8 @@ defmodule IeeeTamuPortalWeb.Auth.AdminAuthTest do
 
   describe "admin_auth/2" do
     test "allows access with correct credentials", %{conn: conn} do
-      username = Application.fetch_env!(:ieee_tamu_portal, AdminAuth)[:username]
-      password = Application.fetch_env!(:ieee_tamu_portal, AdminAuth)[:password]
-
-      credentials = Base.encode64("#{username}:#{password}")
+      {:ok, config} = IeeeTamuPortal.Features.get_config(:admin_panel)
+      credentials = Base.encode64("#{config[:username]}:#{config[:password]}")
 
       conn =
         conn

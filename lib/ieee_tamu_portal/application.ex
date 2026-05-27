@@ -5,6 +5,8 @@ defmodule IeeeTamuPortal.Application do
 
   use Application
 
+  alias IeeeTamuPortal.Features
+
   @impl true
   def start(_type, _args) do
     children =
@@ -16,13 +18,18 @@ defmodule IeeeTamuPortal.Application do
         {Phoenix.PubSub, name: IeeeTamuPortal.PubSub},
         # Start a worker by calling: IeeeTamuPortal.Worker.start_link(arg)
         # {IeeeTamuPortal.Worker, arg}
-        IeeeTamuPortal.Members.AgeUpdater,
-        IeeeTamuPortal.S3Delete,
-        IeeeTamuPortal.Discord.RoleSyncService,
-        IeeeTamuPortal.Mautic.SyncService,
-        # Start to serve requests, typically the last entry
-        IeeeTamuPortalWeb.Endpoint
-      ]
+        IeeeTamuPortal.Members.AgeUpdater
+      ] ++
+        ([
+           if(Features.enabled?(:s3_resume_upload), do: IeeeTamuPortal.S3Delete),
+           if(Features.enabled?(:discord_bot), do: IeeeTamuPortal.Discord.RoleSyncService),
+           if(Features.enabled?(:mautic), do: IeeeTamuPortal.Mautic.SyncService)
+         ]
+         |> Enum.reject(&is_nil/1)) ++
+        [
+          # Start to serve requests, typically the last entry
+          IeeeTamuPortalWeb.Endpoint
+        ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

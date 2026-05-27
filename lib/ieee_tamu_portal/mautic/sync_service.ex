@@ -58,7 +58,7 @@ defmodule IeeeTamuPortal.Mautic.SyncService do
   end
 
   defp configured? do
-    match?({:ok, [_ | _]}, Application.fetch_env(:ieee_tamu_portal, :mautic))
+    IeeeTamuPortal.Features.enabled?(:mautic)
   end
 
   @impl true

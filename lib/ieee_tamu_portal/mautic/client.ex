@@ -41,18 +41,14 @@ defmodule IeeeTamuPortal.Mautic.Client do
   end
 
   @doc """
-  Returns the Mautic configuration from application env.
+  Returns the Mautic configuration from application env, or raises if not configured.
   """
   def config! do
-    case Application.fetch_env(:ieee_tamu_portal, :mautic) do
-      {:ok, config} when is_list(config) ->
-        %{
-          base_url: Keyword.fetch!(config, :base_url),
-          username: Keyword.fetch!(config, :username),
-          password: Keyword.fetch!(config, :password)
-        }
+    case IeeeTamuPortal.Features.get_config(:mautic) do
+      {:ok, config} ->
+        config
 
-      _ ->
+      :error ->
         raise "Mautic configuration not found. Set :ieee_tamu_portal, :mautic in config."
     end
   end

@@ -120,7 +120,8 @@ defmodule IeeeTamuPortal.Discord.Client do
   # Private helper functions
 
   defp discord_bot_url(path) do
-    base_url = Application.fetch_env!(:ieee_tamu_portal, :discord_bot_url)
-    base_url <> path
+    case IeeeTamuPortal.Features.get_config(:discord_bot) do
+      {:ok, base_url} -> base_url <> path
+    end
   end
 end

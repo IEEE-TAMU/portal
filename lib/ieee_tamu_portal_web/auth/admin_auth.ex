@@ -1,8 +1,15 @@
 defmodule IeeeTamuPortalWeb.Auth.AdminAuth do
-  defp username, do: Application.fetch_env!(:ieee_tamu_portal, __MODULE__)[:username]
-  defp password, do: Application.fetch_env!(:ieee_tamu_portal, __MODULE__)[:password]
+  import Plug.Conn
 
   def admin_auth(conn, _opts) do
-    Plug.BasicAuth.basic_auth(conn, username: username(), password: password())
+    case IeeeTamuPortal.Features.get_config(:admin_panel) do
+      {:ok, config} ->
+        Plug.BasicAuth.basic_auth(conn, username: config[:username], password: config[:password])
+
+      :error ->
+        conn
+        |> send_resp(503, "Admin panel is not configured")
+        |> halt()
+    end
   end
 end

@@ -4,35 +4,41 @@ defmodule IeeeTamuPortalWeb.AdminResumeZipController do
   alias IeeeTamuPortal.ResumeZipService
 
   def download(conn, params) do
-    filter =
-      case Map.get(params, "looking_for") do
-        "full_time" -> :full_time
-        "internship" -> :internship
-        _ -> :all
+    if IeeeTamuPortal.Features.enabled?(:s3_resume_upload) do
+      filter =
+        case Map.get(params, "looking_for") do
+          "full_time" -> :full_time
+          "internship" -> :internship
+          _ -> :all
+        end
+
+      case ResumeZipService.stream_zip(looking_for: filter) do
+        {:ok, zip_stream} ->
+          suffix =
+            case filter do
+              :full_time -> "_full_time"
+              :internship -> "_internship"
+              _ -> ""
+            end
+
+          conn
+          |> put_resp_content_type("application/zip")
+          |> put_resp_header(
+            "content-disposition",
+            "attachment; filename=\"ieee_tamu_resumes#{suffix}.zip\""
+          )
+          |> send_chunked(200)
+          |> stream_zip_data(zip_stream)
+
+        {:error, :no_resumes_found} ->
+          conn
+          |> put_flash(:error, "No resumes found to download.")
+          |> redirect(to: ~p"/admin")
       end
-
-    case ResumeZipService.stream_zip(looking_for: filter) do
-      {:ok, zip_stream} ->
-        suffix =
-          case filter do
-            :full_time -> "_full_time"
-            :internship -> "_internship"
-            _ -> ""
-          end
-
-        conn
-        |> put_resp_content_type("application/zip")
-        |> put_resp_header(
-          "content-disposition",
-          "attachment; filename=\"ieee_tamu_resumes#{suffix}.zip\""
-        )
-        |> send_chunked(200)
-        |> stream_zip_data(zip_stream)
-
-      {:error, :no_resumes_found} ->
-        conn
-        |> put_flash(:error, "No resumes found to download.")
-        |> redirect(to: ~p"/admin")
+    else
+      conn
+      |> put_flash(:error, "Resume upload service is not configured")
+      |> redirect(to: ~p"/admin")
     end
   end
 
