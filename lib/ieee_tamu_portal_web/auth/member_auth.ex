@@ -210,10 +210,20 @@ defmodule IeeeTamuPortalWeb.Auth.MemberAuth do
   end
 
   defp mount_current_member(socket, session) do
-    Phoenix.Component.assign_new(socket, :current_member, fn ->
+    socket
+    |> Phoenix.Component.assign_new(:current_member, fn ->
       if member_token = session["member_token"] do
         Accounts.get_member_by_session_token(member_token)
       end
+    end)
+    |> Phoenix.Component.assign_new(:s3_configured, fn ->
+      IeeeTamuPortal.Features.enabled?(:s3_resume_upload)
+    end)
+    |> Phoenix.Component.assign_new(:discord_oauth_enabled, fn ->
+      IeeeTamuPortal.Features.enabled?(:discord_oauth)
+    end)
+    |> Phoenix.Component.assign_new(:google_oauth_enabled, fn ->
+      IeeeTamuPortal.Features.enabled?(:google_oauth)
     end)
   end
 

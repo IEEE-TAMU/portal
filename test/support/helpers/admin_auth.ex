@@ -3,13 +3,9 @@ defmodule IeeeTamuPortalWeb.TestHelpers.AdminAuth do
 
   # Helper to add basic auth headers for admin-only routes in LiveView/controller tests
   def admin_auth_conn(conn) do
-    username =
-      Application.fetch_env!(:ieee_tamu_portal, IeeeTamuPortalWeb.Auth.AdminAuth)[:username]
+    {:ok, config} = IeeeTamuPortal.Features.get_config(:admin_panel)
+    credentials = Base.encode64("#{config[:username]}:#{config[:password]}")
 
-    password =
-      Application.fetch_env!(:ieee_tamu_portal, IeeeTamuPortalWeb.Auth.AdminAuth)[:password]
-
-    credentials = Base.encode64("#{username}:#{password}")
     Plug.Conn.put_req_header(conn, "authorization", "Basic #{credentials}")
   end
 end

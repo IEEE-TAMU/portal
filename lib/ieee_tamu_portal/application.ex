@@ -5,6 +5,7 @@ defmodule IeeeTamuPortal.Application do
 
   use Application
 
+  # TODO: re-write using Features
   @impl true
   def start(_type, _args) do
     children =
@@ -39,11 +40,20 @@ defmodule IeeeTamuPortal.Application do
 
   defp env_children(:test), do: []
   # TODO: test other processes?
-  defp env_children(_),
-    do: [
-      IeeeTamuPortal.S3Delete,
-      IeeeTamuPortal.Members.AgeUpdater,
-      IeeeTamuPortal.Discord.RoleSyncService,
-      IeeeTamuPortal.Mautic.SyncService
+  defp env_children(_) do
+    [
+      IeeeTamuPortal.Members.AgeUpdater
+    ] ++ optional_children()
+  end
+
+  defp optional_children do
+    alias IeeeTamuPortal.Features
+
+    [
+      if(Features.enabled?(:s3_resume_upload), do: IeeeTamuPortal.S3Delete),
+      if(Features.enabled?(:discord_bot), do: IeeeTamuPortal.Discord.RoleSyncService),
+      if(Features.enabled?(:mautic), do: IeeeTamuPortal.Mautic.SyncService)
     ]
+    |> Enum.reject(&is_nil/1)
+  end
 end

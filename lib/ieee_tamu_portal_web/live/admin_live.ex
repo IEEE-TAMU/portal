@@ -17,6 +17,7 @@ defmodule IeeeTamuPortalWeb.AdminLive do
       |> assign(:resume_count, resume_count)
       |> assign(:api_key_count, api_key_count)
       |> assign(:page_title, "Admin Dashboard")
+      |> assign(:s3_configured, IeeeTamuPortal.Features.enabled?(:s3_resume_upload))
 
     {:ok, socket}
   end
@@ -63,9 +64,9 @@ defmodule IeeeTamuPortalWeb.AdminLive do
           value={@resume_count}
           icon="hero-document-text"
           icon_bg="bg-purple-500"
-          show_action={@resume_count > 0}
+          show_action={@s3_configured and @resume_count > 0}
         >
-          <:action :if={@resume_count > 0}>
+          <:action :if={@s3_configured and @resume_count > 0}>
             <.link
               href={~p"/admin/download-resumes"}
               target="_blank"
@@ -77,6 +78,8 @@ defmodule IeeeTamuPortalWeb.AdminLive do
           </:action>
         </.stats_card>
       </div>
+
+      <.feature_status s3_configured={@s3_configured} />
 
       <div class="mt-8 bg-white rounded-lg shadow p-6">
         <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
@@ -107,6 +110,7 @@ defmodule IeeeTamuPortalWeb.AdminLive do
             description="Browse and manage resumes"
             icon="hero-document-text"
             href={~p"/admin/resumes"}
+            disabled={!@s3_configured}
           />
         </div>
       </div>
@@ -226,6 +230,37 @@ defmodule IeeeTamuPortalWeb.AdminLive do
       </div>
       <p class="text-xs text-gray-500 mt-1">{@description}</p>
     </.link>
+    """
+  end
+
+  @doc """
+  Feature status panel showing which optional services are configured.
+  """
+  attr :s3_configured, :boolean, required: true
+
+  def feature_status(assigns) do
+    assigns = assign(assigns, :features, IeeeTamuPortal.Features.list())
+
+    ~H"""
+    <div class="mt-8 bg-white rounded-lg shadow p-6">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4">Feature Status</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <%= for feature <- @features do %>
+          <div class="flex items-center justify-between p-3 rounded-md border border-gray-200">
+            <span class="text-sm text-gray-700">{feature.name}</span>
+            <%= if feature.enabled do %>
+              <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                Enabled
+              </span>
+            <% else %>
+              <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
+                Disabled
+              </span>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
     """
   end
 end

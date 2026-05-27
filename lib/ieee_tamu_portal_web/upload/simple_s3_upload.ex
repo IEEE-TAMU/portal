@@ -7,13 +7,14 @@ defmodule IeeeTamuPortalWeb.Upload.SimpleS3Upload do
   """
   @one_hour_seconds 3600
 
-  defp region, do: Application.fetch_env!(:ieee_tamu_portal, __MODULE__)[:region]
-  defp access_key_id, do: Application.fetch_env!(:ieee_tamu_portal, __MODULE__)[:access_key_id]
+  defp config! do
+    case IeeeTamuPortal.Features.get_config(:s3_resume_upload) do
+      {:ok, config} -> config
+      :error -> raise "S3 upload is not configured"
+    end
+  end
 
-  defp secret_access_key,
-    do: Application.fetch_env!(:ieee_tamu_portal, __MODULE__)[:secret_access_key]
-
-  def bucket_url, do: Application.fetch_env!(:ieee_tamu_portal, __MODULE__)[:url]
+  def bucket_url, do: config!()[:url]
 
   defp uri(opts) do
     case Keyword.get(opts, :uri) do
@@ -27,6 +28,7 @@ defmodule IeeeTamuPortalWeb.Upload.SimpleS3Upload do
   end
 
   def sign(opts) do
+    config = config!()
     expires_in = Keyword.get(opts, :expires_in, @one_hour_seconds)
 
     method = Keyword.fetch!(opts, :method)
@@ -35,9 +37,9 @@ defmodule IeeeTamuPortalWeb.Upload.SimpleS3Upload do
 
     url =
       :aws_signature.sign_v4_query_params(
-        access_key_id(),
-        secret_access_key(),
-        region(),
+        config[:access_key_id],
+        config[:secret_access_key],
+        config[:region],
         "s3",
         :calendar.universal_time(),
         method,
