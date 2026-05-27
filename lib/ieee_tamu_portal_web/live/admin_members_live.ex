@@ -33,7 +33,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
 
   @impl Phoenix.LiveView
   def handle_params(params, _, socket) do
-    {members, meta} = IeeeTamuPortal.Accounts.Member.list_members(params)
+    {members, meta} = Accounts.list_members_paginated(params)
     {:noreply, assign(socket, members: members, meta: meta, filter_params: params)}
   end
 
@@ -59,7 +59,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
         # Get current params from the URL to maintain filters
         params = Map.get(socket.assigns, :filter_params, %{})
         # Refresh the members list to get updated data
-        {members, meta} = IeeeTamuPortal.Accounts.Member.list_members(params)
+        {members, meta} = Accounts.list_members_paginated(params)
 
         action = if updated_registration.payment_override, do: "enabled", else: "disabled"
 
@@ -236,7 +236,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
         # Get current params from the URL to maintain filters
         params = Map.get(socket.assigns, :filter_params, %{})
         # Refresh the members list to keep Flop pagination intact
-        {members, meta} = IeeeTamuPortal.Accounts.Member.list_members(params)
+        {members, meta} = Accounts.list_members_paginated(params)
 
         info_form = Members.change_member_info(info) |> to_form()
 
