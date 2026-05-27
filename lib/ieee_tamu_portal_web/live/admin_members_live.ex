@@ -217,7 +217,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   @impl true
   def handle_event("update_member_info", params, socket) do
     %{"info" => info_params} = params
-    member = socket.assigns.current_member
+    %Accounts.Member{} = member = socket.assigns.current_member
 
     update_or_create_info = fn
       %Members.Info{} = info -> Members.update_member_info(info, info_params)
@@ -226,7 +226,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
 
     case update_or_create_info.(member.info) do
       {:ok, info} ->
-        updated_member = %Accounts.Member{member | info: info}
+        updated_member = %{member | info: info}
 
         # Get current params from the URL to maintain filters
         params = Map.get(socket.assigns, :filter_params, %{})
