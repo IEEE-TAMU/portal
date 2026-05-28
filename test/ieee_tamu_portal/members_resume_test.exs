@@ -1,6 +1,7 @@
 defmodule IeeeTamuPortal.MembersResumeTest do
   use IeeeTamuPortal.DataCase
 
+  import ExUnit.CaptureLog
   import IeeeTamuPortal.AccountsFixtures
 
   alias IeeeTamuPortal.Members
@@ -146,9 +147,15 @@ defmodule IeeeTamuPortal.MembersResumeTest do
 
       member = %{member | resume: resume}
 
-      assert {:ok, returned} = Members.delete_member_resume(member)
-      assert returned.resume == nil
-      refute Repo.get(Resume, resume.id)
+      log =
+        capture_log(fn ->
+          assert {:ok, returned} = Members.delete_member_resume(member)
+          assert returned.resume == nil
+          refute Repo.get(Resume, resume.id)
+          Process.sleep(500)
+        end)
+
+      assert log =~ "S3 delete failed with status code: 403"
     end
 
     test "handles member with resume not preloaded" do
@@ -161,9 +168,15 @@ defmodule IeeeTamuPortal.MembersResumeTest do
       })
 
       # member has resume not loaded
-      assert {:ok, returned} = Members.delete_member_resume(member)
-      assert returned.resume == nil
-      assert Repo.aggregate(Resume, :count, :id) == 0
+      log =
+        capture_log(fn ->
+          assert {:ok, returned} = Members.delete_member_resume(member)
+          assert returned.resume == nil
+          assert Repo.aggregate(Resume, :count, :id) == 0
+          Process.sleep(500)
+        end)
+
+      assert log =~ "S3 delete failed with status code: 403"
     end
   end
 

@@ -50,6 +50,7 @@ defmodule IeeeTamuPortal.Services.FileStorageServiceTest do
       # Should successfully delete
       capture_log(fn ->
         assert {:ok, _deleted_resume} = FileStorageService.delete_resume(resume)
+        Process.sleep(500)
       end)
     end
 
@@ -59,12 +60,14 @@ defmodule IeeeTamuPortal.Services.FileStorageServiceTest do
       resume = %Members.Resume{
         id: 999,
         original_filename: "nonexistent.pdf",
-        key: "resumes/nonexistent.pdf"
+        key: "resumes/nonexistent.pdf",
+        bucket_url: "https://test-bucket.s3.amazonaws.com"
       }
 
       # Should handle stale entry error gracefully
       capture_log(fn ->
         assert {:error, :not_found} = FileStorageService.delete_resume(resume)
+        Process.sleep(500)
       end)
     end
   end
