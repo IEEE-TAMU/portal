@@ -155,6 +155,8 @@ defmodule IeeeTamuPortalWeb.Api.V1.MemberControllerTest do
   end
 
   defp unique_uin do
-    System.unique_integer([:positive]) |> rem(900_000_000) |> Kernel.+(100_000_000)
+    first = System.unique_integer([:positive]) |> rem(900) |> Kernel.+(100)
+    last = System.unique_integer([:positive]) |> rem(10_000)
+    "#{first}00#{String.pad_leading(Integer.to_string(last), 4, "0")}" |> String.to_integer()
   end
 end
