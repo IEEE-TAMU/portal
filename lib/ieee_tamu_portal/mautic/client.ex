@@ -27,7 +27,7 @@ defmodule IeeeTamuPortal.Mautic.Client do
     ]
 
     case Req.post(url, headers: headers, json: contacts) do
-      {:ok, %Req.Response{status: 200..299, body: body}} ->
+      {:ok, %Req.Response{status: status, body: body}} when status in 200..299 ->
         {:ok, body}
 
       {:ok, %Req.Response{status: status, body: body}} ->
