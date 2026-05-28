@@ -99,4 +99,18 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLiveTest do
       assert result =~ "is not valid"
     end
   end
+
+  describe "email display" do
+    test "displays member email", %{conn: conn} do
+      member = confirmed_member_fixture()
+
+      {:ok, _lv, html} =
+        conn
+        |> log_in_member(member)
+        |> live(~p"/members/settings")
+
+      assert html =~ member.email
+      assert html =~ "Account Settings"
+    end
+  end
 end
