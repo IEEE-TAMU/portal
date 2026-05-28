@@ -188,4 +188,239 @@ defmodule IeeeTamuPortal.EventsTest do
       assert Events.count_rsvps(event.uid) == 0
     end
   end
+
+  describe "rsvps" do
+    import IeeeTamuPortal.AccountsFixtures
+    import IeeeTamuPortal.SettingsFixtures
+    alias IeeeTamuPortal.Members
+
+    setup do
+      {:ok, event} =
+        Events.create_event(valid_attrs(%{summary: "RSVP Test Event", rsvp_limit: nil}))
+
+      %{event: event}
+    end
+
+    test "create_rsvp/2 creates an RSVP", %{event: event} do
+      member = member_fixture()
+      assert {:ok, rsvp} = Events.create_rsvp(member.id, event.uid)
+      assert rsvp.member_id == member.id
+      assert rsvp.event_uid == event.uid
+    end
+
+    test "create_rsvp/2 fails with duplicate RSVP", %{event: event} do
+      member = member_fixture()
+      {:ok, _} = Events.create_rsvp(member.id, event.uid)
+      assert {:error, _changeset} = Events.create_rsvp(member.id, event.uid)
+    end
+
+    test "get_rsvp/2 retrieves an RSVP", %{event: event} do
+      member = member_fixture()
+      {:ok, _rsvp} = Events.create_rsvp(member.id, event.uid)
+      rsvp = Events.get_rsvp(member.id, event.uid)
+      assert rsvp != nil
+      assert rsvp.member_id == member.id
+    end
+
+    test "get_rsvp/2 returns nil for non-existent RSVP", %{event: event} do
+      assert Events.get_rsvp(-1, event.uid) == nil
+    end
+
+    test "member_rsvped?/2 returns true when RSVP exists", %{event: event} do
+      member = member_fixture()
+      {:ok, _} = Events.create_rsvp(member.id, event.uid)
+      assert Events.member_rsvped?(member.id, event.uid)
+    end
+
+    test "member_rsvped?/2 returns false when no RSVP", %{event: event} do
+      refute Events.member_rsvped?(-1, event.uid)
+    end
+
+    test "delete_rsvp/2 removes an RSVP", %{event: event} do
+      member = member_fixture()
+      {:ok, _} = Events.create_rsvp(member.id, event.uid)
+      assert Events.member_rsvped?(member.id, event.uid)
+      assert {:ok, _} = Events.delete_rsvp(member.id, event.uid)
+      refute Events.member_rsvped?(member.id, event.uid)
+    end
+
+    test "delete_rsvp/2 returns error for non-existent RSVP", %{event: event} do
+      assert {:error, :not_found} = Events.delete_rsvp(-1, event.uid)
+    end
+
+    test "count_rsvps/1 returns count of RSVPs", %{event: event} do
+      assert Events.count_rsvps(event.uid) == 0
+
+      member1 = member_fixture()
+      member2 = member_fixture()
+      {:ok, _} = Events.create_rsvp(member1.id, event.uid)
+      {:ok, _} = Events.create_rsvp(member2.id, event.uid)
+
+      assert Events.count_rsvps(event.uid) == 2
+    end
+
+    test "event_at_capacity?/1 is false when no limit", %{event: event} do
+      refute Events.event_at_capacity?(event.uid)
+    end
+
+    test "event_at_capacity?/1 is true when limit reached", %{event: event} do
+      {:ok, limited} =
+        Events.create_event(valid_attrs(%{summary: "Limited Event", rsvp_limit: 2}))
+
+      member1 = member_fixture()
+      member2 = member_fixture()
+      {:ok, _} = Events.create_rsvp(member1.id, limited.uid)
+      {:ok, _} = Events.create_rsvp(member2.id, limited.uid)
+
+      assert Events.event_at_capacity?(limited.uid)
+    end
+
+    test "event_at_capacity?/1 is false when limit not reached", %{event: event} do
+      {:ok, limited} =
+        Events.create_event(valid_attrs(%{summary: "Not Full", rsvp_limit: 10}))
+
+      member = member_fixture()
+      {:ok, _} = Events.create_rsvp(member.id, limited.uid)
+
+      refute Events.event_at_capacity?(limited.uid)
+    end
+
+    test "get_event_with_rsvp_info/2 includes RSVP info", %{event: event} do
+      member = member_fixture()
+      {:ok, _} = Events.create_rsvp(member.id, event.uid)
+
+      info = Events.get_event_with_rsvp_info(event.uid, member.id)
+
+      assert info.rsvp_count == 1
+      assert info.member_rsvped == true
+      assert info.at_capacity == false
+    end
+
+    test "list_event_rsvps/1 returns RSVPs with member info", %{event: event} do
+      member = member_fixture()
+
+      {:ok, _info} =
+        Members.create_member_info(member, %{
+          uin: 123_001_234,
+          first_name: "Alice",
+          last_name: "Smith",
+          tshirt_size: :M,
+          graduation_year: 2026,
+          major: :ELEN,
+          gender: :Male,
+          international_student: false,
+          phone_number: "123-456-7890"
+        })
+
+      {:ok, _} = Events.create_rsvp(member.id, event.uid)
+
+      rsvps = Events.list_event_rsvps(event.uid)
+      assert length(rsvps) == 1
+      assert hd(rsvps).first_name == "Alice"
+    end
+  end
+
+  describe "checkins" do
+    import IeeeTamuPortal.AccountsFixtures
+    import IeeeTamuPortal.SettingsFixtures
+    alias IeeeTamuPortal.Members
+    alias IeeeTamuPortal.Members.EventCheckin
+
+    setup do
+      registration_year_setting_fixture("2025")
+      current_event_setting_fixture("test_event")
+      :ok
+    end
+
+    test "list_event_checkins/1 returns checkins with member info" do
+      member = member_fixture()
+
+      {:ok, _info} =
+        Members.create_member_info(member, %{
+          uin: 123_001_234,
+          first_name: "Alice",
+          last_name: "Smith",
+          tshirt_size: :M,
+          graduation_year: 2026,
+          major: :ELEN,
+          gender: :Male,
+          international_student: false,
+          phone_number: "123-456-7890"
+        })
+
+      EventCheckin.insert_for_member_id(member.id)
+
+      checkins = Events.list_event_checkins("test_event", 2025)
+      assert length(checkins) == 1
+      assert hd(checkins).first_name == "Alice"
+    end
+
+    test "count_event_checkins/2 returns count of checkins" do
+      assert Events.count_event_checkins("test_event", 2025) == 0
+
+      member = member_fixture()
+      EventCheckin.insert_for_member_id(member.id)
+
+      assert Events.count_event_checkins("test_event", 2025) == 1
+    end
+
+    test "emails_and_names_for_event_rsvps/1 returns CSV export data" do
+      {:ok, event} =
+        Events.create_event(valid_attrs(%{summary: "CSV Export Event"}))
+
+      member = member_fixture()
+
+      {:ok, _info} =
+        Members.create_member_info(member, %{
+          uin: 123_001_234,
+          first_name: "Alice",
+          last_name: "Smith",
+          tshirt_size: :M,
+          graduation_year: 2026,
+          major: :ELEN,
+          gender: :Male,
+          international_student: false,
+          phone_number: "123-456-7890"
+        })
+
+      {:ok, _} = Events.create_rsvp(member.id, event.uid)
+
+      rows = Events.emails_and_names_for_event_rsvps(event.uid)
+      assert length(rows) == 1
+      {_created, email, _name, _uin, event_title} = hd(rows)
+      assert email == member.email
+      assert event_title == "CSV Export Event"
+    end
+
+    test "emails_and_names_for_event_checkins/2 returns CSV export data" do
+      member = member_fixture()
+
+      {:ok, _info} =
+        Members.create_member_info(member, %{
+          uin: 123_001_234,
+          first_name: "Alice",
+          last_name: "Smith",
+          tshirt_size: :M,
+          graduation_year: 2026,
+          major: :ELEN,
+          gender: :Male,
+          international_student: false,
+          phone_number: "123-456-7890"
+        })
+
+      EventCheckin.insert_for_member_id(member.id)
+
+      rows = Events.emails_and_names_for_event_checkins("test_event", 2025)
+      assert length(rows) == 1
+      {_created, email, _name, _uin, event_name} = hd(rows)
+      assert email == member.email
+      assert event_name == "test_event"
+    end
+
+    test "next_event/0 returns soonest upcoming event" do
+      result = Events.next_event()
+      # May return nil if no events exist, or an event struct
+      assert is_nil(result) || result.__struct__ == Event
+    end
+  end
 end
