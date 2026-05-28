@@ -263,7 +263,7 @@ defmodule IeeeTamuPortal.EventsTest do
       refute Events.event_at_capacity?(event.uid)
     end
 
-    test "event_at_capacity?/1 is true when limit reached", %{event: event} do
+    test "event_at_capacity?/1 is true when limit reached", %{event: _event} do
       {:ok, limited} =
         Events.create_event(valid_attrs(%{summary: "Limited Event", rsvp_limit: 2}))
 
@@ -275,7 +275,7 @@ defmodule IeeeTamuPortal.EventsTest do
       assert Events.event_at_capacity?(limited.uid)
     end
 
-    test "event_at_capacity?/1 is false when limit not reached", %{event: event} do
+    test "event_at_capacity?/1 is false when limit not reached", %{event: _event} do
       {:ok, limited} =
         Events.create_event(valid_attrs(%{summary: "Not Full", rsvp_limit: 10}))
 
