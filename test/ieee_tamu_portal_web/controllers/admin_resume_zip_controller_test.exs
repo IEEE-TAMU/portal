@@ -1,5 +1,5 @@
 defmodule IeeeTamuPortalWeb.AdminResumeZipControllerTest do
-  use IeeeTamuPortalWeb.ConnCase, async: true
+  use IeeeTamuPortalWeb.ConnCase, async: false
 
   import IeeeTamuPortalWeb.TestHelpers.AdminAuth, only: [admin_auth_conn: 1]
 
