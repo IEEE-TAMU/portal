@@ -772,7 +772,7 @@ let
 
       mint =
         let
-          version = "1.8.0";
+          version = "1.9.0";
           drv = buildMix {
             inherit version;
             name = "mint";
@@ -781,7 +781,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "mint";
-              sha256 = "f3c572c11355eccf00f22275e9b42463bc17bd28db13be1e28f8e0bb4adbc849";
+              sha256 = "007154c7d8c43916aed3c93afd1f11aebbaa9c5ff4b7ba55ebe0d17ee0296042";
             };
 
             beamDeps = [
@@ -998,7 +998,7 @@ let
 
       phoenix_live_view =
         let
-          version = "1.1.30";
+          version = "1.1.31";
           drv = buildMix {
             inherit version;
             name = "phoenix_live_view";
@@ -1007,7 +1007,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "phoenix_live_view";
-              sha256 = "a353c51ac1e3190910f01a6100c7d5cc02c5e22e7374fd817bd3aedd21149039";
+              sha256 = "2f53cc6a9e149f30449341c2775990819d97e3b22338fe719c4d30342e6f9638";
             };
 
             beamDeps = [
@@ -1160,7 +1160,7 @@ let
 
       swoosh =
         let
-          version = "1.25.3";
+          version = "1.26.1";
           drv = buildMix {
             inherit version;
             name = "swoosh";
@@ -1169,7 +1169,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "swoosh";
-              sha256 = "cc5d2cd7f24a3ee4249e02a60a0a5c2519d396a8b8798e1ec44ea78714d68d85";
+              sha256 = "8ad197c025102bbcbaffcd67c10ff7b390746c32f534ff5158891b149460118e";
             };
 
             beamDeps = [
@@ -1264,7 +1264,7 @@ let
 
       thousand_island =
         let
-          version = "1.4.3";
+          version = "1.5.0";
           drv = buildMix {
             inherit version;
             name = "thousand_island";
@@ -1273,7 +1273,7 @@ let
             src = fetchHex {
               inherit version;
               pkg = "thousand_island";
-              sha256 = "6e4ce09b0fd761a58594d02814d40f77daff460c48a7354a15ab353bb998ea0b";
+              sha256 = "708923d40523e43cf99041ab37a0d4b0ec426ac6438fa3716ab23d919eaeb412";
             };
 
             beamDeps = [
