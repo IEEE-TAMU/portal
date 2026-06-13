@@ -64,7 +64,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:bandit, "== 1.11.1"},
       {:open_api_spex, "== 3.22.3"},
       {:deps_nix, "== 3.0.0", only: :dev},
-      {:req, "== 0.5.18"},
+      {:req, "== 0.6.1"},
       {:assent, "0.3.1"},
       {:zstream, "0.6.7"},
       {:flop_phoenix, "== 0.26.0"},
