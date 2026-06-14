@@ -383,7 +383,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
               <p class="text-sm text-gray-600 mb-3" hidden={!@scanning_enabled}>
                 Current: <span class="font-medium">{@current_event}</span>
               </p>
-              <.form for={%{}} phx-submit="set_event" class="flex flex-wrap items-center gap-2">
+              <.form for={%{}} id="set_event_form" phx-submit="set_event" class="flex flex-wrap items-center gap-2">
                 <input
                   type="text"
                   name="event_name"
@@ -426,7 +426,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
           <div class="bg-white p-4 rounded-lg shadow">
             <h2 class="text-lg font-semibold mb-2">Export Check-ins</h2>
             <p class="text-sm text-gray-600 mb-2">Year: <span class="font-medium">{@year}</span></p>
-            <.form for={%{}} phx-change="select_event" class="space-y-2">
+            <.form for={%{}} id="select_event_form" phx-change="select_event" class="space-y-2">
               <label class="block text-sm">
                 <span class="text-gray-700">Event (optional)</span>
                 <select name="event_name" class="mt-1 block w-full border-gray-300 rounded-md">

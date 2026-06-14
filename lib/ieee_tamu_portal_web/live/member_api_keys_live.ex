@@ -190,7 +190,7 @@ defmodule IeeeTamuPortalWeb.MemberApiKeysLive do
         <div class="rounded-lg border border-gray-200 bg-white p-6">
           <h2 class="text-lg font-medium leading-6 text-gray-900 mb-4">Create New API Key</h2>
 
-          <.simple_form for={@form} phx-change="validate" phx-submit="save">
+          <.simple_form for={@form} id="create_api_key_form" phx-change="validate" phx-submit="save">
             <.input field={@form[:name]} type="text" label="Name" placeholder="e.g., My Script" />
 
             <div class="flex items-center gap-4">

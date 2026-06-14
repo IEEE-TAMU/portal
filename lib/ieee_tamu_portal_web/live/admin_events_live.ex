@@ -303,6 +303,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
             <h2 class="text-lg font-medium text-gray-900 mb-4">Create New Event</h2>
             <.simple_form
               for={@create_form}
+              id="create_event_form"
               phx-change="validate_create"
               phx-submit="create_event"
               class="space-y-6"
@@ -367,6 +368,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
             <h2 class="text-lg font-medium text-gray-900 mb-4">Edit Event</h2>
             <.simple_form
               for={@edit_form}
+              id="edit_event_form"
               phx-change="validate_edit"
               phx-submit="update_event"
               class="space-y-4"
