@@ -29,8 +29,7 @@ defmodule IeeeTamuPortalWeb.Api.V1.MemberController do
                 json(conn, [])
 
               member ->
-                [Schemas.Member.from_struct(member)]
-                |> json(conn)
+                json(conn, [Schemas.Member.from_struct(member)])
             end
           else
             json(conn, [])

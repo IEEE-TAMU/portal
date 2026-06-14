@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:cachix/devenv-nixpkgs/rolling";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     systems.url = "github:nix-systems/default";
     devenv.url = "github:cachix/devenv";
     devenv.inputs.nixpkgs.follows = "nixpkgs";
@@ -48,7 +48,7 @@
                 packages = lib.optional pkgs.stdenv.isLinux pkgs.inotify-tools;
                 languages.javascript.enable = true;
                 languages.elixir.enable = true;
-                languages.elixir.package = pkgs.beamMinimal28Packages.elixir_1_19;
+                languages.elixir.package = pkgs.beam29Packages.elixir_1_20;
                 services.mysql = {
                   enable = true;
                   ensureUsers = [

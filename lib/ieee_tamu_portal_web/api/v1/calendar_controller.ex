@@ -91,7 +91,7 @@ defmodule IeeeTamuPortalWeb.Api.V1.CalendarController do
 
   defp fold_line_recursive(line, max_length, acc) do
     # Take the first max_length characters
-    <<chunk::binary-size(max_length), rest::binary>> = line
+    <<chunk::binary-size(^max_length), rest::binary>> = line
 
     # Add this chunk to accumulator and continue with rest
     # Rest gets prefixed with space for continuation

@@ -33,11 +33,6 @@ defmodule IeeeTamuPortalWeb.AdminResumeZipController do
         conn
         |> put_flash(:error, "No resumes found to download.")
         |> redirect(to: ~p"/admin")
-
-      {:error, reason} ->
-        conn
-        |> put_flash(:error, "Failed to create zip file: #{inspect(reason)}")
-        |> redirect(to: ~p"/admin")
     end
   end
 

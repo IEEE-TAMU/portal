@@ -14,6 +14,7 @@ defmodule IeeeTamuPortal.Events.Event do
     field :organizer, :string
     field :rsvp_limit, :integer
     field :rsvpable, :boolean, default: true
+    field :rsvp_count, :integer, virtual: true, default: nil
 
     timestamps(type: :utc_datetime)
 

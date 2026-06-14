@@ -99,7 +99,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
     event = Events.get_event!(uid)
     # Add current RSVP count to the event
     rsvp_count = Events.count_rsvps(event.uid)
-    event_with_rsvp = Map.put(event, :rsvp_count, rsvp_count)
+    event_with_rsvp = %{event | rsvp_count: rsvp_count}
 
     edit_form = Events.change_event(event) |> to_form()
 
