@@ -179,8 +179,8 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
             </:actions>
           </.simple_form>
         </div>
-        
-    <!-- Existing Settings -->
+
+        <!-- Existing Settings -->
         <div class="bg-white shadow rounded-lg overflow-hidden">
           <div class="px-6 py-4 border-b border-gray-200">
             <h3 class="text-lg font-medium text-gray-900">Current Settings</h3>

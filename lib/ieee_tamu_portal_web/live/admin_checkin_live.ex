@@ -198,8 +198,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
                 phx-update="ignore"
                 class="absolute inset-0 w-full h-full object-cover"
                 playsinline
-              >
-              </video>
+              ></video>
               <!-- Green safe area overlay -->
               <div :if={@scanner_active} class="pointer-events-none absolute inset-0">
                 <div class="absolute inset-0 grid place-items-center">
@@ -250,8 +249,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
                 id="camera-select"
                 phx-update="ignore"
                 class="px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-              </select>
+              ></select>
             </label>
           </div>
           <script :type={Phoenix.LiveView.ColocatedHook} name=".QRScanner">
@@ -383,7 +381,12 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
               <p class="text-sm text-gray-600 mb-3" hidden={!@scanning_enabled}>
                 Current: <span class="font-medium">{@current_event}</span>
               </p>
-              <.form for={%{}} id="set_event_form" phx-submit="set_event" class="flex flex-wrap items-center gap-2">
+              <.form
+                for={%{}}
+                id="set_event_form"
+                phx-submit="set_event"
+                class="flex flex-wrap items-center gap-2"
+              >
                 <input
                   type="text"
                   name="event_name"

@@ -271,7 +271,9 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
                     rel="noopener noreferrer"
                     class="text-blue-500 hover:underline whitespace-nowrap"
                   >
-                    here <.icon name="hero-arrow-top-right-on-square" class="w-4 h-5" />.</.link> (make sure to enter the confirmation code below in the order form)
+                    here <.icon name="hero-arrow-top-right-on-square" class="w-4 h-5" />.
+                  </.link>
+                  (make sure to enter the confirmation code below in the order form)
                 </p>
               </div>
             </div>
