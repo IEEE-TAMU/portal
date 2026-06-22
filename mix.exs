@@ -76,7 +76,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:eqrcode, "0.2.1"},
       {:live_debugger, "== 0.7.0", only: [:dev]},
       {:icalendar, github: "tcitworld/icalendar", branch: "main"},
-      {:tzdata, "1.1.3"}
+      {:tzdata, "== 1.1.4"}
     ]
   end
 
