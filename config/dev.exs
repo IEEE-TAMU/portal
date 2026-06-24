@@ -29,6 +29,11 @@ config :ieee_tamu_portal, IeeeTamuPortalWeb.Endpoint,
     tailwind: {Tailwind, :install_and_run, [:ieee_tamu_portal, ~w(--watch)]}
   ]
 
+# Allow the local dev frontend at http://portal.localhost to call the API.
+config :cors_plug,
+  origin: "http://portal.localhost",
+  credentials: true
+
 # ## SSL Support
 #
 # In order to use HTTPS in development, a self-signed

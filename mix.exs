@@ -75,6 +75,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:nimble_csv, "1.3.0"},
       {:eqrcode, "0.2.1"},
       {:live_debugger, "== 0.7.0", only: [:dev]},
+      {:cors_plug, "== 3.0.3", only: [:dev, :test]},
       {:icalendar, github: "tcitworld/icalendar", branch: "main"},
       {:tzdata, "1.1.3"}
     ]

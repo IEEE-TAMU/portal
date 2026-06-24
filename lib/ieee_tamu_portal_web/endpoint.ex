@@ -34,6 +34,10 @@ defmodule IeeeTamuPortalWeb.Endpoint do
     plug Phoenix.Ecto.CheckRepoStatus, otp_app: :ieee_tamu_portal
   end
 
+  if Mix.env() == :dev do
+    plug CORSPlug
+  end
+
   plug Phoenix.LiveDashboard.RequestLogger,
     param_key: "request_logger",
     cookie_key: "request_logger"
