@@ -63,6 +63,25 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
     end
   end
 
+  defmodule PaidMembersCountResponse do
+    require OpenApiSpex
+
+    OpenApiSpex.schema(%{
+      type: :object,
+      description: "Number of paid members for a registration year",
+      properties: %{
+        count: %Schema{type: :integer, description: "Number of paid members", example: 42},
+        year: %Schema{
+          type: :integer,
+          description:
+            "The registration year the count corresponds to (the requested year, or the current registration year setting if none was provided)",
+          example: 2025
+        }
+      },
+      required: [:count, :year]
+    })
+  end
+
   defmodule Payment do
     require OpenApiSpex
 
