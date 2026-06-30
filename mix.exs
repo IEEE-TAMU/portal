@@ -42,11 +42,11 @@ defmodule IeeeTamuPortal.MixProject do
       {:ecto_mysql_extras, "0.6.3", only: :dev},
       {:phoenix_html, "4.3.0"},
       {:phoenix_live_reload, "1.6.2", only: :dev},
-      {:phoenix_live_view, "== 1.2.1"},
+      {:phoenix_live_view, "== 1.2.5"},
       {:aws_signature, "0.4.2"},
       {:phoenix_live_dashboard, "0.8.7"},
       {:esbuild, "0.10.0", runtime: Mix.env() == :dev},
-      {:tailwind, "0.4.1", runtime: Mix.env() == :dev},
+      {:tailwind, "== 0.5.1", runtime: Mix.env() == :dev},
       {:heroicons,
        github: "tailwindlabs/heroicons",
        tag: "v2.2.0",
@@ -54,7 +54,7 @@ defmodule IeeeTamuPortal.MixProject do
        app: false,
        compile: false,
        depth: 1},
-      {:swoosh, "== 1.26.1"},
+      {:swoosh, "== 1.26.2"},
       {:gen_smtp, "1.3.0", only: :prod},
       {:telemetry_metrics, "1.1.0"},
       {:telemetry_poller, "1.3.0"},
@@ -64,7 +64,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:bandit, "== 1.12.0"},
       {:open_api_spex, "== 3.22.3"},
       {:deps_nix, "== 3.0.0", only: :dev},
-      {:req, "== 0.6.1"},
+      {:req, "== 0.6.2"},
       {:assent, "0.3.1"},
       {:zstream, "0.6.7"},
       {:flop_phoenix, "== 0.26.1"},
@@ -77,7 +77,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:live_debugger, "== 0.7.0", only: [:dev]},
       {:cors_plug, "== 3.0.3", only: [:dev, :test]},
       {:icalendar, github: "tcitworld/icalendar", branch: "main"},
-      {:tzdata, "1.1.3"}
+      {:tzdata, "== 1.1.4"}
     ]
   end
 
