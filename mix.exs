@@ -35,14 +35,14 @@ defmodule IeeeTamuPortal.MixProject do
   defp deps do
     [
       {:bcrypt_elixir, "3.3.2"},
-      {:phoenix, "== 1.8.8"},
+      {:phoenix, "== 1.8.9"},
       {:phoenix_ecto, "4.7.0"},
       {:ecto_sql, "== 3.14.0"},
       {:myxql, "== 0.9.0"},
       {:ecto_mysql_extras, "0.6.3", only: :dev},
       {:phoenix_html, "4.3.0"},
       {:phoenix_live_reload, "1.6.2", only: :dev},
-      {:phoenix_live_view, "== 1.2.5"},
+      {:phoenix_live_view, "== 1.2.6"},
       {:aws_signature, "0.4.2"},
       {:phoenix_live_dashboard, "0.8.7"},
       {:esbuild, "0.10.0", runtime: Mix.env() == :dev},
