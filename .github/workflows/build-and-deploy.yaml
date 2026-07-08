@@ -4,9 +4,56 @@ on:
     - master
     tags:
     - v*
+  pull_request:
+    branches:
+    - master
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: portal_test
+          MARIADB_USER: portal
+          MARIADB_PASSWORD: portal
+        ports:
+        - 3306:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      MIX_ENV: test
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: erlef/setup-beam@v1
+      with:
+        elixir-version: "1.20.1"
+        otp-version: "29"
+
+    - uses: actions/cache@v4
+      with:
+        path: |
+          deps
+          _build
+        key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-mix-
+
+    - run: mix deps.get
+    - run: mix test
+
   publish:
+    needs: test
+    if: github.event_name == 'push'
     uses: IEEE-TAMU/.github/.github/workflows/docker-publish.yaml@master
     with:
       image-name: portal
