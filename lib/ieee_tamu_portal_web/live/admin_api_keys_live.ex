@@ -8,7 +8,7 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
   def mount(_params, _session, socket) do
     socket =
       socket
-      |> assign(:page_title, "API Keys")
+      |> assign(:page_title, "IEEE Admin - API Keys")
       |> assign(:api_keys, Api.list_api_keys())
       |> assign(:show_form, false)
       |> assign(:form, to_form(Api.change_api_key(%ApiKey{})))
@@ -111,84 +111,93 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="px-4 sm:px-6 lg:px-8">
-      <div class="sm:flex sm:items-center">
-        <div class="sm:flex-auto">
-          <h1 class="text-2xl font-semibold leading-6 text-gray-900">API Keys</h1>
-          <p class="mt-2 text-sm text-gray-700">
-            Manage API keys for external integrations and services.
-          </p>
-        </div>
-        <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-          <button
-            :if={!@show_form}
-            phx-click="show_form"
-            type="button"
-            class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            Create API Key
-          </button>
-        </div>
-      </div>
+    <.header>
+      API Keys
+      <:subtitle>Manage API keys for external integrations and services.</:subtitle>
+      <:actions>
+        <button
+          :if={!@show_form}
+          phx-click="show_form"
+          type="button"
+          class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+        >
+          Create API Key
+        </button>
+      </:actions>
+    </.header>
 
-      <div :if={@new_token} class="mt-6 rounded-md bg-green-50 p-4">
-        <div class="flex">
-          <div class="flex-shrink-0">
-            <.icon name="hero-check-circle" class="h-5 w-5 text-green-400" />
+    <div :if={@new_token} class="mt-6 rounded-md bg-green-50 p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <.icon name="hero-check-circle" class="h-5 w-5 text-green-400" />
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-green-800">
+            API Key Created Successfully!
+          </h3>
+          <div class="mt-2 text-sm text-green-700">
+            <p class="font-semibold">Your new API key (save this, it won't be shown again):</p>
+            <div class="mt-2 font-mono text-xs bg-green-100 p-2 rounded border break-all">
+              {@new_token}
+            </div>
           </div>
-          <div class="ml-3">
-            <h3 class="text-sm font-medium text-green-800">
-              API Key Created Successfully!
-            </h3>
-            <div class="mt-2 text-sm text-green-700">
-              <p class="font-semibold">Your new API key (save this, it won't be shown again):</p>
-              <div class="mt-2 font-mono text-xs bg-green-100 p-2 rounded border break-all">
-                {@new_token}
-              </div>
-            </div>
-            <div class="mt-4">
-              <button
-                phx-click="hide_form"
-                type="button"
-                class="text-sm font-medium text-green-800 underline"
-              >
-                Dismiss
-              </button>
-            </div>
+          <div class="mt-4">
+            <button
+              phx-click="hide_form"
+              type="button"
+              class="text-sm font-medium text-green-800 underline"
+            >
+              Dismiss
+            </button>
           </div>
         </div>
       </div>
+    </div>
 
-      <div :if={@show_form and !@new_token} class="mt-6">
-        <div class="rounded-lg border border-gray-200 bg-white p-6">
-          <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Create New API Key</h3>
+    <div :if={@show_form and !@new_token} class="mt-6">
+      <div class="rounded-lg border border-gray-200 bg-white p-6">
+        <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Create New API Key</h3>
 
-          <.simple_form for={@form} id="create_api_key_form" phx-change="validate" phx-submit="save">
+        <.simple_form for={@form} id="create_api_key_form" phx-change="validate" phx-submit="save">
+          <div class="flex items-end gap-4">
             <.input
               field={@form[:name]}
               type="text"
               label="Name"
               placeholder="e.g., Mobile App Integration"
             />
-
-            <div class="flex items-center gap-4">
-              <.button phx-disable-with="Creating...">Create API Key</.button>
-              <button
-                phx-click="hide_form"
-                type="button"
-                class="text-sm font-medium text-gray-500 hover:text-gray-700"
-              >
-                Cancel
-              </button>
-            </div>
-          </.simple_form>
-        </div>
+            <.button phx-disable-with="Creating...">Create API Key</.button>
+            <button
+              phx-click="hide_form"
+              type="button"
+              class="text-sm font-medium text-gray-500 hover:text-gray-700 mb-2"
+            >
+              Cancel
+            </button>
+          </div>
+        </.simple_form>
       </div>
+    </div>
 
-      <div class="mt-8 flow-root">
-        <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+    <div class="mt-8 flow-root">
+      <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+          <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+            <%= if @api_keys == [] do %>
+              <.empty_state
+                icon="hero-key"
+                title="No API keys"
+                subtitle="Get started by creating your first API key."
+              >
+                <button
+                  phx-click="show_form"
+                  type="button"
+                  class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                >
+                  <.icon name="hero-plus" class="-ml-0.5 mr-1.5 h-5 w-5" /> Create API Key
+                </button>
+              </.empty_state>
+            <% else %>
               <table class="min-w-full divide-y divide-gray-300">
                 <thead class="bg-gray-50">
                   <tr>
@@ -290,22 +299,7 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLive do
                   </tr>
                 </tbody>
               </table>
-
-              <div :if={@api_keys == []} class="text-center py-12 bg-white">
-                <.icon name="hero-key" class="mx-auto h-12 w-12 text-gray-400" />
-                <h3 class="mt-2 text-sm font-semibold text-gray-900">No API keys</h3>
-                <p class="mt-1 text-sm text-gray-500">Get started by creating your first API key.</p>
-                <div class="mt-6">
-                  <button
-                    phx-click="show_form"
-                    type="button"
-                    class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                  >
-                    <.icon name="hero-plus" class="-ml-0.5 mr-1.5 h-5 w-5" /> Create API Key
-                  </button>
-                </div>
-              </div>
-            </div>
+            <% end %>
           </div>
         </div>
       </div>

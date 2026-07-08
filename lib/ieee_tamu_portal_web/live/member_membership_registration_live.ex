@@ -390,7 +390,11 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
                           <div class="flex items-start justify-between gap-4">
                             <div class="flex-1">
                               <div class="text-sm text-gray-600">
-                                {format_local(event.dtstart, @time_zone, "%A, %B %d at %I:%M %p")}
+                                {IeeeTamuPortalWeb.TimezoneHelper.format_local(
+                                  event.dtstart,
+                                  @time_zone,
+                                  "%A, %B %d at %I:%M %p"
+                                )}
                               </div>
                               <div class="text-base font-medium text-gray-900">{event.summary}</div>
                               <div :if={event.description} class="text-sm text-gray-700 mt-1">
@@ -531,7 +535,11 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
           <div class="mt-4 text-left">
             <h4 class="font-semibold text-gray-900">{@selected_event.summary}</h4>
             <p class="text-sm text-gray-600 mt-1">
-              {format_local(@selected_event.dtstart, @time_zone, "%A, %B %d at %I:%M %p")}
+              {IeeeTamuPortalWeb.TimezoneHelper.format_local(
+                @selected_event.dtstart,
+                @time_zone,
+                "%A, %B %d at %I:%M %p"
+              )}
             </p>
             <p :if={@selected_event.location} class="text-sm text-gray-600">
               Location: {@selected_event.location}
@@ -628,13 +636,6 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
       <p>You are checked into {@event_name}.</p>
     </div>
     """
-  end
-
-  defp format_local(%DateTime{} = dt, tz, pattern) do
-    case DateTime.shift_zone(dt, tz) do
-      {:ok, local} -> Calendar.strftime(local, pattern)
-      _ -> Calendar.strftime(dt, pattern)
-    end
   end
 
   defp refresh_upcoming_events(events, member_id) do

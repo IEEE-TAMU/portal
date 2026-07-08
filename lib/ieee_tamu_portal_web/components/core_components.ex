@@ -220,9 +220,9 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
   def simple_form(assigns) do
     ~H"""
     <.form :let={f} for={@for} as={@as} {@rest}>
-      <div class="mt-10 space-y-8">
+      <div class="mt-6 space-y-6">
         {render_slot(@inner_block, f)}
-        <div :for={action <- @actions} class="mt-2 flex items-center justify-between gap-6">
+        <div :for={action <- @actions} class="flex items-center justify-between gap-6">
           {render_slot(action, f)}
         </div>
       </div>
@@ -614,9 +614,9 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
 
   def header(assigns) do
     ~H"""
-    <header class={[@actions != [] && "flex items-center justify-between gap-6", @class]}>
+    <header class={["mb-6", @actions != [] && "flex items-center justify-between gap-6", @class]}>
       <div>
-        <h1 class="text-lg font-semibold leading-8 text-zinc-800">
+        <h1 class="text-xl font-semibold leading-8 text-zinc-800">
           {render_slot(@inner_block)}
         </h1>
         <p :if={@subtitle != []} class="mt-2 text-sm leading-6 text-zinc-600">
@@ -756,6 +756,36 @@ defmodule IeeeTamuPortalWeb.CoreComponents do
         <.icon name="hero-arrow-left-solid" class="h-3 w-3" />
         {render_slot(@inner_block)}
       </.link>
+    </div>
+    """
+  end
+
+  @doc """
+  Renders a standardized empty state placeholder.
+
+  ## Examples
+
+      <.empty_state icon="hero-users" title="No members" subtitle="No members match your search criteria." />
+
+      <.empty_state icon="hero-key" title="No API keys" subtitle="Get started by creating your first API key.">
+        <button phx-click="show_form">Create API Key</button>
+      </.empty_state>
+  """
+  attr :icon, :string, required: true
+  attr :title, :string, required: true
+  attr :subtitle, :string, default: nil
+
+  slot :inner_block, doc: "optional action buttons or links"
+
+  def empty_state(assigns) do
+    ~H"""
+    <div class="text-center py-12 bg-white">
+      <.icon name={@icon} class="mx-auto h-12 w-12 text-gray-400" />
+      <h3 class="mt-2 text-sm font-semibold text-gray-900">{@title}</h3>
+      <p :if={@subtitle} class="mt-1 text-sm text-gray-500">{@subtitle}</p>
+      <div :if={@inner_block != []} class="mt-6">
+        {render_slot(@inner_block)}
+      </div>
     </div>
     """
   end

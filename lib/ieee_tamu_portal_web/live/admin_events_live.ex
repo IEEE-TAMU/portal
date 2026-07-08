@@ -34,7 +34,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
        show_rsvp_qr: false,
        event_rsvps: [],
        event_checkins: [],
-       page_title: "Manage Events",
+       page_title: "IEEE Admin - Events",
        time_zone: time_zone
      )}
   end
@@ -269,521 +269,529 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="mb-8">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-3xl font-bold text-gray-900">Events Management</h1>
-            <p class="text-gray-600 mt-2">Create and manage events</p>
-          </div>
-          <.link
-            navigate={~p"/admin"}
-            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <.icon name="hero-arrow-left" class="w-4 h-4 mr-2" /> Back to Dashboard
-          </.link>
-        </div>
-      </div>
-
-      <!-- Create Event Form -->
-      <div class="flex justify-end mb-6">
+    <.header>
+      Events Management
+      <:subtitle>Create and manage events</:subtitle>
+      <:actions>
         <.button phx-click="show_create_form" class="bg-blue-600 hover:bg-blue-700">
-          <.icon name="hero-plus" class="w-4 h-4 mr-2" /> Create New Event
+          Create New Event
         </.button>
-      </div>
+      </:actions>
+    </.header>
 
-      <!-- Create Event Modal -->
-      <div :if={@show_create_form}>
-        <.modal
-          id="create-event-modal"
-          on_cancel={JS.push("hide_create_form")}
-          show={@show_create_form}
-        >
-          <div class="p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">Create New Event</h2>
-            <.simple_form
-              for={@create_form}
-              id="create_event_form"
-              phx-change="validate_create"
-              phx-submit="create_event"
-              class="space-y-6"
-            >
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <.input field={@create_form[:summary]} type="text" label="Event Title" required />
-                <.input field={@create_form[:organizer]} type="text" label="Organizer" />
-              </div>
+    <!-- Create Event Modal -->
+    <div :if={@show_create_form}>
+      <.modal
+        id="create-event-modal"
+        on_cancel={JS.push("hide_create_form")}
+        show={@show_create_form}
+      >
+        <div class="p-6">
+          <h2 class="text-lg font-medium text-gray-900 mb-4">Create New Event</h2>
+          <.simple_form
+            for={@create_form}
+            id="create_event_form"
+            phx-change="validate_create"
+            phx-submit="create_event"
+            class="space-y-6"
+          >
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <.input field={@create_form[:summary]} type="text" label="Event Title" required />
+              <.input field={@create_form[:organizer]} type="text" label="Organizer" />
+            </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <.input
-                  field={@create_form[:dtstart]}
-                  type="datetime-local"
-                  label="Start Date & Time"
-                  value={@create_local_params["dtstart"]}
-                  required
-                />
-                <.input
-                  field={@create_form[:dtend]}
-                  type="datetime-local"
-                  label="End Date & Time"
-                  value={@create_local_params["dtend"]}
-                />
-              </div>
-
-              <.input field={@create_form[:location]} type="text" label="Location" />
-              <.input field={@create_form[:description]} type="textarea" label="Description" rows="4" />
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <.input
-                field={@create_form[:rsvpable]}
-                type="checkbox"
-                label="Allow RSVPs"
+                field={@create_form[:dtstart]}
+                type="datetime-local"
+                label="Start Date & Time"
+                value={@create_local_params["dtstart"]}
+                required
               />
               <.input
-                :if={@create_local_params["rsvpable"] != "false"}
-                field={@create_form[:rsvp_limit]}
+                field={@create_form[:dtend]}
+                type="datetime-local"
+                label="End Date & Time"
+                value={@create_local_params["dtend"]}
+              />
+            </div>
+
+            <.input field={@create_form[:location]} type="text" label="Location" />
+            <.input field={@create_form[:description]} type="textarea" label="Description" rows="4" />
+            <.input
+              field={@create_form[:rsvpable]}
+              type="checkbox"
+              label="Allow RSVPs"
+            />
+            <.input
+              :if={@create_local_params["rsvpable"] != "false"}
+              field={@create_form[:rsvp_limit]}
+              type="number"
+              label="RSVP Limit (optional)"
+              placeholder="Leave blank for unlimited"
+            />
+
+            <div class="flex justify-end space-x-3">
+              <.button
+                type="button"
+                phx-click="hide_create_form"
+                class="bg-gray-200 text-gray-800 hover:bg-gray-300"
+              >
+                Cancel
+              </.button>
+              <.button type="submit" class="bg-blue-600 hover:bg-blue-700">
+                Create Event
+              </.button>
+            </div>
+          </.simple_form>
+        </div>
+      </.modal>
+    </div>
+
+    <!-- Edit Event Modal -->
+    <div :if={@show_edit_form}>
+      <.modal id="edit-event-modal" on_cancel={JS.push("cancel_edit")} show={@show_edit_form}>
+        <div class="p-6">
+          <h2 class="text-lg font-medium text-gray-900 mb-4">Edit Event</h2>
+          <.simple_form
+            for={@edit_form}
+            id="edit_event_form"
+            phx-change="validate_edit"
+            phx-submit="update_event"
+            class="space-y-4"
+          >
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <.input field={@edit_form[:summary]} type="text" label="Event Title" />
+              <.input field={@edit_form[:organizer]} type="text" label="Organizer" />
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <.input
+                field={@edit_form[:dtstart]}
+                type="datetime-local"
+                label="Start Date & Time"
+                value={
+                  @edit_local_params["dtstart"] ||
+                    IeeeTamuPortalWeb.TimezoneHelper.to_local_naive_input(
+                      @edit_event && @edit_event.dtstart,
+                      @time_zone
+                    )
+                }
+              />
+              <.input
+                field={@edit_form[:dtend]}
+                type="datetime-local"
+                label="End Date & Time"
+                value={
+                  @edit_local_params["dtend"] ||
+                    IeeeTamuPortalWeb.TimezoneHelper.to_local_naive_input(
+                      @edit_event && @edit_event.dtend,
+                      @time_zone
+                    )
+                }
+              />
+            </div>
+
+            <.input field={@edit_form[:location]} type="text" label="Location" />
+            <.input field={@edit_form[:description]} type="textarea" label="Description" rows="3" />
+
+            <.input
+              field={@edit_form[:rsvpable]}
+              type="checkbox"
+              label="Allow RSVPs"
+            />
+            <div :if={
+              @edit_local_params["rsvpable"] != "false" and
+                (@edit_local_params["rsvpable"] == "true" or @edit_event.rsvpable)
+            }>
+              <.input
+                field={@edit_form[:rsvp_limit]}
                 type="number"
                 label="RSVP Limit (optional)"
                 placeholder="Leave blank for unlimited"
               />
-
-              <div class="flex justify-end space-x-3">
-                <.button
-                  type="button"
-                  phx-click="hide_create_form"
-                  class="bg-gray-200 text-gray-800 hover:bg-gray-300"
-                >
-                  Cancel
-                </.button>
-                <.button type="submit" class="bg-blue-600 hover:bg-blue-700">
-                  Create Event
-                </.button>
-              </div>
-            </.simple_form>
-          </div>
-        </.modal>
-      </div>
-
-      <!-- Edit Event Modal -->
-      <div :if={@show_edit_form}>
-        <.modal id="edit-event-modal" on_cancel={JS.push("cancel_edit")} show={@show_edit_form}>
-          <div class="p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">Edit Event</h2>
-            <.simple_form
-              for={@edit_form}
-              id="edit_event_form"
-              phx-change="validate_edit"
-              phx-submit="update_event"
-              class="space-y-4"
-            >
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <.input field={@edit_form[:summary]} type="text" label="Event Title" />
-                <.input field={@edit_form[:organizer]} type="text" label="Organizer" />
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <.input
-                  field={@edit_form[:dtstart]}
-                  type="datetime-local"
-                  label="Start Date & Time"
-                  value={
-                    @edit_local_params["dtstart"] ||
-                      to_local_naive_input(@edit_event && @edit_event.dtstart, @time_zone)
-                  }
-                />
-                <.input
-                  field={@edit_form[:dtend]}
-                  type="datetime-local"
-                  label="End Date & Time"
-                  value={
-                    @edit_local_params["dtend"] ||
-                      to_local_naive_input(@edit_event && @edit_event.dtend, @time_zone)
-                  }
-                />
-              </div>
-
-              <.input field={@edit_form[:location]} type="text" label="Location" />
-              <.input field={@edit_form[:description]} type="textarea" label="Description" rows="3" />
-
-              <.input
-                field={@edit_form[:rsvpable]}
-                type="checkbox"
-                label="Allow RSVPs"
-              />
-              <div :if={
-                @edit_local_params["rsvpable"] != "false" and
-                  (@edit_local_params["rsvpable"] == "true" or @edit_event.rsvpable)
-              }>
-                <.input
-                  field={@edit_form[:rsvp_limit]}
-                  type="number"
-                  label="RSVP Limit (optional)"
-                  placeholder="Leave blank for unlimited"
-                />
-                <%= if @edit_event.rsvp_count > 0 do %>
-                  <p class="mt-1 text-sm text-gray-600">
-                    Current RSVPs: <strong>{@edit_event.rsvp_count}</strong>
-                    <%= if @edit_event.rsvp_limit do %>
-                      (limit cannot be set below this number)
-                    <% end %>
-                  </p>
-                <% end %>
-              </div>
-
-              <div class="flex justify-end space-x-3">
-                <.button
-                  type="button"
-                  phx-click="cancel_edit"
-                  class="bg-gray-200 text-gray-800 hover:bg-gray-300"
-                >
-                  Cancel
-                </.button>
-                <.button type="submit" class="bg-green-600 hover:bg-green-700">
-                  Update Event
-                </.button>
-              </div>
-            </.simple_form>
-          </div>
-        </.modal>
-      </div>
-
-      <!-- RSVPs List Modal -->
-      <div :if={@show_rsvp_list}>
-        <.modal id="rsvps-modal" on_cancel={JS.push("close_lists")} show={@show_rsvp_list}>
-          <div class="p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">
-              RSVPs for "{@selected_event.summary}"
-            </h2>
-            <div :if={@event_rsvps == []} class="text-center text-gray-500 py-8">
-              No RSVPs found for this event.
+              <%= if @edit_event.rsvp_count > 0 do %>
+                <p class="mt-1 text-sm text-gray-600">
+                  Current RSVPs: <strong>{@edit_event.rsvp_count}</strong>
+                  <%= if @edit_event.rsvp_limit do %>
+                    (limit cannot be set below this number)
+                  <% end %>
+                </p>
+              <% end %>
             </div>
-            <div :if={@event_rsvps != []} class="space-y-3 max-h-96 overflow-y-auto">
-              <div
-                :for={rsvp <- @event_rsvps}
-                class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div>
-                  <div class="font-medium text-gray-900">
-                    <%= if rsvp.preferred_name && rsvp.preferred_name != "" do %>
-                      {rsvp.preferred_name} ({rsvp.first_name} {rsvp.last_name})
-                    <% else %>
-                      {rsvp.first_name} {rsvp.last_name}
-                    <% end %>
-                  </div>
-                  <div class="text-sm text-gray-600">{rsvp.email}</div>
-                </div>
-                <div class="text-sm text-gray-500">
-                  {format_local(rsvp.inserted_at, @time_zone, "%B %d, %Y at %I:%M %p")}
-                </div>
-              </div>
-            </div>
-            <div class="flex justify-between items-center mt-6">
-              <div class="text-sm text-gray-600 whitespace-nowrap">
-                <span class="invisible md:visible">Total</span>
-                RSVPs: <strong>{length(@event_rsvps)}</strong>
-              </div>
-              <div class="flex space-x-3">
-                <.link
-                  :if={length(@event_rsvps) > 0}
-                  href={~p"/admin/download-event-rsvps/#{@selected_event.uid}"}
-                  target="_blank"
-                  class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
-                >
-                  <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download
-                </.link>
-                <.button
-                  type="button"
-                  phx-click="close_lists"
-                  class="bg-gray-200 text-gray-800 hover:bg-gray-300"
-                >
-                  Close
-                </.button>
-              </div>
-            </div>
-          </div>
-        </.modal>
-      </div>
 
-      <!-- Checkins List Modal -->
-      <div :if={@show_checkin_list}>
-        <.modal id="checkins-modal" on_cancel={JS.push("close_lists")} show={@show_checkin_list}>
-          <div class="p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">
-              Checkins for "{@selected_event.summary}"
-            </h2>
-            <div :if={@event_checkins == []} class="text-center text-gray-500 py-8">
-              No checkins found for this event.
-            </div>
-            <div :if={@event_checkins != []} class="space-y-3 max-h-96 overflow-y-auto">
-              <div
-                :for={checkin <- @event_checkins}
-                class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div>
-                  <div class="font-medium text-gray-900">
-                    <%= if checkin.preferred_name && checkin.preferred_name != "" do %>
-                      {checkin.preferred_name} ({checkin.first_name} {checkin.last_name})
-                    <% else %>
-                      {checkin.first_name} {checkin.last_name}
-                    <% end %>
-                  </div>
-                  <div class="text-sm text-gray-600">{checkin.email}</div>
-                </div>
-                <div class="text-sm text-gray-500">
-                  {format_local(checkin.inserted_at, @time_zone, "%B %d, %Y at %I:%M %p")}
-                </div>
-              </div>
-            </div>
-            <div class="flex justify-between items-center mt-6">
-              <div class="text-sm text-gray-600">
-                <span class="invisible md:visible">Total</span>Checkins:
-                <strong>{length(@event_checkins)}</strong>
-              </div>
-              <div class="flex space-x-3">
-                <.link
-                  :if={length(@event_checkins) > 0}
-                  href={~p"/admin/download-event-checkins/#{@selected_event.uid}"}
-                  target="_blank"
-                  class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
-                >
-                  <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download CSV
-                </.link>
-                <.button
-                  type="button"
-                  phx-click="close_lists"
-                  class="bg-gray-200 text-gray-800 hover:bg-gray-300"
-                >
-                  Close
-                </.button>
-              </div>
-            </div>
-          </div>
-        </.modal>
-      </div>
-
-      <!-- RSVP QR Code Modal -->
-      <div :if={@show_rsvp_qr}>
-        <.modal id="rsvp-qr-modal" on_cancel={JS.push("close_rsvp_qr")} show={@show_rsvp_qr}>
-          <div class="p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">
-              RSVP QR Code for "{@rsvp_qr_event.summary}"
-            </h2>
-            <p class="text-gray-600 mb-4">
-              Members can scan this QR code to quickly RSVP to the event.
-            </p>
-            <div class="flex justify-center mb-6">
-              <div
-                id="rsvp-qrcode"
-                phx-update="ignore"
-                phx-hook=".QRDownload"
-                aria-label="RSVP QR Code"
-                class="p-2 sm:p-4 bg-white border border-gray-200 rounded-lg w-full max-w-[250px] sm:max-w-xs [&>svg]:w-full [&>svg]:h-auto [&>svg]:max-w-full"
-              >
-                {Phoenix.HTML.raw(@rsvp_qr_svg)}
-              </div>
-            </div>
-            <script :type={Phoenix.LiveView.ColocatedHook} name=".QRDownload">
-              export default {
-                mounted() {
-                  this.handleEvent('download_qr_png', ({filename}) => {
-                    const svgElement = this.el.querySelector('svg')
-                    if (!svgElement) return
-
-                    // Create a canvas element
-                    const canvas = document.createElement('canvas')
-                    const ctx = canvas.getContext('2d')
-
-                    // Get SVG dimensions
-                    const svgData = new XMLSerializer().serializeToString(svgElement)
-                    const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'})
-                    const url = URL.createObjectURL(svgBlob)
-
-                    const img = new Image()
-                    img.onload = function() {
-                      // Set canvas size to match image
-                      canvas.width = img.naturalWidth || 512
-                      canvas.height = img.naturalHeight || 512
-
-                      // Fill canvas with white background
-                      ctx.fillStyle = 'white'
-                      ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-                      // Draw the SVG image
-                      ctx.drawImage(img, 0, 0)
-
-                      // Convert to PNG and download
-                      canvas.toBlob(function(blob) {
-                        const link = document.createElement('a')
-                        link.download = filename || 'qr-code.png'
-                        link.href = URL.createObjectURL(blob)
-                        document.body.appendChild(link)
-                        link.click()
-                        document.body.removeChild(link)
-                        URL.revokeObjectURL(link.href)
-                      }, 'image/png')
-
-                      URL.revokeObjectURL(url)
-                    }
-
-                    img.onerror = function() {
-                      console.error('Failed to load SVG for PNG conversion')
-                      URL.revokeObjectURL(url)
-                    }
-
-                    img.src = url
-                  })
-                }
-              }
-            </script>
-            <div class="bg-gray-50 rounded-md p-3 mb-4">
-              <p class="text-sm text-gray-600">
-                <strong>QR Code URL:</strong>
-                <br />
-                <code class="text-xs break-all">
-                  {url(~p"/members/registration?rsvp=#{@rsvp_qr_event.uid}")}
-                </code>
-              </p>
-            </div>
-            <div class="flex justify-between">
+            <div class="flex justify-end space-x-3">
               <.button
                 type="button"
-                phx-click="download_rsvp_qr_png"
-                phx-value-uid={@rsvp_qr_event.uid}
-                class="bg-green-600 hover:bg-green-700 text-white"
+                phx-click="cancel_edit"
+                class="bg-gray-200 text-gray-800 hover:bg-gray-300"
               >
-                <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download PNG
+                Cancel
               </.button>
+              <.button type="submit" class="bg-green-600 hover:bg-green-700">
+                Update Event
+              </.button>
+            </div>
+          </.simple_form>
+        </div>
+      </.modal>
+    </div>
+
+    <!-- RSVPs List Modal -->
+    <div :if={@show_rsvp_list}>
+      <.modal id="rsvps-modal" on_cancel={JS.push("close_lists")} show={@show_rsvp_list}>
+        <div class="p-6">
+          <h2 class="text-lg font-medium text-gray-900 mb-4">
+            RSVPs for "{@selected_event.summary}"
+          </h2>
+          <div :if={@event_rsvps == []} class="text-center text-gray-500 py-8">
+            No RSVPs found for this event.
+          </div>
+          <div :if={@event_rsvps != []} class="space-y-3 max-h-96 overflow-y-auto">
+            <div
+              :for={rsvp <- @event_rsvps}
+              class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+            >
+              <div>
+                <div class="font-medium text-gray-900">
+                  <%= if rsvp.preferred_name && rsvp.preferred_name != "" do %>
+                    {rsvp.preferred_name} ({rsvp.first_name} {rsvp.last_name})
+                  <% else %>
+                    {rsvp.first_name} {rsvp.last_name}
+                  <% end %>
+                </div>
+                <div class="text-sm text-gray-600">{rsvp.email}</div>
+              </div>
+              <div class="text-sm text-gray-500">
+                {IeeeTamuPortalWeb.TimezoneHelper.format_local(
+                  rsvp.inserted_at,
+                  @time_zone,
+                  "%B %d, %Y at %I:%M %p"
+                )}
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-between items-center mt-6">
+            <div class="text-sm text-gray-600 whitespace-nowrap">
+              <span class="invisible md:visible">Total</span>
+              RSVPs: <strong>{length(@event_rsvps)}</strong>
+            </div>
+            <div class="flex space-x-3">
+              <.link
+                :if={length(@event_rsvps) > 0}
+                href={~p"/admin/download-event-rsvps/#{@selected_event.uid}"}
+                target="_blank"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+              >
+                <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download
+              </.link>
               <.button
                 type="button"
-                phx-click="close_rsvp_qr"
+                phx-click="close_lists"
                 class="bg-gray-200 text-gray-800 hover:bg-gray-300"
               >
                 Close
               </.button>
             </div>
           </div>
-        </.modal>
+        </div>
+      </.modal>
+    </div>
+
+    <!-- Checkins List Modal -->
+    <div :if={@show_checkin_list}>
+      <.modal id="checkins-modal" on_cancel={JS.push("close_lists")} show={@show_checkin_list}>
+        <div class="p-6">
+          <h2 class="text-lg font-medium text-gray-900 mb-4">
+            Checkins for "{@selected_event.summary}"
+          </h2>
+          <div :if={@event_checkins == []} class="text-center text-gray-500 py-8">
+            No checkins found for this event.
+          </div>
+          <div :if={@event_checkins != []} class="space-y-3 max-h-96 overflow-y-auto">
+            <div
+              :for={checkin <- @event_checkins}
+              class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+            >
+              <div>
+                <div class="font-medium text-gray-900">
+                  <%= if checkin.preferred_name && checkin.preferred_name != "" do %>
+                    {checkin.preferred_name} ({checkin.first_name} {checkin.last_name})
+                  <% else %>
+                    {checkin.first_name} {checkin.last_name}
+                  <% end %>
+                </div>
+                <div class="text-sm text-gray-600">{checkin.email}</div>
+              </div>
+              <div class="text-sm text-gray-500">
+                {IeeeTamuPortalWeb.TimezoneHelper.format_local(
+                  checkin.inserted_at,
+                  @time_zone,
+                  "%B %d, %Y at %I:%M %p"
+                )}
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-between items-center mt-6">
+            <div class="text-sm text-gray-600">
+              <span class="invisible md:visible">Total</span>Checkins:
+              <strong>{length(@event_checkins)}</strong>
+            </div>
+            <div class="flex space-x-3">
+              <.link
+                :if={length(@event_checkins) > 0}
+                href={~p"/admin/download-event-checkins/#{@selected_event.uid}"}
+                target="_blank"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
+              >
+                <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download CSV
+              </.link>
+              <.button
+                type="button"
+                phx-click="close_lists"
+                class="bg-gray-200 text-gray-800 hover:bg-gray-300"
+              >
+                Close
+              </.button>
+            </div>
+          </div>
+        </div>
+      </.modal>
+    </div>
+
+    <!-- RSVP QR Code Modal -->
+    <div :if={@show_rsvp_qr}>
+      <.modal id="rsvp-qr-modal" on_cancel={JS.push("close_rsvp_qr")} show={@show_rsvp_qr}>
+        <div class="p-6">
+          <h2 class="text-lg font-medium text-gray-900 mb-4">
+            RSVP QR Code for "{@rsvp_qr_event.summary}"
+          </h2>
+          <p class="text-gray-600 mb-4">
+            Members can scan this QR code to quickly RSVP to the event.
+          </p>
+          <div class="flex justify-center mb-6">
+            <div
+              id="rsvp-qrcode"
+              phx-update="ignore"
+              phx-hook=".QRDownload"
+              aria-label="RSVP QR Code"
+              class="p-2 sm:p-4 bg-white border border-gray-200 rounded-lg w-full max-w-[250px] sm:max-w-xs [&>svg]:w-full [&>svg]:h-auto [&>svg]:max-w-full"
+            >
+              {Phoenix.HTML.raw(@rsvp_qr_svg)}
+            </div>
+          </div>
+          <script :type={Phoenix.LiveView.ColocatedHook} name=".QRDownload">
+            export default {
+              mounted() {
+                this.handleEvent('download_qr_png', ({filename}) => {
+                  const svgElement = this.el.querySelector('svg')
+                  if (!svgElement) return
+
+                  // Create a canvas element
+                  const canvas = document.createElement('canvas')
+                  const ctx = canvas.getContext('2d')
+
+                  // Get SVG dimensions
+                  const svgData = new XMLSerializer().serializeToString(svgElement)
+                  const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'})
+                  const url = URL.createObjectURL(svgBlob)
+
+                  const img = new Image()
+                  img.onload = function() {
+                    // Set canvas size to match image
+                    canvas.width = img.naturalWidth || 512
+                    canvas.height = img.naturalHeight || 512
+
+                    // Fill canvas with white background
+                    ctx.fillStyle = 'white'
+                    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+                    // Draw the SVG image
+                    ctx.drawImage(img, 0, 0)
+
+                    // Convert to PNG and download
+                    canvas.toBlob(function(blob) {
+                      const link = document.createElement('a')
+                      link.download = filename || 'qr-code.png'
+                      link.href = URL.createObjectURL(blob)
+                      document.body.appendChild(link)
+                      link.click()
+                      document.body.removeChild(link)
+                      URL.revokeObjectURL(link.href)
+                    }, 'image/png')
+
+                    URL.revokeObjectURL(url)
+                  }
+
+                  img.onerror = function() {
+                    console.error('Failed to load SVG for PNG conversion')
+                    URL.revokeObjectURL(url)
+                  }
+
+                  img.src = url
+                })
+              }
+            }
+          </script>
+          <div class="bg-gray-50 rounded-md p-3 mb-4">
+            <p class="text-sm text-gray-600">
+              <strong>QR Code URL:</strong>
+              <br />
+              <code class="text-xs break-all">
+                {url(~p"/members/registration?rsvp=#{@rsvp_qr_event.uid}")}
+              </code>
+            </p>
+          </div>
+          <div class="flex justify-between">
+            <.button
+              type="button"
+              phx-click="download_rsvp_qr_png"
+              phx-value-uid={@rsvp_qr_event.uid}
+              class="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download PNG
+            </.button>
+            <.button
+              type="button"
+              phx-click="close_rsvp_qr"
+              class="bg-gray-200 text-gray-800 hover:bg-gray-300"
+            >
+              Close
+            </.button>
+          </div>
+        </div>
+      </.modal>
+    </div>
+
+    <!-- Events List -->
+    <div class="bg-white rounded-lg shadow">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">
+          Existing Events ({length(@events)})
+        </h2>
       </div>
 
-      <!-- Events List -->
-      <div class="bg-white rounded-lg shadow">
-        <div class="px-6 py-4 border-b border-gray-200">
-          <h2 class="text-lg font-medium text-gray-900">
-            Existing Events ({length(@events)})
-          </h2>
-        </div>
+      <div :if={@events == []} class="p-6 text-center text-gray-500">
+        No events found. Create your first event above.
+      </div>
 
-        <div :if={@events == []} class="p-6 text-center text-gray-500">
-          No events found. Create your first event above.
-        </div>
-
-        <div :if={@events != []} class="divide-y divide-gray-200">
-          <div :for={event <- @events} class="p-6">
-            <div>
-              <!-- Display Event -->
-              <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                <div class="flex-1">
-                  <div class="flex items-center gap-4 mb-2">
-                    <h3 class="text-lg font-medium text-gray-900">{event.summary}</h3>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      Event
+      <div :if={@events != []} class="divide-y divide-gray-200">
+        <div :for={event <- @events} class="p-6">
+          <div>
+            <!-- Display Event -->
+            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-4 mb-2">
+                  <h3 class="text-lg font-medium text-gray-900">{event.summary}</h3>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Event
+                  </span>
+                  <%= if event.rsvp_limit && event.rsvp_count >= event.rsvp_limit do %>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      At Capacity
                     </span>
-                    <%= if event.rsvp_limit && event.rsvp_count >= event.rsvp_limit do %>
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        At Capacity
-                      </span>
-                    <% end %>
+                  <% end %>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
+                  <div class="flex items-center">
+                    <.icon name="hero-calendar" class="w-4 h-4 mr-2" />
+                    <span>
+                      <%= if event.dtstart do %>
+                        {IeeeTamuPortalWeb.TimezoneHelper.format_local(
+                          event.dtstart,
+                          @time_zone,
+                          "%B %d, %Y at %I:%M %p"
+                        )}
+                      <% end %>
+                      <%= if event.dtend do %>
+                        - {IeeeTamuPortalWeb.TimezoneHelper.format_local(
+                          event.dtend,
+                          @time_zone,
+                          "%I:%M %p"
+                        )}
+                      <% end %>
+                    </span>
                   </div>
 
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
-                    <div class="flex items-center">
-                      <.icon name="hero-calendar" class="w-4 h-4 mr-2" />
-                      <span>
-                        <%= if event.dtstart do %>
-                          {format_local(event.dtstart, @time_zone, "%B %d, %Y at %I:%M %p")}
-                        <% end %>
-                        <%= if event.dtend do %>
-                          - {format_local(event.dtend, @time_zone, "%I:%M %p")}
-                        <% end %>
-                      </span>
-                    </div>
-
-                    <div :if={event.location} class="flex items-center">
-                      <.icon name="hero-map-pin" class="w-4 h-4 mr-2" />
-                      <span>{event.location}</span>
-                    </div>
-
-                    <div :if={event.organizer} class="flex items-center">
-                      <.icon name="hero-user" class="w-4 h-4 mr-2" />
-                      <span>{event.organizer}</span>
-                    </div>
-
-                    <div :if={event.rsvp_limit} class="flex items-center">
-                      <.icon name="hero-users" class="w-4 h-4 mr-2" />
-                      <span>RSVPs: {event.rsvp_count}/{event.rsvp_limit}</span>
-                    </div>
-
-                    <div :if={!event.rsvp_limit && event.rsvp_count > 0} class="flex items-center">
-                      <.icon name="hero-users" class="w-4 h-4 mr-2" />
-                      <span>RSVPs: {event.rsvp_count} (unlimited)</span>
-                    </div>
+                  <div :if={event.location} class="flex items-center">
+                    <.icon name="hero-map-pin" class="w-4 h-4 mr-2" />
+                    <span>{event.location}</span>
                   </div>
 
-                  <div :if={event.description} class="text-sm text-gray-700 mb-3">
-                    <p>{event.description}</p>
+                  <div :if={event.organizer} class="flex items-center">
+                    <.icon name="hero-user" class="w-4 h-4 mr-2" />
+                    <span>{event.organizer}</span>
+                  </div>
+
+                  <div :if={event.rsvp_limit} class="flex items-center">
+                    <.icon name="hero-users" class="w-4 h-4 mr-2" />
+                    <span>RSVPs: {event.rsvp_count}/{event.rsvp_limit}</span>
+                  </div>
+
+                  <div :if={!event.rsvp_limit && event.rsvp_count > 0} class="flex items-center">
+                    <.icon name="hero-users" class="w-4 h-4 mr-2" />
+                    <span>RSVPs: {event.rsvp_count} (unlimited)</span>
                   </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2 lg:space-x-2 lg:ml-4">
-                  <.button
-                    type="button"
-                    phx-click="show_event_rsvps"
-                    phx-value-uid={event.uid}
-                    class="bg-green-600 hover:bg-green-700 text-xs sm:text-sm px-2 sm:px-3 py-1"
-                  >
-                    <.icon name="hero-users" class="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span class="hidden sm:inline">RSVPs </span>({event.rsvp_count})
-                  </.button>
-
-                  <.button
-                    type="button"
-                    phx-click="show_event_checkins"
-                    phx-value-uid={event.uid}
-                    class="bg-purple-600 hover:bg-purple-700 text-xs sm:text-sm px-2 sm:px-3 py-1"
-                  >
-                    <.icon name="hero-check-circle" class="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span class="hidden sm:inline">Checkins </span>({event.checkin_count})
-                  </.button>
-
-                  <.button
-                    :if={event.rsvpable}
-                    type="button"
-                    phx-click="show_rsvp_qr"
-                    phx-value-uid={event.uid}
-                    class="bg-indigo-600 hover:bg-indigo-700 text-xs sm:text-sm px-2 sm:px-3 py-1"
-                  >
-                    <.icon name="hero-qr-code" class="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span class="hidden sm:inline">RSVP </span>QR
-                  </.button>
-
-                  <.button
-                    type="button"
-                    phx-click="edit_event"
-                    phx-value-uid={event.uid}
-                    class="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm px-2 sm:px-3 py-1"
-                  >
-                    <.icon name="hero-pencil" class="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span class="hidden sm:inline">Edit</span>
-                  </.button>
-
-                  <.button
-                    type="button"
-                    phx-click="delete_event"
-                    phx-value-uid={event.uid}
-                    data-confirm="Are you sure you want to delete this event?"
-                    class="bg-red-600 hover:bg-red-700 text-xs sm:text-sm px-2 sm:px-3 py-1"
-                  >
-                    <.icon name="hero-trash" class="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span class="hidden sm:inline">Delete</span>
-                  </.button>
+                <div :if={event.description} class="text-sm text-gray-700 mb-3">
+                  <p>{event.description}</p>
                 </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2 lg:space-x-2 lg:ml-4">
+                <.button
+                  type="button"
+                  phx-click="show_event_rsvps"
+                  phx-value-uid={event.uid}
+                  class="bg-green-600 hover:bg-green-700 text-xs sm:text-sm px-2 sm:px-3 py-1"
+                >
+                  <.icon name="hero-users" class="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span class="hidden sm:inline">RSVPs </span>({event.rsvp_count})
+                </.button>
+
+                <.button
+                  type="button"
+                  phx-click="show_event_checkins"
+                  phx-value-uid={event.uid}
+                  class="bg-purple-600 hover:bg-purple-700 text-xs sm:text-sm px-2 sm:px-3 py-1"
+                >
+                  <.icon name="hero-check-circle" class="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span class="hidden sm:inline">Checkins </span>({event.checkin_count})
+                </.button>
+
+                <.button
+                  :if={event.rsvpable}
+                  type="button"
+                  phx-click="show_rsvp_qr"
+                  phx-value-uid={event.uid}
+                  class="bg-indigo-600 hover:bg-indigo-700 text-xs sm:text-sm px-2 sm:px-3 py-1"
+                >
+                  <.icon name="hero-qr-code" class="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span class="hidden sm:inline">RSVP </span>QR
+                </.button>
+
+                <.button
+                  type="button"
+                  phx-click="edit_event"
+                  phx-value-uid={event.uid}
+                  class="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm px-2 sm:px-3 py-1"
+                >
+                  <.icon name="hero-pencil" class="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span class="hidden sm:inline">Edit</span>
+                </.button>
+
+                <.button
+                  type="button"
+                  phx-click="delete_event"
+                  phx-value-uid={event.uid}
+                  data-confirm="Are you sure you want to delete this event?"
+                  class="bg-red-600 hover:bg-red-700 text-xs sm:text-sm px-2 sm:px-3 py-1"
+                >
+                  <.icon name="hero-trash" class="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span class="hidden sm:inline">Delete</span>
+                </.button>
               </div>
             </div>
           </div>
@@ -830,33 +838,6 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
       {:ambiguous, first, _second} -> DateTime.shift_zone(first, "Etc/UTC")
       {:gap, _naive, _} -> {:error, :time_gap}
       other -> other
-    end
-  end
-
-  defp to_local_naive_input(nil, _tz), do: nil
-
-  defp to_local_naive_input(%DateTime{} = dt, tz) do
-    case DateTime.shift_zone(dt, tz) do
-      {:ok, local} ->
-        local
-        |> DateTime.to_naive()
-        |> naive_to_input_string()
-
-      _ ->
-        nil
-    end
-  end
-
-  defp naive_to_input_string(%NaiveDateTime{} = naive) do
-    # HTML datetime-local expects YYYY-MM-DDTHH:MM
-    NaiveDateTime.to_iso8601(naive)
-    |> String.slice(0, 16)
-  end
-
-  defp format_local(%DateTime{} = dt, tz, pattern) do
-    case DateTime.shift_zone(dt, tz) do
-      {:ok, local} -> Calendar.strftime(local, pattern)
-      _ -> Calendar.strftime(dt, pattern)
     end
   end
 

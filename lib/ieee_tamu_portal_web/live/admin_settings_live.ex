@@ -10,6 +10,7 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
 
     {:ok,
      assign(socket,
+       page_title: "IEEE Admin - Settings",
        settings: settings,
        create_form: to_form(create_changeset),
        update_forms: build_update_forms(settings)
@@ -127,65 +128,65 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-6xl mx-auto">
-      <.header>
-        Global Settings
-        <:subtitle>Manage application-wide settings</:subtitle>
-      </.header>
+    <.header>
+      Global Settings
+      <:subtitle>Manage application-wide settings</:subtitle>
+    </.header>
 
-      <div class="mt-8">
-        <!-- Add New Setting Form -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Add New Setting</h3>
+    <div class="mt-8">
+      <!-- Add New Setting Form -->
+      <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Add New Setting</h3>
 
-          <.simple_form
-            for={@create_form}
-            id="create_setting_form"
-            phx-change="validate_create"
-            phx-submit="create_setting"
-          >
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <.input
-                  field={@create_form[:key]}
-                  id="create_setting_key"
-                  label="Key"
-                  placeholder="e.g., registration_year"
-                  required
-                />
-              </div>
-              <div>
-                <.input
-                  field={@create_form[:value]}
-                  id="create_setting_value"
-                  label="Value"
-                  placeholder="e.g., 2025"
-                  required
-                />
-              </div>
-              <div>
-                <.input
-                  field={@create_form[:description]}
-                  id="create_setting_description"
-                  label="Description"
-                  placeholder="Description of this setting"
-                />
-              </div>
-            </div>
-            <:actions>
-              <.button type="submit" class="bg-blue-600 hover:bg-blue-700">
-                Add Setting
-              </.button>
-            </:actions>
-          </.simple_form>
+        <.simple_form
+          for={@create_form}
+          id="create_setting_form"
+          phx-change="validate_create"
+          phx-submit="create_setting"
+        >
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <.input
+              field={@create_form[:key]}
+              id="create_setting_key"
+              label="Key"
+              placeholder="e.g., registration_year"
+              required
+            />
+            <.input
+              field={@create_form[:value]}
+              id="create_setting_value"
+              label="Value"
+              placeholder="e.g., 2025"
+              required
+            />
+          </div>
+          <.input
+            field={@create_form[:description]}
+            id="create_setting_description"
+            label="Description"
+            placeholder="Description of this setting"
+          />
+          <:actions>
+            <.button type="submit" class="bg-blue-600 hover:bg-blue-700">
+              Add Setting
+            </.button>
+          </:actions>
+        </.simple_form>
+      </div>
+
+      <!-- Existing Settings -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-medium text-gray-900">Current Settings</h3>
         </div>
 
-        <!-- Existing Settings -->
-        <div class="bg-white shadow rounded-lg overflow-hidden">
-          <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900">Current Settings</h3>
-          </div>
-
+        <%= if Enum.empty?(@settings) do %>
+          <.empty_state
+            icon="hero-document-text"
+            title="No settings"
+            subtitle="Get started by creating a new setting above."
+          />
+        <% else %>
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
@@ -262,32 +263,8 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
                 <% end %>
               </tbody>
             </table>
-
-            <%= if Enum.empty?(@settings) do %>
-              <div class="text-center py-12">
-                <div class="text-gray-500">
-                  <svg
-                    class="mx-auto h-12 w-12 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  <h3 class="mt-2 text-sm font-medium text-gray-900">No settings</h3>
-                  <p class="mt-1 text-sm text-gray-500">
-                    Get started by creating a new setting above.
-                  </p>
-                </div>
-              </div>
-            <% end %>
           </div>
-        </div>
+        <% end %>
       </div>
     </div>
     """

@@ -51,7 +51,7 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLiveTest do
       # Open the create form (header button)
       _ =
         lv
-        |> element("div.sm\\:flex-none button", "Create API Key")
+        |> element("div.flex-none button", "Create API Key")
         |> render_click()
 
       # Validate with empty name

@@ -16,7 +16,7 @@ defmodule IeeeTamuPortalWeb.AdminLive do
       |> assign(:paid_members_count, paid_members_count)
       |> assign(:resume_count, resume_count)
       |> assign(:api_key_count, api_key_count)
-      |> assign(:page_title, "Admin Dashboard")
+      |> assign(:page_title, "IEEE Admin")
       |> assign(:s3_configured, IeeeTamuPortal.Features.enabled?(:s3_resume_upload))
 
     {:ok, socket}
@@ -34,85 +34,83 @@ defmodule IeeeTamuPortalWeb.AdminLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="px-4 sm:px-6 lg:px-8">
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p class="text-gray-600 mt-2">Overview of the IEEE TAMU Portal</p>
-      </div>
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+      <p class="text-gray-600 mt-2">Overview of the IEEE TAMU Portal</p>
+    </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <.stats_card
-          label="Total Members"
-          value={@member_count}
-          icon="hero-users"
-          icon_bg="bg-blue-500"
-          action_href={~p"/admin/download-members"}
-          action_label="CSV"
-          action_class="bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <.stats_card
+        label="Total Members"
+        value={@member_count}
+        icon="hero-users"
+        icon_bg="bg-blue-500"
+        action_href={~p"/admin/download-members"}
+        action_label="CSV"
+        action_class="bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+      />
+      <.stats_card
+        label="Paid Members"
+        value={@paid_members_count}
+        icon="hero-credit-card"
+        icon_bg="bg-green-500"
+        action_href={~p"/admin/download-members?paid=true"}
+        action_label="CSV"
+        action_class="bg-green-600 hover:bg-green-700 focus:ring-green-500"
+      />
+      <.stats_card
+        label="Resumes"
+        value={@resume_count}
+        icon="hero-document-text"
+        icon_bg="bg-purple-500"
+        show_action={@s3_configured and @resume_count > 0}
+      >
+        <:action :if={@s3_configured and @resume_count > 0}>
+          <.link
+            href={~p"/admin/download-resumes"}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+          >
+            <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download
+          </.link>
+        </:action>
+      </.stats_card>
+    </div>
+
+    <.feature_status s3_configured={@s3_configured} />
+
+    <div class="mt-8 bg-white rounded-lg shadow p-6">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <.quick_action_card
+          title="Global Settings"
+          description="Manage application-wide settings"
+          icon="hero-cog-6-tooth"
+          href={~p"/admin/settings"}
         />
-        <.stats_card
-          label="Paid Members"
-          value={@paid_members_count}
-          icon="hero-credit-card"
-          icon_bg="bg-green-500"
-          action_href={~p"/admin/download-members?paid=true"}
-          action_label="CSV"
-          action_class="bg-green-600 hover:bg-green-700 focus:ring-green-500"
+
+        <.quick_action_card
+          title="Events"
+          description="Create and manage events"
+          icon="hero-calendar-days"
+          href={~p"/admin/events"}
         />
-        <.stats_card
-          label="Resumes"
-          value={@resume_count}
+
+        <.quick_action_card
+          title="API Keys"
+          description="Manage API access keys"
+          icon="hero-key"
+          href={~p"/admin/api-keys"}
+        />
+
+        <.quick_action_card
+          title="Resumes"
+          description="Browse and manage resumes"
           icon="hero-document-text"
-          icon_bg="bg-purple-500"
-          show_action={@s3_configured and @resume_count > 0}
-        >
-          <:action :if={@s3_configured and @resume_count > 0}>
-            <.link
-              href={~p"/admin/download-resumes"}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-            >
-              <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download
-            </.link>
-          </:action>
-        </.stats_card>
-      </div>
-
-      <.feature_status s3_configured={@s3_configured} />
-
-      <div class="mt-8 bg-white rounded-lg shadow p-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <.quick_action_card
-            title="Global Settings"
-            description="Manage application-wide settings"
-            icon="hero-cog-6-tooth"
-            href={~p"/admin/settings"}
-          />
-
-          <.quick_action_card
-            title="Events"
-            description="Create and manage events"
-            icon="hero-calendar-days"
-            href={~p"/admin/events"}
-          />
-
-          <.quick_action_card
-            title="API Keys"
-            description="Manage API access keys"
-            icon="hero-key"
-            href={~p"/admin/api-keys"}
-          />
-
-          <.quick_action_card
-            title="Resumes"
-            description="Browse and manage resumes"
-            icon="hero-document-text"
-            href={~p"/admin/resumes"}
-            disabled={!@s3_configured}
-          />
-        </div>
+          href={~p"/admin/resumes"}
+          disabled={!@s3_configured}
+        />
       </div>
     </div>
     """
