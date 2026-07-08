@@ -39,7 +39,7 @@ jobs:
         elixir-version: "1.20.1"
         otp-version: "29"
 
-    - uses: actions/cache@v4
+    - uses: actions/cache@v6
       with:
         path: |
           deps
