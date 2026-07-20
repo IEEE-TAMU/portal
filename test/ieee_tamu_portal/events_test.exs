@@ -84,6 +84,28 @@ defmodule IeeeTamuPortal.EventsTest do
       assert Events.count_events() == start_count + 1
     end
 
+    test "list_events/1 excludes private events by default" do
+      {:ok, _public} = Events.create_event(valid_attrs(%{summary: "Public Event", private: false}))
+      {:ok, _private} = Events.create_event(valid_attrs(%{summary: "Private Event", private: true}))
+
+      past = DateTime.add(DateTime.utc_now(), -365 * 24 * 3600, :second)
+      events = Events.list_events(after: past)
+      summaries = Enum.map(events, & &1.summary)
+      assert "Public Event" in summaries
+      refute "Private Event" in summaries
+    end
+
+    test "list_events/1 with include_private: true returns private events" do
+      {:ok, _public} = Events.create_event(valid_attrs(%{summary: "Public Event", private: false}))
+      {:ok, _private} = Events.create_event(valid_attrs(%{summary: "Private Event", private: true}))
+
+      past = DateTime.add(DateTime.utc_now(), -365 * 24 * 3600, :second)
+      events = Events.list_events(after: past, include_private: true)
+      summaries = Enum.map(events, & &1.summary)
+      assert "Public Event" in summaries
+      assert "Private Event" in summaries
+    end
+
     test "list_events/1 default only returns ongoing or future events (day granularity)" do
       now = DateTime.utc_now() |> DateTime.truncate(:second)
 

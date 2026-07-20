@@ -169,4 +169,20 @@ defmodule IeeeTamuPortalWeb.AdminEventsLiveTest do
       refute render(lv) =~ "To Delete"
     end
   end
+
+  describe "Private events" do
+    test "shows private events with Private badge on admin page", %{conn: conn} do
+      _private = create_event!(%{summary: "Secret Meeting", private: true})
+      _public = create_event!(%{summary: "Public Meeting", private: false})
+
+      {:ok, _lv, html} =
+        conn
+        |> admin_auth_conn()
+        |> live(~p"/admin/events")
+
+      assert html =~ "Secret Meeting"
+      assert html =~ "Public Meeting"
+      assert html =~ "Private"
+    end
+  end
 end
