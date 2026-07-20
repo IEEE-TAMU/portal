@@ -48,5 +48,16 @@ defmodule IeeeTamuPortalWeb.Api.V1.CalendarControllerTest do
       [ctype] = get_resp_header(conn, "content-type")
       assert String.starts_with?(ctype, "text/calendar")
     end
+    test "excludes private events from public feed", %{conn: conn} do
+      _public = create_event!(%{summary: "Public Event", private: false})
+      _private = create_event!(%{summary: "Private Event", private: true})
+
+      conn = get(conn, ~p"/api/v1/calendar")
+
+      assert conn.status == 200
+      body = conn.resp_body
+      assert String.contains?(body, "Public Event")
+      refute String.contains?(body, "Private Event")
+    end
   end
 end

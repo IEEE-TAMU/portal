@@ -14,6 +14,7 @@ defmodule IeeeTamuPortal.Events do
 
   Options:
   - `:after` (DateTime or Date): default `DateTime.utc_now()`; returns events that overlap or occur after this moment.
+  - `:include_private` (boolean): default `false`; when true, includes events marked as private.
 
   Overlap semantics ensure currently-running events are included.
   """
@@ -32,6 +33,13 @@ defmodule IeeeTamuPortal.Events do
           (is_nil(e.dtend) and e.dtstart >= ^cutoff) or
             (not is_nil(e.dtend) and e.dtend >= ^cutoff),
         order_by: [asc: e.dtstart]
+
+    query =
+      if Keyword.get(opts, :include_private, false) do
+        query
+      else
+        from e in query, where: e.private == false
+      end
 
     Repo.all(query)
   end
