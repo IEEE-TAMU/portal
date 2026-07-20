@@ -150,8 +150,12 @@ defmodule IeeeTamuPortal.Events do
   end
 
   def next_event do
+    now = DateTime.utc_now()
+
     from(e in Event,
-      where: e.dtstart >= ^DateTime.utc_now(),
+      where:
+        (is_nil(e.dtend) and e.dtstart >= ^now) or
+          (not is_nil(e.dtend) and e.dtend >= ^now),
       order_by: [asc: e.dtstart],
       limit: 1
     )
