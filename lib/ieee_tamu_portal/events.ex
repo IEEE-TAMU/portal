@@ -31,7 +31,7 @@ defmodule IeeeTamuPortal.Events do
         where:
           (is_nil(e.dtend) and e.dtstart >= ^cutoff) or
             (not is_nil(e.dtend) and e.dtend >= ^cutoff),
-        order_by: [desc: e.dtstart]
+        order_by: [asc: e.dtstart]
 
     Repo.all(query)
   end

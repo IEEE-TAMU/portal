@@ -19,7 +19,7 @@ defmodule IeeeTamuPortal.EventsTest do
       )
     end
 
-    test "list_events/1 returns events ordered by dtstart desc when including past via after: far past" do
+    test "list_events/1 returns events ordered by dtstart asc (soonest first) when including past via after: far past" do
       {:ok, e1} =
         Events.create_event(
           valid_attrs(%{dtstart: DateTime.add(DateTime.utc_now(), -7200, :second)})
@@ -31,7 +31,7 @@ defmodule IeeeTamuPortal.EventsTest do
         )
 
       past = DateTime.add(DateTime.utc_now(), -365 * 24 * 3600, :second)
-      assert [e2.uid, e1.uid] == Events.list_events(after: past) |> Enum.map(& &1.uid)
+      assert [e1.uid, e2.uid] == Events.list_events(after: past) |> Enum.map(& &1.uid)
     end
 
     test "get_event!/1 returns the event by uid" do
