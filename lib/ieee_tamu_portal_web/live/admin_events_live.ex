@@ -683,9 +683,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
               <div class="flex-1">
                 <div class="flex items-center gap-4 mb-2">
                   <h3 class="text-lg font-medium text-gray-900">{event.summary}</h3>
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    Event
-                  </span>
+
                   <%= if event.rsvp_limit && event.rsvp_count >= event.rsvp_limit do %>
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                       At Capacity
@@ -882,5 +880,6 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
       |> Map.put(:rsvp_count, rsvp_count)
       |> Map.put(:checkin_count, checkin_count)
     end)
+
   end
 end
