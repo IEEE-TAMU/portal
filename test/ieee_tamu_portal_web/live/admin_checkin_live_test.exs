@@ -7,6 +7,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLiveTest do
   import IeeeTamuPortal.SettingsFixtures
 
   alias IeeeTamuPortal.{Members, Settings}
+  alias IeeeTamuPortal.Events
 
   setup do
     registration_year_setting_fixture("2025")
@@ -228,6 +229,46 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLiveTest do
     end
   end
 
+  describe "next event suggestion" do
+    test "pre-populates event controls with next upcoming event when none is running", %{conn: conn} do
+      Settings.stop_current_event()
+
+      dt_start1 = DateTime.utc_now() |> DateTime.add(3600, :second) |> DateTime.truncate(:second)
+      dt_start2 = DateTime.utc_now() |> DateTime.add(7200, :second) |> DateTime.truncate(:second)
+
+      _earlier = create_event(%{summary: "Earlier Event", dtstart: dt_start1, dtend: DateTime.add(dt_start1, 3600, :second)})
+      _later = create_event(%{summary: "Later Event", dtstart: dt_start2, dtend: DateTime.add(dt_start2, 3600, :second)})
+
+      {:ok, _lv, html} =
+        conn
+        |> admin_auth_conn()
+        |> live(~p"/admin/checkin")
+
+      assert html =~ "Start Event"
+      assert html =~ ~s(value="Earlier Event")
+    end
+
+    test "populates event controls with next event after stopping current event", %{conn: conn} do
+      dt_start = DateTime.utc_now() |> DateTime.add(3600, :second) |> DateTime.truncate(:second)
+      _next = create_event(%{summary: "Next Upcoming Event", dtstart: dt_start, dtend: DateTime.add(dt_start, 3600, :second)})
+
+      {:ok, lv, _html} =
+        conn
+        |> admin_auth_conn()
+        |> live(~p"/admin/checkin")
+
+      assert render(lv) =~ "Stop Event"
+
+      lv
+      |> element("button", "Stop Event")
+      |> render_click()
+
+      html = render(lv)
+      assert html =~ "Start Event"
+      assert html =~ ~s(value="Next Upcoming Event")
+    end
+  end
+
   defp create_member_info(member) do
     {:ok, _info} =
       Members.create_member_info(member, %{
@@ -241,5 +282,18 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLiveTest do
         international_student: false,
         phone_number: "123-456-7890"
       })
+  end
+
+  defp create_event(attrs \\ %{}) do
+    base = %{
+      summary: "Test Event",
+      dtstart: DateTime.utc_now() |> DateTime.truncate(:second),
+      dtend: DateTime.utc_now() |> DateTime.add(3600, :second) |> DateTime.truncate(:second),
+      location: "ZACH 100",
+      organizer: "IEEE TAMU"
+    }
+
+    {:ok, event} = Events.create_event(Map.merge(base, attrs))
+    event
   end
 end
