@@ -25,10 +25,8 @@ defmodule IeeeTamuPortalWeb.Router do
     get "/openapi", RenderSpec, []
 
     scope "/v1", V1 do
-      # Unsecured ICS calendar feed
+      # ICS calendar feed (public by default, admin with Bearer token or ?token= param)
       get "/calendar", CalendarController, :index
-      # Admin-only ICS calendar feed (includes private events)
-      get "/admin/calendar", AdminCalendarController, :index
       resources "/ping", PingController, only: [:show], singleton: true
       resources "/payments", PaymentController, only: [:index, :show, :create]
       resources "/members", MemberController, only: [:index, :show]

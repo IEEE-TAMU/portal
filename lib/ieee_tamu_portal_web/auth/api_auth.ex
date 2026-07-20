@@ -32,13 +32,79 @@ defmodule IeeeTamuPortalWeb.Auth.ApiAuth do
         end
 
       _ ->
-        conn =
-          conn
-          |> put_status(:unauthorized)
-          |> json(IeeeTamuPortalWeb.Api.V1.Schemas.UnauthorizedResponse.default())
-          |> halt()
+        case extract_token_from_query(conn) do
+          {token, conn} ->
+            case Api.verify_api_token(token) do
+              {:ok, api_key} ->
+                {:ok, api_key, conn}
 
-        {:error, :missing_token, conn}
+              {:error, :invalid_token} ->
+                conn =
+                  conn
+                  |> put_status(:unauthorized)
+                  |> json(IeeeTamuPortalWeb.Api.V1.Schemas.UnauthorizedResponse.default())
+                  |> halt()
+
+                {:error, :invalid_token, conn}
+            end
+
+          nil ->
+            conn =
+              conn
+              |> put_status(:unauthorized)
+              |> json(IeeeTamuPortalWeb.Api.V1.Schemas.UnauthorizedResponse.default())
+              |> halt()
+
+            {:error, :missing_token, conn}
+        end
+    end
+  end
+
+  @doc """
+  Optionally extracts an admin API key from the connection without halting on failure.
+  Checks the Authorization header first, then falls back to the `token` query parameter.
+  If found in the query string, the token is removed from the conn.
+
+  Returns {:ok, api_key, conn} if a valid admin key is found, {:error, conn} otherwise.
+  """
+  def try_get_admin_key(conn) do
+    case get_req_header(conn, @header) |> List.first() do
+      "Bearer " <> provided_token ->
+        verify_admin_token(provided_token, conn)
+
+      _ ->
+        case extract_token_from_query(conn) do
+          {token, conn} -> verify_admin_token(token, conn)
+          nil -> {:error, conn}
+        end
+    end
+  end
+
+  defp verify_admin_token(token, conn) do
+    case Api.verify_api_token(token) do
+      {:ok, api_key = %{context: :admin}} ->
+        {:ok, api_key, conn}
+
+      _ ->
+        {:error, conn}
+    end
+  end
+
+  defp extract_token_from_query(conn) do
+    case conn.query_string do
+      nil -> nil
+      "" -> nil
+      qs ->
+        case URI.decode_query(qs) do
+          %{"token" => token} = params ->
+            rest = Map.delete(params, "token")
+            new_qs = if rest == %{}, do: "", else: URI.encode_query(rest)
+            conn = %{conn | query_string: new_qs}
+            {token, conn}
+
+          _ ->
+            nil
+        end
     end
   end
 
