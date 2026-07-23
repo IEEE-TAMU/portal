@@ -63,7 +63,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:dns_cluster, "0.2.0"},
       {:bandit, "== 1.12.0"},
       {:open_api_spex, "== 3.22.3"},
-      {:req, "== 0.6.2"},
+      {:req, "== 0.6.3"},
       {:assent, "0.3.1"},
       {:zstream, "0.6.7"},
       {:flop_phoenix, "== 0.26.1"},
