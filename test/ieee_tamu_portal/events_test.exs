@@ -19,7 +19,7 @@ defmodule IeeeTamuPortal.EventsTest do
       )
     end
 
-    test "list_events/1 returns events ordered by dtstart desc when including past via after: far past" do
+    test "list_events/1 returns events ordered by dtstart asc (soonest first) when including past via after: far past" do
       {:ok, e1} =
         Events.create_event(
           valid_attrs(%{dtstart: DateTime.add(DateTime.utc_now(), -7200, :second)})
@@ -31,7 +31,7 @@ defmodule IeeeTamuPortal.EventsTest do
         )
 
       past = DateTime.add(DateTime.utc_now(), -365 * 24 * 3600, :second)
-      assert [e2.uid, e1.uid] == Events.list_events(after: past) |> Enum.map(& &1.uid)
+      assert [e1.uid, e2.uid] == Events.list_events(after: past) |> Enum.map(& &1.uid)
     end
 
     test "get_event!/1 returns the event by uid" do
@@ -82,6 +82,28 @@ defmodule IeeeTamuPortal.EventsTest do
       start_count = Events.count_events()
       {:ok, _} = Events.create_event(valid_attrs())
       assert Events.count_events() == start_count + 1
+    end
+
+    test "list_events/1 excludes private events by default" do
+      {:ok, _public} = Events.create_event(valid_attrs(%{summary: "Public Event", private: false}))
+      {:ok, _private} = Events.create_event(valid_attrs(%{summary: "Private Event", private: true}))
+
+      past = DateTime.add(DateTime.utc_now(), -365 * 24 * 3600, :second)
+      events = Events.list_events(after: past)
+      summaries = Enum.map(events, & &1.summary)
+      assert "Public Event" in summaries
+      refute "Private Event" in summaries
+    end
+
+    test "list_events/1 with include_private: true returns private events" do
+      {:ok, _public} = Events.create_event(valid_attrs(%{summary: "Public Event", private: false}))
+      {:ok, _private} = Events.create_event(valid_attrs(%{summary: "Private Event", private: true}))
+
+      past = DateTime.add(DateTime.utc_now(), -365 * 24 * 3600, :second)
+      events = Events.list_events(after: past, include_private: true)
+      summaries = Enum.map(events, & &1.summary)
+      assert "Public Event" in summaries
+      assert "Private Event" in summaries
     end
 
     test "list_events/1 default only returns ongoing or future events (day granularity)" do

@@ -2,17 +2,35 @@ defmodule IeeeTamuPortalWeb.Api.V1.CalendarController do
   use IeeeTamuPortalWeb.ApiController
 
   alias IeeeTamuPortal.Events
+  alias IeeeTamuPortalWeb.Auth.ApiAuth
 
   tags ["calendar"]
 
   insecure_operation :index,
-    summary: "Public iCalendar feed",
-    description: "Returns an iCalendar (ICS) feed of events. No authentication required.",
+    summary: "iCalendar feed",
+    description:
+      "Returns an iCalendar (ICS) feed of events. No authentication required (public events only). " <>
+        "Provide an admin API key via Bearer token or ?token= query parameter to include private events.",
+    parameters: [
+      %OpenApiSpex.Parameter{
+        in: :query,
+        name: "token",
+        required: false,
+        description: "Admin API token to include private events",
+        schema: %OpenApiSpex.Schema{type: :string}
+      }
+    ],
     responses: [
       ok: {"ICS feed", "text/calendar", %OpenApiSpex.Schema{type: :string}}
     ] do
     fn conn, _params ->
-      events = Events.list_events()
+      {include_private, conn} =
+        case ApiAuth.try_get_admin_key(conn) do
+          {:ok, _api_key, conn} -> {true, conn}
+          {:error, conn} -> {false, conn}
+        end
+
+      events = Events.list_events(include_private: include_private)
 
       ics_events =
         for e <- events do
@@ -32,7 +50,6 @@ defmodule IeeeTamuPortalWeb.Api.V1.CalendarController do
           )
         end
 
-      # Generate ICS with custom serialization for RFC 5545 compliance
       ics_content = generate_rfc5545_compliant_ics(%ICalendar{events: ics_events})
 
       conn

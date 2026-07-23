@@ -330,6 +330,11 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
               label="RSVP Limit (optional)"
               placeholder="Leave blank for unlimited"
             />
+            <.input
+              field={@create_form[:private]}
+              type="checkbox"
+              label="Private event (hidden from public pages)"
+            />
 
             <div class="flex justify-end space-x-3">
               <.button
@@ -419,6 +424,12 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
                 </p>
               <% end %>
             </div>
+
+            <.input
+              field={@edit_form[:private]}
+              type="checkbox"
+              label="Private event (hidden from public pages)"
+            />
 
             <div class="flex justify-end space-x-3">
               <.button
@@ -683,9 +694,12 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
               <div class="flex-1">
                 <div class="flex items-center gap-4 mb-2">
                   <h3 class="text-lg font-medium text-gray-900">{event.summary}</h3>
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    Event
-                  </span>
+
+                  <%= if event.private do %>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      Private
+                    </span>
+                  <% end %>
                   <%= if event.rsvp_limit && event.rsvp_count >= event.rsvp_limit do %>
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                       At Capacity
@@ -873,7 +887,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
   defp events_with_rsvp_counts do
     two_weeks_ago = DateTime.add(DateTime.utc_now(), -14, :day)
 
-    Events.list_events(after: two_weeks_ago)
+    Events.list_events(after: two_weeks_ago, include_private: true)
     |> Enum.map(fn event ->
       rsvp_count = Events.count_rsvps(event.uid)
       checkin_count = Events.count_event_checkins(event.summary)
@@ -882,5 +896,6 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
       |> Map.put(:rsvp_count, rsvp_count)
       |> Map.put(:checkin_count, checkin_count)
     end)
+
   end
 end
