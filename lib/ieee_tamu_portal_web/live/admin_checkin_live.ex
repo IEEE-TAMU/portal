@@ -174,7 +174,9 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
     ~H"""
     <.header>
       Check-in
-      <:subtitle>Scan member QR codes to record event check-ins and export attendance data.</:subtitle>
+      <:subtitle>
+        Scan member QR codes to record event check-ins and export attendance data.
+      </:subtitle>
       <:actions :if={@scanning_enabled}>
         <.button phx-click="start_scanner" class="bg-green-600 hover:bg-green-700">
           Start Scanner
