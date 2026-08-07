@@ -196,6 +196,7 @@ defmodule IeeeTamuPortal.Accounts do
     query =
       from(m in Member,
         join: info in assoc(m, :info),
+        as: :info,
         where: not is_nil(info.ieee_membership_number),
         left_join: r in Registration,
         on: r.member_id == m.id and r.year == ^year and r.payment_override == true,
