@@ -30,6 +30,16 @@ defmodule IeeeTamuPortalWeb.AdminVerificationLive do
   end
 
   @impl true
+  def handle_event("filter", %{"filters" => filter_params}, socket) do
+    {:noreply, push_patch(socket, to: ~p"/admin/verification?#{%{"filters" => filter_params}}")}
+  end
+
+  @impl true
+  def handle_event("clear_filters", _params, socket) do
+    {:noreply, push_patch(socket, to: ~p"/admin/verification")}
+  end
+
+  @impl true
   def handle_event("approve", %{"member_id" => member_id}, socket) do
     member_id = String.to_integer(member_id)
     current_year = socket.assigns.year
@@ -62,6 +72,10 @@ defmodule IeeeTamuPortalWeb.AdminVerificationLive do
         Members who have provided their IEEE membership number but have not yet been verified for {@year}.
       </:subtitle>
     </.header>
+
+    <div class="mt-6">
+      <.filter_form meta={@meta} path={~p"/admin/verification"} />
+    </div>
 
     <div class="mt-6 flex items-center justify-between">
       <.page_size_selector meta={@meta} path={~p"/admin/verification"} />

@@ -2,6 +2,7 @@ defmodule IeeeTamuPortalWeb.PaginationComponents do
   use Phoenix.Component
 
   alias Phoenix.LiveView.JS
+  import IeeeTamuPortalWeb.CoreComponents, only: [input: 1, button: 1]
 
   @page_sizes [10, 25, 50, 100]
 
@@ -79,6 +80,58 @@ defmodule IeeeTamuPortalWeb.PaginationComponents do
       >
         {size}
       </button>
+    </div>
+    """
+  end
+
+  attr :meta, :any, required: true
+  attr :path, :any, required: true
+  attr :id, :string, default: "filter_form"
+
+  def filter_form(assigns) do
+    ~H"""
+    <div class="bg-white shadow rounded-lg p-4">
+      <.form
+        for={to_form(@meta)}
+        id={@id}
+        class="space-y-4"
+        phx-change="filter"
+        phx-submit="filter"
+      >
+        <div class="flex items-end justify-between gap-3">
+          <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Flop.Phoenix.filter_fields
+              :let={i}
+              form={to_form(@meta)}
+              fields={[
+                email: [
+                  label: "Filter by Email",
+                  type: "text",
+                  placeholder: "Enter email to search...",
+                  op: :like
+                ],
+                full_name: [
+                  label: "Filter by Name",
+                  type: "text",
+                  placeholder: "Enter preferred name, first name, or last name to search...",
+                  op: :like
+                ]
+              ]}
+            >
+              <.input field={i.field} label={i.label} type={i.type} phx-debounce="500" {i.rest} />
+            </Flop.Phoenix.filter_fields>
+          </div>
+
+          <div class="flex space-x-2">
+            <.button type="submit" class="bg-indigo-600 hover:bg-indigo-700">
+              Filter
+            </.button>
+            <.button type="button" phx-click="clear_filters" class="bg-gray-500 hover:bg-gray-600">
+              Clear
+            </.button>
+          </div>
+        </div>
+      </.form>
     </div>
     """
   end
