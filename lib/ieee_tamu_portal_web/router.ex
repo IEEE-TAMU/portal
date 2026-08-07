@@ -135,6 +135,7 @@ defmodule IeeeTamuPortalWeb.Router do
       live "/settings", AdminSettingsLive, :index
       live "/api-keys", AdminApiKeysLive, :index
       live "/events", AdminEventsLive, :index
+      live "/verification", AdminVerificationLive, :index
     end
   end
 end
