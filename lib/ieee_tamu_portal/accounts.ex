@@ -177,6 +177,36 @@ defmodule IeeeTamuPortal.Accounts do
   end
 
   @doc """
+  Lists members who have entered their IEEE membership number but have not
+  yet been granted a payment override for the given year.
+
+  Members are included if:
+  - Their info record has an `ieee_membership_number` set
+  - They do NOT have a registration for the given year with `payment_override: true`
+
+  ## Examples
+
+      iex> list_members_pending_verification(2025)
+      [%Member{info: %Info{}, ...}, ...]
+  """
+  def list_members_pending_verification(year, params \\ %{}) do
+    alias IeeeTamuPortal.Members.Registration
+    import Ecto.Query
+
+    query =
+      from(m in Member,
+        join: info in assoc(m, :info),
+        where: not is_nil(info.ieee_membership_number),
+        left_join: r in Registration,
+        on: r.member_id == m.id and r.year == ^year and r.payment_override == true,
+        where: is_nil(r.id),
+        preload: [info: info, registrations: ^Registration.with_payment_status()]
+      )
+
+    Flop.validate_and_run!(query, params, for: Member, replace_invalid_params: true)
+  end
+
+  @doc """
   Gets a member by email.
 
   ## Examples
