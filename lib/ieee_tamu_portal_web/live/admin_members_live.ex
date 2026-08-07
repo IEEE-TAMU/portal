@@ -50,37 +50,6 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   end
 
   @impl true
-  def handle_event("toggle_payment_override", %{"member_id" => member_id}, socket) do
-    member_id = String.to_integer(member_id)
-    member = Enum.find(socket.assigns.members, &(&1.id == member_id))
-    current_year = Settings.get_registration_year!()
-
-    case Members.toggle_payment_override(member, current_year) do
-      {:ok, updated_registration} ->
-        # Get current params from the URL to maintain filters
-        params = Map.get(socket.assigns, :filter_params, %{})
-        # Refresh the members list to get updated data
-        {members, meta} = Accounts.list_members_paginated(params)
-
-        action = if updated_registration.payment_override, do: "enabled", else: "disabled"
-
-        {:noreply,
-         socket
-         |> Phoenix.LiveView.put_flash(:info, "Payment override #{action} for #{member.email}")
-         |> assign(:members, members)
-         |> assign(:meta, meta)}
-
-      {:error, _changeset} ->
-        {:noreply,
-         socket
-         |> Phoenix.LiveView.put_flash(
-           :error,
-           "Failed to toggle payment override for #{member.email}"
-         )}
-    end
-  end
-
-  @impl true
   def handle_event(
         "show_resume",
         %{"email" => email, "member_id" => member_id},
@@ -389,23 +358,13 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                       Paid
                     </span>
                   <% :override -> %>
-                    <button
-                      phx-click="toggle_payment_override"
-                      phx-value-member_id={member.id}
-                      class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 hover:bg-blue-200 cursor-pointer transition-colors"
-                      title="Click to remove override"
-                    >
+                    <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
                       Override
-                    </button>
+                    </span>
                   <% :pending -> %>
-                    <button
-                      phx-click="toggle_payment_override"
-                      phx-value-member_id={member.id}
-                      class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 hover:bg-red-200 cursor-pointer transition-colors"
-                      title="Click to mark as paid"
-                    >
+                    <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
                       Pending
-                    </button>
+                    </span>
                 <% end %>
               </:col>
 
@@ -480,28 +439,6 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                     >
                       Resend
                     </button>
-                  <% end %>
-                  <%= if member.info && member.info.ieee_membership_number do %>
-                    <form
-                      action="https://services24.ieee.org/membership-validator.html"
-                      method="post"
-                      target="_blank"
-                      rel="noopener"
-                      class="inline"
-                    >
-                      <input
-                        type="hidden"
-                        name="customerId"
-                        value={member.info.ieee_membership_number}
-                      />
-                      <button
-                        type="submit"
-                        class="text-indigo-600 hover:text-indigo-900 text-xs"
-                        title="Open IEEE Membership Validator in a new tab"
-                      >
-                        Validate
-                      </button>
-                    </form>
                   <% end %>
                 </div>
               </:col>
