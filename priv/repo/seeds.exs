@@ -384,13 +384,15 @@ case Accounts.register_member(%{
            uin: 574_003_467,
            major: :CPEN,
            graduation_year: 2027,
-           international_student: false
+           international_student: false,
+           ieee_membership_number: 97_775_572
          }) do
       {:ok, info} ->
         IO.puts("✓ Created member info for Caleb Norton")
         IO.puts("  UIN: #{info.uin}")
         IO.puts("  Major: #{info.major}")
         IO.puts("  Graduation Year: #{info.graduation_year}")
+        IO.puts("  IEEE #: #{info.ieee_membership_number}")
 
       {:error, changeset} ->
         IO.puts("✗ Failed to create member info")
@@ -478,6 +480,14 @@ IO.puts("\n🚀 Generating 100 random users...")
           member_info_attrs =
             if is_international do
               Map.put(member_info_attrs, :international_country, SeedHelpers.random_country())
+            else
+              member_info_attrs
+            end
+
+          # Add IEEE membership number to ~30% of users
+          member_info_attrs =
+            if rem(i, 10) < 3 do
+              Map.put(member_info_attrs, :ieee_membership_number, 97_775_700 + i)
             else
               member_info_attrs
             end
