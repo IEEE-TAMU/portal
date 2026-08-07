@@ -2,8 +2,24 @@ defmodule IeeeTamuPortal.Members.RegistrationTest do
   use IeeeTamuPortal.DataCase, async: true
 
   import Ecto.Query
-  alias IeeeTamuPortal.Members.{Registration}
-  import IeeeTamuPortal.{AccountsFixtures, MembersFixtures}
+  alias IeeeTamuPortal.Members.Registration
+  alias IeeeTamuPortal.Settings
+  import IeeeTamuPortal.{AccountsFixtures, MembersFixtures, SettingsFixtures}
+
+  describe "payment_override preserves historical data" do
+    test "old override persists when registration year changes" do
+      old_year_setting = registration_year_setting_fixture("2024")
+
+      member = member_fixture()
+      old_reg = registration_fixture(member, %{year: 2024, payment_override: true})
+      assert old_reg.payment_override == true
+
+      assert {:ok, _} = Settings.update_setting(old_year_setting, %{value: "2025"})
+
+      old_reg_reloaded = IeeeTamuPortal.Repo.reload(old_reg)
+      assert old_reg_reloaded.payment_override == true
+    end
+  end
 
   describe "with_payment_status/1" do
     test "marks pending when no payment and no override" do
