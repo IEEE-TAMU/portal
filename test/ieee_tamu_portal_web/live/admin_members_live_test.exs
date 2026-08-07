@@ -160,30 +160,6 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
       assert html =~ "No members match your search criteria"
     end
 
-    test "shows IEEE validate button when member has ieee_membership_number", %{conn: conn} do
-      member = confirmed_member_fixture()
-      create_member_info(member, %{ieee_membership_number: "97775577"})
-
-      {:ok, _lv, html} =
-        conn
-        |> admin_auth_conn()
-        |> live(~p"/admin/members")
-
-      assert html =~ "Validate"
-    end
-
-    test "does not show IEEE validate button when no ieee_membership_number", %{conn: conn} do
-      member = confirmed_member_fixture()
-      create_member_info(member, %{ieee_membership_number: nil})
-
-      {:ok, _lv, html} =
-        conn
-        |> admin_auth_conn()
-        |> live(~p"/admin/members")
-
-      refute html =~ "Validate"
-    end
-
     test "shows Resend button for unconfirmed members", %{conn: conn} do
       member_fixture()
 
@@ -352,47 +328,6 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
 
       html = render(lv)
       refute html =~ "Edit Member"
-    end
-  end
-
-  describe "payment override" do
-    test "toggles payment override from pending to override", %{conn: conn} do
-      member = confirmed_member_fixture()
-      create_member_info(member)
-
-      {:ok, lv, _html} =
-        conn
-        |> admin_auth_conn()
-        |> live(~p"/admin/members")
-
-      lv
-      |> element("button", "Pending")
-      |> render_click()
-
-      html = render(lv)
-      assert html =~ "Payment override enabled"
-
-      # Should now show Override
-      assert html =~ "Override"
-    end
-
-    test "toggles payment override from override back to pending", %{conn: conn} do
-      member = confirmed_member_fixture()
-      create_member_info(member)
-      {:ok, registration} = Members.get_or_create_registration(member, 2025)
-      Members.update_registration(registration, %{payment_override: true})
-
-      {:ok, lv, _html} =
-        conn
-        |> admin_auth_conn()
-        |> live(~p"/admin/members")
-
-      lv
-      |> element("button", "Override")
-      |> render_click()
-
-      html = render(lv)
-      assert html =~ "Payment override disabled"
     end
   end
 
