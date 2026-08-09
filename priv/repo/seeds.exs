@@ -321,7 +321,7 @@ defmodule SeedHelpers do
   end
 end
 
-# seed 2 events
+# seed 3 events
 event_params = [
   %{
     "summary" => "Welcome Back Social",
@@ -338,6 +338,14 @@ event_params = [
     "dtstart" => DateTime.utc_now(),
     "dtend" => DateTime.add(DateTime.utc_now(), 720, :day),
     "rsvp_limit" => 50
+  },
+  %{
+    "summary" => "Officer Only Meeting",
+    "description" => "Internal officer planning session.",
+    "location" => "IEEE Lounge, ENGR Bldg",
+    "dtstart" => DateTime.utc_now(),
+    "dtend" => DateTime.add(DateTime.utc_now(), 720, :day),
+    "private" => true
   }
 ]
 

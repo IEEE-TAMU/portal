@@ -130,12 +130,20 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
   def handle_event("stop_event", _params, socket) do
     case Settings.stop_current_event() do
       {:ok, _setting} ->
+        suggested_event =
+          Events.next_event()
+          |> case do
+            nil -> nil
+            e -> e.summary
+          end
+
         {:noreply,
          socket
          |> assign(
            current_event: Settings.get_current_event!(),
            scanning_enabled: false,
-           scanner_active: false
+           scanner_active: false,
+           suggested_event: suggested_event
          )
          |> put_flash(:info, "Event stopped")}
 

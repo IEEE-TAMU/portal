@@ -14,6 +14,7 @@ defmodule IeeeTamuPortal.Events.Event do
     field :organizer, :string
     field :rsvp_limit, :integer
     field :rsvpable, :boolean, default: true
+    field :private, :boolean, default: false
     field :rsvp_count, :integer, virtual: true, default: nil
 
     timestamps(type: :utc_datetime)
@@ -32,7 +33,8 @@ defmodule IeeeTamuPortal.Events.Event do
       :location,
       :organizer,
       :rsvp_limit,
-      :rsvpable
+      :rsvpable,
+      :private
     ])
     |> validate_required([:dtstart, :summary])
     |> validate_length(:summary, min: 1, max: 255)
