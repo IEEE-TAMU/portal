@@ -896,6 +896,5 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
       |> Map.put(:rsvp_count, rsvp_count)
       |> Map.put(:checkin_count, checkin_count)
     end)
-
   end
 end

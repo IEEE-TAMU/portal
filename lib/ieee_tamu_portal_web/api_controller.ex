@@ -59,23 +59,11 @@ defmodule IeeeTamuPortalWeb.ApiController do
     end
   end
 
-  @doc """
-  Macro for defining a standard API operation with automatic auth response injection.
-
-  Usage:
-    api_operation :index,
-      summary: "Get items",
-      responses: [ok: {"Items", "application/json", Schema}] do
-      fn conn, params, api_key ->
-        # implementation here - api_key is automatically extracted from conn.assigns
-      end
-    end
-  """
-  defmacro api_operation(name, opts, do: body) do
+  defp secure_operation(name, opts, auth_fn, responses_fn, body) do
     quote do
-      # Extract responses and add auth responses
+      # Extract responses and add the appropriate auth responses
       {responses, other_opts} = Keyword.pop(unquote(opts), :responses, [])
-      final_responses = responses ++ IeeeTamuPortalWeb.Auth.ApiAuth.standard_auth_responses()
+      final_responses = responses ++ unquote(responses_fn).()
 
       final_opts =
         Keyword.put(other_opts, :responses, final_responses)
@@ -84,9 +72,9 @@ defmodule IeeeTamuPortalWeb.ApiController do
       # Declare the operation
       operation unquote(name), final_opts
 
-      # Define the function using the provided body, extracting api_key from conn.assigns
+      # Define the function using the provided body, extracting api_key from conn
       def unquote(name)(conn, params) do
-        case IeeeTamuPortalWeb.Auth.ApiAuth.get_api_key(conn) do
+        case unquote(auth_fn).(conn) do
           {:ok, api_key, conn} ->
             unquote(body).(conn, params, api_key)
 
@@ -95,6 +83,28 @@ defmodule IeeeTamuPortalWeb.ApiController do
         end
       end
     end
+  end
+
+  @doc """
+  Macro for defining a standard API operation with automatic auth response injection.
+
+  Usage:
+    api_operation :index,
+      summary: "Get items",
+      responses: [ok: {"Items", "application/json", Schema}] do
+      fn conn, params, api_key ->
+        # implementation here - api_key is automatically extracted from conn
+      end
+    end
+  """
+  defmacro api_operation(name, opts, do: body) do
+    secure_operation(
+      name,
+      opts,
+      &IeeeTamuPortalWeb.Auth.ApiAuth.get_api_key/1,
+      &IeeeTamuPortalWeb.Auth.ApiAuth.standard_auth_responses/0,
+      body
+    )
   end
 
   @doc """
@@ -130,33 +140,16 @@ defmodule IeeeTamuPortalWeb.ApiController do
       responses: [created: {"Created", "application/json", Schema}] do
       fn conn, params, api_key ->
         # implementation here - automatically protected as admin-only
-        # api_key is automatically extracted from conn.assigns
       end
     end
   """
   defmacro admin_operation(name, opts, do: body) do
-    quote do
-      # Extract responses and add admin auth responses
-      {responses, other_opts} = Keyword.pop(unquote(opts), :responses, [])
-      final_responses = responses ++ IeeeTamuPortalWeb.Auth.ApiAuth.admin_auth_responses()
-
-      final_opts =
-        Keyword.put(other_opts, :responses, final_responses)
-        |> Keyword.put(:security, [%{IeeeTamuPortalWeb.Auth.ApiAuth.auth_header() => []}])
-
-      # Declare the operation
-      operation unquote(name), final_opts
-
-      # Define the function with admin protection
-      def unquote(name)(conn, params) do
-        case IeeeTamuPortalWeb.Auth.ApiAuth.require_admin(conn) do
-          {:ok, api_key, conn} ->
-            unquote(body).(conn, params, api_key)
-
-          {:error, _, conn} ->
-            conn
-        end
-      end
-    end
+    secure_operation(
+      name,
+      opts,
+      &IeeeTamuPortalWeb.Auth.ApiAuth.require_admin/1,
+      &IeeeTamuPortalWeb.Auth.ApiAuth.admin_auth_responses/0,
+      body
+    )
   end
 end

@@ -85,8 +85,11 @@ defmodule IeeeTamuPortal.EventsTest do
     end
 
     test "list_events/1 excludes private events by default" do
-      {:ok, _public} = Events.create_event(valid_attrs(%{summary: "Public Event", private: false}))
-      {:ok, _private} = Events.create_event(valid_attrs(%{summary: "Private Event", private: true}))
+      {:ok, _public} =
+        Events.create_event(valid_attrs(%{summary: "Public Event", private: false}))
+
+      {:ok, _private} =
+        Events.create_event(valid_attrs(%{summary: "Private Event", private: true}))
 
       past = DateTime.add(DateTime.utc_now(), -365 * 24 * 3600, :second)
       events = Events.list_events(after: past)
@@ -96,8 +99,11 @@ defmodule IeeeTamuPortal.EventsTest do
     end
 
     test "list_events/1 with include_private: true returns private events" do
-      {:ok, _public} = Events.create_event(valid_attrs(%{summary: "Public Event", private: false}))
-      {:ok, _private} = Events.create_event(valid_attrs(%{summary: "Private Event", private: true}))
+      {:ok, _public} =
+        Events.create_event(valid_attrs(%{summary: "Public Event", private: false}))
+
+      {:ok, _private} =
+        Events.create_event(valid_attrs(%{summary: "Private Event", private: true}))
 
       past = DateTime.add(DateTime.utc_now(), -365 * 24 * 3600, :second)
       events = Events.list_events(after: past, include_private: true)
