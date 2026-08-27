@@ -3,9 +3,17 @@ defmodule IeeeTamuPortalWeb.MemberResumeLive do
 
   alias IeeeTamuPortal.{Accounts, Members}
   alias IeeeTamuPortal.Members.Resume
+  alias IeeeTamuPortalWeb.Auth.MemberAuth
 
   @impl true
   def mount(_params, _session, socket) do
+    case MemberAuth.ensure_info_submitted(socket) do
+      {:ok, socket} -> mount_page(socket)
+      {:error, socket} -> {:ok, socket}
+    end
+  end
+
+  defp mount_page(socket) do
     if IeeeTamuPortal.Features.enabled?(:s3_resume_upload) do
       member = Accounts.preload_member_resume(socket.assigns.current_member)
 

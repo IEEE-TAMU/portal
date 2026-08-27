@@ -283,4 +283,49 @@ defmodule IeeeTamuPortalWeb.Auth.MemberAuthTest do
       refute conn.status
     end
   end
+
+  describe "ensure_info_submitted/1" do
+    test "returns {:ok, socket} with preloaded info when info is submitted", %{conn: conn} do
+      member = confirmed_member_fixture()
+
+      {:ok, _info} =
+        IeeeTamuPortal.Members.create_member_info(member, %{
+          first_name: "Test",
+          last_name: "User",
+          uin: 123_004_567,
+          tshirt_size: :M,
+          major: :CSCE,
+          graduation_year: 2026,
+          gender: :Male,
+          international_student: false
+        })
+
+      socket = authed_socket(conn, member)
+
+      assert {:ok, updated_socket} = MemberAuth.ensure_info_submitted(socket)
+      assert updated_socket.assigns.current_member.id == member.id
+      assert updated_socket.assigns.current_member.info != nil
+    end
+
+    test "returns {:error, socket} with a redirect to the info page when info is missing", %{
+      conn: conn
+    } do
+      member = confirmed_member_fixture()
+      socket = authed_socket(conn, member)
+
+      assert {:error, updated_socket} = MemberAuth.ensure_info_submitted(socket)
+
+      assert {:redirect, %{to: "/members/info"}} = updated_socket.redirected
+
+      assert Phoenix.Flash.get(updated_socket.assigns.flash, :error) ==
+               "You must submit your information to access the rest of the site."
+    end
+
+    defp authed_socket(conn, member) do
+      %LiveView.Socket{
+        endpoint: IeeeTamuPortalWeb.Endpoint,
+        assigns: %{__changed__: %{}, flash: %{}, current_member: member}
+      }
+    end
+  end
 end

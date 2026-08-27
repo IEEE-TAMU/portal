@@ -31,14 +31,21 @@ defmodule IeeeTamuPortal.Discord.Client do
   @doc """
   Gets all roles for a Discord user.
 
-  Returns {:ok, user_data} or {:error, reason}.
+  Returns {:ok, user_data}, {:error, :not_in_guild} when the user is not a
+  member of the Discord server (expected — members can leave the server while
+  still having a portal account), or {:error, reason}.
   """
   def get_user_roles(discord_user_id) do
     url = discord_bot_url("/roles?userId=#{discord_user_id}")
 
-    case Req.get(url) do
+    case Req.get(url, req_options()) do
       {:ok, %Req.Response{status: 200, body: body}} ->
         {:ok, body}
+
+      {:ok, %Req.Response{status: 404}} ->
+        # The user is not in the guild — a normal state, not an error.
+        Logger.info("Discord user #{discord_user_id} is not in the guild")
+        {:error, :not_in_guild}
 
       {:ok, %Req.Response{status: status_code, body: body}} ->
         Logger.error("Failed to get user roles: #{status_code} - #{inspect(body)}")
@@ -59,7 +66,7 @@ defmodule IeeeTamuPortal.Discord.Client do
     url = discord_bot_url("/roles/manage")
     body = %{userId: discord_user_id, roleName: role_name}
 
-    case Req.put(url, json: body) do
+    case Req.put(url, [json: body] ++ req_options()) do
       {:ok, %Req.Response{status: 200, body: response_body}} ->
         Logger.info("Successfully added #{role_name} role to Discord user #{discord_user_id}")
         {:ok, response_body}
@@ -83,7 +90,7 @@ defmodule IeeeTamuPortal.Discord.Client do
     url = discord_bot_url("/roles/manage")
     body = %{userId: discord_user_id, roleName: role_name}
 
-    case Req.delete(url, json: body) do
+    case Req.delete(url, [json: body] ++ req_options()) do
       {:ok, %Req.Response{status: 200, body: response_body}} ->
         Logger.info("Successfully removed #{role_name} role from Discord user #{discord_user_id}")
         {:ok, response_body}
@@ -112,6 +119,9 @@ defmodule IeeeTamuPortal.Discord.Client do
       {:ok, %{"success" => false, "message" => message}} ->
         {:error, message}
 
+      {:error, :not_in_guild} = error ->
+        error
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -123,5 +133,11 @@ defmodule IeeeTamuPortal.Discord.Client do
     case IeeeTamuPortal.Features.get_config(:discord_bot) do
       {:ok, base_url} -> base_url <> path
     end
+  end
+
+  # Req options are injectable via application env so tests can stub the HTTP
+  # layer with Req.Test instead of hitting the real Discord bot API.
+  defp req_options do
+    Application.get_env(:ieee_tamu_portal, :discord_bot_req_opts, [])
   end
 end

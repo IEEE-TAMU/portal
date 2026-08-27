@@ -4,9 +4,17 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
   alias IeeeTamuPortal.{Settings, Members}
   alias IeeeTamuPortal.Events
   alias IeeeTamuPortal.Members.EventCheckin
+  alias IeeeTamuPortalWeb.Auth.MemberAuth
 
   @impl true
   def mount(_params, _session, socket) do
+    case MemberAuth.ensure_info_submitted(socket) do
+      {:ok, socket} -> mount_page(socket)
+      {:error, socket} -> {:ok, socket}
+    end
+  end
+
+  defp mount_page(socket) do
     current_member = socket.assigns.current_member
 
     # Get current registration year from settings

@@ -76,10 +76,15 @@ defmodule IeeeTamuPortalWeb.Router do
   end
 
   # routes available to authenticated members
+  # All member pages share a single live_session so navbar navigation between
+  # them stays client-side (cross-session navigate falls back to a full page
+  # reload and spams warnings). Pages that require submitted member info
+  # (resume, registration) enforce that check in their own mount via
+  # MemberAuth.ensure_info_submitted/1.
   scope "/", IeeeTamuPortalWeb do
     pipe_through [:browser, :require_authenticated_member]
 
-    live_session :require_authenticated_member,
+    live_session :member_authenticated,
       on_mount: [
         {IeeeTamuPortalWeb.Auth.MemberAuth, :ensure_authenticated},
         {IeeeTamuPortalWeb.Auth.MemberAuth, :ensure_confirmed}
@@ -87,14 +92,6 @@ defmodule IeeeTamuPortalWeb.Router do
       live "/members/settings", MemberSettingsLive, :edit
       live "/members/info", MemberInfoLive, :edit
       live "/members/api-keys", MemberApiKeysLive, :index
-    end
-
-    live_session :ensure_info_submitted,
-      on_mount: [
-        {IeeeTamuPortalWeb.Auth.MemberAuth, :ensure_authenticated},
-        {IeeeTamuPortalWeb.Auth.MemberAuth, :ensure_confirmed},
-        {IeeeTamuPortalWeb.Auth.MemberAuth, :ensure_info_submitted}
-      ] do
       live "/members/resume", MemberResumeLive, :edit
       live "/members/registration", MemberMembershipRegistrationLive, :show
     end

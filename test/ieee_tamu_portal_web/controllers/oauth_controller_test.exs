@@ -62,6 +62,59 @@ defmodule IeeeTamuPortalWeb.OAuthControllerTest do
       assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
                "Google authentication was cancelled or failed."
     end
+
+    test "discord callback without a stored flow redirects instead of crashing", %{conn: conn} do
+      conn = get(conn, ~p"/auth/discord/callback?code=abc&state=xyz")
+
+      assert redirected_to(conn) == ~p"/members/login"
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+               "Discord login session expired. Please try again."
+    end
+
+    test "discord callback without a stored flow redirects to settings when logged in", %{
+      conn: conn
+    } do
+      member = confirmed_member_fixture()
+      conn = log_in_member(conn, member)
+
+      conn = get(conn, ~p"/auth/discord/callback?code=abc&state=xyz")
+
+      assert redirected_to(conn) == ~p"/members/settings"
+    end
+
+    test "google callback without a stored flow redirects instead of crashing", %{conn: conn} do
+      conn = get(conn, ~p"/auth/google/callback?code=abc&state=xyz")
+
+      assert redirected_to(conn) == ~p"/members/login"
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+               "Google login session expired. Please try again."
+    end
+
+    test "discord callback with mismatched state fails gracefully", %{conn: conn} do
+      conn =
+        conn
+        |> init_test_session(%{oauth_session_params: %{state: "stored-state"}})
+        |> get(~p"/auth/discord/callback?code=abc&state=different-state")
+
+      assert redirected_to(conn) == ~p"/members/login"
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+               "Discord login failed. Please try again."
+    end
+
+    test "google callback with mismatched state fails gracefully", %{conn: conn} do
+      conn =
+        conn
+        |> init_test_session(%{oauth_session_params: %{state: "stored-state"}})
+        |> get(~p"/auth/google/callback?code=abc&state=different-state")
+
+      assert redirected_to(conn) == ~p"/members/login"
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+               "Google login failed. Please try again."
+    end
   end
 
   describe "GET /auth/google/callback (success paths)" do
@@ -107,7 +160,10 @@ defmodule IeeeTamuPortalWeb.OAuthControllerTest do
         "email_verified" => true
       })
 
-      conn = get(conn, ~p"/auth/google/callback?code=123")
+      conn =
+        conn
+        |> init_test_session(%{oauth_session_params: %{state: "test-state"}})
+        |> get(~p"/auth/google/callback?code=123")
 
       assert get_session(conn, :member_token)
 
@@ -132,7 +188,10 @@ defmodule IeeeTamuPortalWeb.OAuthControllerTest do
         "email_verified" => false
       })
 
-      conn = get(conn, ~p"/auth/google/callback?code=123")
+      conn =
+        conn
+        |> init_test_session(%{oauth_session_params: %{state: "test-state"}})
+        |> get(~p"/auth/google/callback?code=123")
 
       assert redirected_to(conn) == ~p"/members/login"
 
@@ -151,7 +210,10 @@ defmodule IeeeTamuPortalWeb.OAuthControllerTest do
         "email_verified" => true
       })
 
-      conn = get(conn, ~p"/auth/google/callback?code=123")
+      conn =
+        conn
+        |> init_test_session(%{oauth_session_params: %{state: "test-state"}})
+        |> get(~p"/auth/google/callback?code=123")
 
       assert get_session(conn, :member_token)
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "automatically created"
@@ -182,7 +244,10 @@ defmodule IeeeTamuPortalWeb.OAuthControllerTest do
         "email_verified" => true
       })
 
-      conn = get(conn, ~p"/auth/google/callback?code=123")
+      conn =
+        conn
+        |> init_test_session(%{oauth_session_params: %{state: "test-state"}})
+        |> get(~p"/auth/google/callback?code=123")
 
       assert get_session(conn, :member_token)
       assert Phoenix.Flash.get(conn.assigns.flash, :info) == "Successfully logged in with Google!"

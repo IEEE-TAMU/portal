@@ -86,6 +86,14 @@ defmodule IeeeTamuPortal.Discord.RoleManager do
             {:ok, :no_change_needed}
         end
 
+      # The member left the Discord server — there is nothing to sync.
+      {:error, :not_in_guild} ->
+        Logger.info(
+          "Discord user #{discord_user_id} not in guild — skipping role sync for member #{member.id}"
+        )
+
+        {:ok, :not_in_guild}
+
       {:error, reason} ->
         Logger.error("Failed to check role status for member #{member.id}: #{reason}")
         {:error, reason}
@@ -141,6 +149,8 @@ defmodule IeeeTamuPortal.Discord.RoleManager do
             :role_added -> %{acc | roles_added: acc.roles_added + 1}
             :role_removed -> %{acc | roles_removed: acc.roles_removed + 1}
             :no_change_needed -> %{acc | no_change: acc.no_change + 1}
+            # Members who left the Discord server need no role changes.
+            :not_in_guild -> %{acc | no_change: acc.no_change + 1}
             {:error, _} -> %{acc | errors: acc.errors + 1}
           end
         end

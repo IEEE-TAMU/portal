@@ -65,9 +65,12 @@ defmodule IeeeTamuPortal.Mautic.SyncService do
   def handle_info(:sync_all, state) do
     Logger.info("Running periodic Mautic contact sync")
 
-    case ContactSync.sync_all_members() do
+    case safe_sync_all() do
       {:ok, summary} ->
         Logger.info("Periodic Mautic sync completed: #{inspect(summary)}")
+
+      {:error, reason} ->
+        Logger.error("Periodic Mautic sync failed: #{inspect(reason)}")
     end
 
     schedule_next_sync()
@@ -78,24 +81,48 @@ defmodule IeeeTamuPortal.Mautic.SyncService do
   def handle_call(:force_sync, _from, state) do
     Logger.info("Force running Mautic contact sync")
 
-    result = ContactSync.sync_all_members()
+    result = safe_sync_all()
 
     {:reply, result, state}
   end
 
   @impl true
-  def handle_cast({:sync_member, member}, state) do
-    Logger.debug("Syncing member #{member.id} to Mautic")
-
-    case ContactSync.sync_member(member) do
+  def handle_cast({:sync_member, member_or_id}, state) do
+    # ContactSync accepts either a member id or a %Member{} struct; callers
+    # (e.g. payment events) cast bare ids, so never assume a struct here.
+    case safe_sync(member_or_id) do
       {:ok, action} ->
-        Logger.debug("Mautic sync for member #{member.id}: #{inspect(action)}")
+        Logger.debug("Mautic sync for #{inspect(member_or_id)}: #{inspect(action)}")
 
       {:error, reason} ->
-        Logger.warning("Mautic sync failed for member #{member.id}: #{reason}")
+        Logger.warning("Mautic sync failed for #{inspect(member_or_id)}: #{reason}")
     end
 
     {:noreply, state}
+  end
+
+  # A crash inside a cast handler would kill this GenServer and drop every
+  # sync queued behind the failing one, so exceptions are contained here and
+  # logged instead.
+  defp safe_sync(member_or_id) do
+    ContactSync.sync_member(member_or_id)
+  rescue
+    exception ->
+      Logger.error(
+        "Mautic sync crashed for #{inspect(member_or_id)}: #{Exception.message(exception)}"
+      )
+
+      {:error, "crashed: #{Exception.message(exception)}"}
+  end
+
+  # Same containment for the full sync: a transient DB failure must not take
+  # down the service (sync_all_members signals failure by raising).
+  defp safe_sync_all do
+    ContactSync.sync_all_members()
+  rescue
+    exception ->
+      Logger.error("Mautic full sync crashed: #{Exception.message(exception)}")
+      {:error, "crashed: #{Exception.message(exception)}"}
   end
 
   # Private functions

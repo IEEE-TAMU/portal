@@ -190,30 +190,6 @@ defmodule IeeeTamuPortalWeb.Auth.MemberAuth do
     end
   end
 
-  def on_mount(:ensure_info_submitted, _params, session, socket) do
-    socket =
-      socket
-      |> mount_current_member(session)
-      |> mount_feature_flags()
-
-    member = socket.assigns.current_member
-    member = Accounts.preload_member_info(member)
-
-    if member.info != nil do
-      {:cont, socket}
-    else
-      socket =
-        socket
-        |> Phoenix.LiveView.put_flash(
-          :error,
-          "You must submit your information to access the rest of the site."
-        )
-        |> Phoenix.LiveView.redirect(to: ~p"/members/info")
-
-      {:halt, socket}
-    end
-  end
-
   def on_mount(:redirect_if_member_is_authenticated, _params, session, socket) do
     socket =
       socket
@@ -224,6 +200,34 @@ defmodule IeeeTamuPortalWeb.Auth.MemberAuth do
       {:halt, Phoenix.LiveView.redirect(socket, to: signed_in_path(socket))}
     else
       {:cont, socket}
+    end
+  end
+
+  @doc """
+  Ensures the current member has submitted their member info.
+
+  Called from a LiveView's `mount/3` for pages that require submitted info
+  (resume, registration). Those pages share a single live_session with the
+  other member pages so navigation between them stays client-side; the
+  submitted-info requirement is enforced here rather than by a separate
+  live_session `on_mount`.
+
+  Returns `{:ok, socket}` with the member's info preloaded, or
+  `{:error, socket}` with a flash and redirect to the info page.
+  """
+  def ensure_info_submitted(socket) do
+    member = Accounts.preload_member_info(socket.assigns.current_member)
+
+    if member.info != nil do
+      {:ok, Phoenix.Component.assign(socket, :current_member, member)}
+    else
+      {:error,
+       socket
+       |> Phoenix.LiveView.put_flash(
+         :error,
+         "You must submit your information to access the rest of the site."
+       )
+       |> Phoenix.LiveView.redirect(to: ~p"/members/info")}
     end
   end
 

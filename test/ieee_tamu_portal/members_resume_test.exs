@@ -8,9 +8,49 @@ defmodule IeeeTamuPortal.MembersResumeTest do
   alias IeeeTamuPortal.Members.Resume
   alias IeeeTamuPortal.Repo
 
+  setup do
+    # Route S3Delete's HTTP calls through Req.Test so deletes can be stubbed
+    # instead of hitting the real bucket. Tests are not async, so the stubs
+    # are shared with the S3Delete GenServer process.
+    Req.Test.set_req_test_to_shared()
+
+    Application.put_env(:ieee_tamu_portal, :s3_delete_req_opts,
+      plug: {Req.Test, IeeeTamuPortal.S3Delete},
+      retry: false
+    )
+
+    on_exit(fn ->
+      Application.delete_env(:ieee_tamu_portal, :s3_delete_req_opts)
+    end)
+
+    :ok
+  end
+
   # Simulate a Phoenix.LiveView.UploadEntry minimal struct subset
   defp upload_entry(name) do
     %Phoenix.LiveView.UploadEntry{client_name: name, client_type: "application/pdf"}
+  end
+
+  defp stub_s3_delete(status) do
+    Req.Test.expect(IeeeTamuPortal.S3Delete, fn conn ->
+      conn
+      |> Plug.Conn.put_resp_content_type("application/xml")
+      |> Plug.Conn.resp(status, "stubbed")
+    end)
+  end
+
+  # The S3Delete GenServer handles the delete asynchronously; wait until the
+  # stubbed request has been made before asserting on the captured log.
+  defp wait_for_s3_delete(attempts \\ 100)
+
+  defp wait_for_s3_delete(0), do: flunk("S3 delete request was never made")
+
+  defp wait_for_s3_delete(attempts) do
+    Req.Test.verify!(IeeeTamuPortal.S3Delete)
+  rescue
+    RuntimeError ->
+      Process.sleep(25)
+      wait_for_s3_delete(attempts - 1)
   end
 
   describe "put_member_resume/2" do
@@ -147,12 +187,14 @@ defmodule IeeeTamuPortal.MembersResumeTest do
 
       member = %{member | resume: resume}
 
+      stub_s3_delete(403)
+
       log =
         capture_log(fn ->
           assert {:ok, returned} = Members.delete_member_resume(member)
           assert returned.resume == nil
           refute Repo.get(Resume, resume.id)
-          Process.sleep(500)
+          wait_for_s3_delete()
         end)
 
       assert log =~ "S3 delete failed with status code: 403"
@@ -168,12 +210,14 @@ defmodule IeeeTamuPortal.MembersResumeTest do
       })
 
       # member has resume not loaded
+      stub_s3_delete(403)
+
       log =
         capture_log(fn ->
           assert {:ok, returned} = Members.delete_member_resume(member)
           assert returned.resume == nil
           assert Repo.aggregate(Resume, :count, :id) == 0
-          Process.sleep(500)
+          wait_for_s3_delete()
         end)
 
       assert log =~ "S3 delete failed with status code: 403"

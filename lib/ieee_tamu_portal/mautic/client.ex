@@ -18,15 +18,15 @@ defmodule IeeeTamuPortal.Mautic.Client do
   """
   def create_contacts_batch(contacts) when is_list(contacts) do
     config = config!()
-    url = "#{config.base_url}/api/contacts/batch/new"
-    auth = Base.encode64("#{config.username}:#{config.password}")
+    url = "#{config[:base_url]}/api/contacts/batch/new"
+    auth = Base.encode64("#{config[:username]}:#{config[:password]}")
 
     headers = [
       authorization: "Basic #{auth}",
       accept: "application/json"
     ]
 
-    case Req.post(url, headers: headers, json: contacts) do
+    case Req.post(url, [headers: headers, json: contacts] ++ req_options()) do
       {:ok, %Req.Response{status: status, body: body}} when status in 200..299 ->
         {:ok, body}
 
@@ -42,14 +42,25 @@ defmodule IeeeTamuPortal.Mautic.Client do
 
   @doc """
   Returns the Mautic configuration from application env, or raises if not configured.
+
+  The config is stored as a keyword list (see `config/runtime.exs`), so it is
+  normalized to a map here. Downstream code uses Access syntax (`config[:key]`)
+  rather than dot syntax — dot syntax on a keyword list raises `BadMapError`,
+  whose message would print the raw config (including credentials) to the logs.
   """
   def config! do
     case IeeeTamuPortal.Features.get_config(:mautic) do
       {:ok, config} ->
-        config
+        Map.new(config)
 
       :error ->
         raise "Mautic configuration not found. Set :ieee_tamu_portal, :mautic in config."
     end
+  end
+
+  # Req options are injectable via application env so tests can stub the HTTP
+  # layer with Req.Test instead of hitting the real Mautic instance.
+  defp req_options do
+    Application.get_env(:ieee_tamu_portal, :mautic_req_opts, [])
   end
 end

@@ -81,33 +81,40 @@ defmodule IeeeTamuPortalWeb.OAuthController do
   end
 
   def callback(conn, %{"provider" => "discord"} = params) do
-    session_params = get_session(conn, :oauth_session_params) || %{}
+    session_params = get_session(conn, :oauth_session_params)
     conn = delete_session(conn, :oauth_session_params)
 
-    discord_config()
-    |> Keyword.put(:session_params, session_params)
-    |> Discord.callback(params)
-    |> case do
-      {:ok, info} ->
-        # Check if user is authenticated to determine behavior
-        if conn.assigns[:current_member] do
-          handle_successful_auth(conn, info, :discord)
-        else
-          handle_discord_login(conn, info)
-        end
-
-      {:error, _error} ->
-        # Different error handling based on whether user is authenticated
-        {redirect_location, error_message} =
+    if valid_session_params?(session_params) do
+      discord_config()
+      |> Keyword.put(:session_params, session_params)
+      |> Discord.callback(params)
+      |> case do
+        {:ok, info} ->
+          # Check if user is authenticated to determine behavior
           if conn.assigns[:current_member] do
-            {~p"/members/settings", "Discord authentication failed. Please try again."}
+            handle_successful_auth(conn, info, :discord)
           else
-            {~p"/members/login", "Discord login failed. Please try again."}
+            handle_discord_login(conn, info)
           end
 
-        conn
-        |> put_flash(:error, error_message)
-        |> redirect(to: redirect_location)
+        {:error, _error} ->
+          # Different error handling based on whether user is authenticated
+          {redirect_location, error_message} =
+            if conn.assigns[:current_member] do
+              {~p"/members/settings", "Discord authentication failed. Please try again."}
+            else
+              {~p"/members/login", "Discord login failed. Please try again."}
+            end
+
+          conn
+          |> put_flash(:error, error_message)
+          |> redirect(to: redirect_location)
+      end
+    else
+      # No stored state means the flow was never started from this browser or
+      # the session expired. Assent crashes with a KeyError on a missing state,
+      # so short-circuit to a friendly redirect instead.
+      oauth_error_redirect(conn, "Discord login session expired. Please try again.")
     end
   end
 
@@ -126,33 +133,38 @@ defmodule IeeeTamuPortalWeb.OAuthController do
   end
 
   def callback(conn, %{"provider" => "google"} = params) do
-    session_params = get_session(conn, :oauth_session_params) || %{}
+    session_params = get_session(conn, :oauth_session_params)
     conn = delete_session(conn, :oauth_session_params)
 
-    google_config()
-    |> Keyword.put(:session_params, session_params)
-    |> google_adapter().callback(params)
-    |> case do
-      {:ok, info} ->
-        # Check if user is authenticated to determine behavior
-        if conn.assigns[:current_member] do
-          handle_google_linking(conn, info)
-        else
-          handle_google_login(conn, info)
-        end
-
-      {:error, _error} ->
-        # Different error handling based on whether user is authenticated
-        {redirect_location, error_message} =
+    if valid_session_params?(session_params) do
+      google_config()
+      |> Keyword.put(:session_params, session_params)
+      |> google_adapter().callback(params)
+      |> case do
+        {:ok, info} ->
+          # Check if user is authenticated to determine behavior
           if conn.assigns[:current_member] do
-            {~p"/members/settings", "Google authentication failed. Please try again."}
+            handle_google_linking(conn, info)
           else
-            {~p"/members/login", "Google login failed. Please try again."}
+            handle_google_login(conn, info)
           end
 
-        conn
-        |> put_flash(:error, error_message)
-        |> redirect(to: redirect_location)
+        {:error, _error} ->
+          # Different error handling based on whether user is authenticated
+          {redirect_location, error_message} =
+            if conn.assigns[:current_member] do
+              {~p"/members/settings", "Google authentication failed. Please try again."}
+            else
+              {~p"/members/login", "Google login failed. Please try again."}
+            end
+
+          conn
+          |> put_flash(:error, error_message)
+          |> redirect(to: redirect_location)
+      end
+    else
+      # See the discord callback: no stored state must not reach Assent.
+      oauth_error_redirect(conn, "Google login session expired. Please try again.")
     end
   end
 
@@ -389,6 +401,23 @@ defmodule IeeeTamuPortalWeb.OAuthController do
       {:error, :member, _changeset, _changes_so_far} -> {:error, :already_exists}
       # other error
       {:error, _failed_operation, changeset, _changes_so_far} -> {:error, changeset}
+    end
+  end
+
+  # `authorize_url/1` stores `%{state: ...}` in the session; anything else
+  # means the callback was hit without a flow started from this browser.
+  defp valid_session_params?(%{state: state}) when is_binary(state), do: true
+  defp valid_session_params?(_), do: false
+
+  defp oauth_error_redirect(conn, message) do
+    if conn.assigns[:current_member] do
+      conn
+      |> put_flash(:error, message)
+      |> redirect(to: ~p"/members/settings")
+    else
+      conn
+      |> put_flash(:error, message)
+      |> redirect(to: ~p"/members/login")
     end
   end
 

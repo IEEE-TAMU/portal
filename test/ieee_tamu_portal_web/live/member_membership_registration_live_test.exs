@@ -125,4 +125,41 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLiveTest do
       assert %{"error" => "You must log in to access this page."} = flash
     end
   end
+
+  describe "navigation" do
+    setup %{conn: conn} do
+      registration_year_setting_fixture("2025")
+
+      member = confirmed_member_fixture()
+
+      {:ok, _info} =
+        Members.create_member_info(member, %{
+          uin: 123_001_234,
+          first_name: "Test",
+          last_name: "User",
+          tshirt_size: :M,
+          graduation_year: 2026,
+          major: :ELEN,
+          gender: :Male,
+          international_student: false,
+          phone_number: "123-456-7890"
+        })
+
+      {:ok, conn: log_in_member(conn, member), member: member}
+    end
+
+    test "member pages share a live_session so navbar navigation stays client-side", %{
+      conn: conn
+    } do
+      {:ok, view, _html} = live(conn, ~p"/members/registration")
+
+      # All member pages live in a single live_session; clicking a navbar
+      # navigate link stays inside the LiveView as a pushed live redirect
+      # (cross-session navigation would fall back to a full page reload).
+      assert {:error, {:live_redirect, %{kind: :push, to: "/members/info"}}} =
+               view
+               |> element("a[href='/members/info'][data-phx-link='redirect']")
+               |> render_click()
+    end
+  end
 end
