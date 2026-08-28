@@ -118,7 +118,7 @@ defmodule IeeeTamuPortalWeb.Utils.DiscordRoleAssigner do
 
     body = %{email: email, role: role}
 
-    case Req.request(method: :post, url: url, headers: headers, json: body) do
+    case Req.request([method: :post, url: url, headers: headers, json: body] ++ req_options()) do
       {:ok, %{status: status, body: body}} when status in [200, 201] ->
         {:ok, body}
 
@@ -128,6 +128,12 @@ defmodule IeeeTamuPortalWeb.Utils.DiscordRoleAssigner do
       {:error, reason} ->
         {:error, {:request_error, reason}}
     end
+  end
+
+  # Req options are injectable via application env so tests can stub the HTTP
+  # layer with Req.Test instead of hitting the real portal API.
+  defp req_options do
+    Application.get_env(:ieee_tamu_portal, :discord_role_assigner_req_opts, [])
   end
 
   defp build_url(host, path) do

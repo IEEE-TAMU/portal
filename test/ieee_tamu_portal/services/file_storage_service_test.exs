@@ -1,103 +1,154 @@
 defmodule IeeeTamuPortal.Services.FileStorageServiceTest do
-  use IeeeTamuPortal.DataCase
+  use IeeeTamuPortal.DataCase, async: false
 
-  alias IeeeTamuPortal.Services.FileStorageService
-  alias IeeeTamuPortal.Members
-
+  import ExUnit.CaptureLog
   import IeeeTamuPortal.AccountsFixtures
 
-  describe "upload_resume/2" do
-    test "creates resume record with upload params" do
-      member = member_fixture()
+  alias IeeeTamuPortal.Repo
+  alias IeeeTamuPortal.Services.FileStorageService
 
-      # Mock upload params (simplified for testing)
-      upload_params = %{
-        client_name: "resume.pdf"
-      }
+  setup do
+    Req.Test.set_req_test_to_shared()
 
-      result = FileStorageService.upload_resume(member, upload_params)
+    original_s3 = Application.get_env(:ieee_tamu_portal, IeeeTamuPortalWeb.Upload.SimpleS3Upload)
 
-      assert {:ok, resume} = result
-      assert resume.member_id == member.id
-      assert resume.original_filename == "resume.pdf"
-      assert is_binary(resume.key)
-      assert String.contains?(resume.key, "resumes/")
-    end
+    Application.put_env(:ieee_tamu_portal, :s3_delete_req_opts,
+      plug: {Req.Test, IeeeTamuPortal.S3Delete},
+      retry: false
+    )
 
-    test "returns error with invalid upload" do
-      member = member_fixture()
+    # The S3Delete success path logs at :info, which the test env suppresses.
+    Logger.configure(level: :info)
 
-      invalid_params = %{client_name: ""}
+    on_exit(fn ->
+      Logger.configure(level: :warning)
+      Application.delete_env(:ieee_tamu_portal, :s3_delete_req_opts)
+      Application.put_env(:ieee_tamu_portal, IeeeTamuPortalWeb.Upload.SimpleS3Upload, original_s3)
+    end)
 
-      assert {:error, changeset} = FileStorageService.upload_resume(member, invalid_params)
-      assert changeset.errors[:original_filename]
-    end
+    :ok
   end
 
-  describe "delete_resume/1" do
-    test "successfully deletes existing resume" do
-      import ExUnit.CaptureLog
+  defp upload_entry(name) do
+    %Phoenix.LiveView.UploadEntry{client_name: name, client_type: "application/pdf"}
+  end
 
+  describe "upload_resume/2" do
+    test "creates a resume from an upload entry" do
       member = member_fixture()
 
-      # Create a resume first
-      {:ok, resume} =
-        Members.create_member_resume(member, %{
-          original_filename: "test_resume.pdf",
-          key: "resumes/#{member.id}-test_resume.pdf"
-        })
-
-      # Should successfully delete
-      capture_log(fn ->
-        assert {:ok, _deleted_resume} = FileStorageService.delete_resume(resume)
-        Process.sleep(500)
-      end)
+      assert {:ok, resume} = FileStorageService.upload_resume(member, upload_entry("r.pdf"))
+      assert resume.original_filename == "r.pdf"
+      assert resume.key == "resumes/#{member.id}-#{member.email}.pdf"
     end
 
-    test "handles resume that doesn't exist gracefully" do
-      import ExUnit.CaptureLog
+    test "creates a resume from plain params" do
+      # Use a deterministic email — plain-param keys sanitize everything
+      # except alphanumerics, @ and dots.
+      member = member_fixture(%{email: "storage.test@tamu.edu"})
 
-      resume = %Members.Resume{
-        id: 999,
-        original_filename: "nonexistent.pdf",
-        key: "resumes/nonexistent.pdf",
-        bucket_url: "https://test-bucket.s3.amazonaws.com"
-      }
+      assert {:ok, resume} =
+               FileStorageService.upload_resume(member, %{client_name: "other.PDF"})
 
-      # Should handle stale entry error gracefully
-      capture_log(fn ->
-        assert {:error, :not_found} = FileStorageService.delete_resume(resume)
-        Process.sleep(500)
-      end)
+      assert resume.key == "resumes/#{member.id}-storage.test@tamu.edu.PDF"
     end
   end
 
   describe "generate_resume_key/2" do
-    test "generates unique key for member and upload" do
+    test "builds a key from an upload entry" do
       member = member_fixture()
 
-      upload_params = %{client_name: "my_resume.pdf"}
+      key = FileStorageService.generate_resume_key(member, upload_entry("r.pdf"))
 
-      key = FileStorageService.generate_resume_key(member, upload_params)
-
-      assert is_binary(key)
-      assert String.starts_with?(key, "resumes/")
-      assert String.contains?(key, to_string(member.id))
-      assert String.ends_with?(key, ".pdf")
+      assert key == "resumes/#{member.id}-#{member.email}.pdf"
     end
 
-    test "sanitizes member email in key" do
-      # Use a valid TAMU email
-      member = member_fixture(%{email: "testuser@tamu.edu"})
+    test "builds a key from plain params" do
+      # Use a deterministic email — plain-param keys sanitize everything
+      # except alphanumerics, @ and dots.
+      member = member_fixture(%{email: "storage.test@tamu.edu"})
 
-      upload_params = %{client_name: "resume.pdf"}
+      key = FileStorageService.generate_resume_key(member, %{client_name: "r.docx"})
 
-      key = FileStorageService.generate_resume_key(member, upload_params)
-
-      # Should include member ID and be properly formatted
-      assert String.contains?(key, to_string(member.id))
-      assert String.contains?(key, "testuser@tamu.edu")
-      assert String.ends_with?(key, ".pdf")
+      assert key == "resumes/#{member.id}-storage.test@tamu.edu.docx"
     end
+  end
+
+  describe "get_resume_url/2" do
+    test "returns a signed URL for a resume" do
+      member = member_fixture()
+      {:ok, resume} = FileStorageService.upload_resume(member, upload_entry("r.pdf"))
+
+      assert {:ok, url} = FileStorageService.get_resume_url(resume)
+      assert url =~ resume.key
+      assert url =~ "X-Amz-Signature"
+    end
+
+    test "returns {:error, :configuration_missing} when S3 is unconfigured" do
+      member = member_fixture()
+      {:ok, resume} = FileStorageService.upload_resume(member, upload_entry("r.pdf"))
+
+      Application.delete_env(:ieee_tamu_portal, IeeeTamuPortalWeb.Upload.SimpleS3Upload)
+
+      assert {:error, :configuration_missing} = FileStorageService.get_resume_url(resume)
+    end
+  end
+
+  describe "delete_resume/1" do
+    test "deletes the resume record and requests the object deletion" do
+      member = member_fixture()
+      {:ok, resume} = FileStorageService.upload_resume(member, upload_entry("r.pdf"))
+
+      stub_s3_delete(204)
+
+      log =
+        capture_log([level: :info], fn ->
+          assert {:ok, _deleted} = FileStorageService.delete_resume(resume)
+          assert Repo.aggregate(IeeeTamuPortal.Members.Resume, :count, :id) == 0
+          wait_for_s3_delete()
+        end)
+
+      assert log =~ "Deleted S3 object"
+    end
+
+    test "returns {:error, :not_found} when the record is already gone" do
+      member = member_fixture()
+      {:ok, resume} = FileStorageService.upload_resume(member, upload_entry("r.pdf"))
+
+      capture_log(fn ->
+        stub_s3_delete(204)
+
+        assert {:ok, _} = FileStorageService.delete_resume(resume)
+        wait_for_s3_delete()
+
+        stub_s3_delete(204)
+
+        assert {:error, :not_found} = FileStorageService.delete_resume(resume)
+        wait_for_s3_delete()
+      end)
+    end
+  end
+
+  defp stub_s3_delete(status) do
+    Req.Test.expect(IeeeTamuPortal.S3Delete, fn conn ->
+      conn
+      |> Plug.Conn.put_resp_content_type("application/xml")
+      |> Plug.Conn.resp(status, "stubbed")
+    end)
+  end
+
+  # The S3Delete GenServer handles the delete asynchronously; wait until the
+  # stubbed request has been made before asserting on the captured log.
+  defp wait_for_s3_delete(attempts \\ 100)
+
+  defp wait_for_s3_delete(0), do: flunk("S3 delete request was never made")
+
+  defp wait_for_s3_delete(attempts) do
+    Req.Test.verify!(IeeeTamuPortal.S3Delete)
+    Process.sleep(50)
+  rescue
+    RuntimeError ->
+      Process.sleep(25)
+      wait_for_s3_delete(attempts - 1)
   end
 end

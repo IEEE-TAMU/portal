@@ -81,4 +81,64 @@ defmodule IeeeTamuPortal.Discord.ClientTest do
       assert {:error, :not_in_guild} = Client.has_role?("123", "Member")
     end
   end
+
+  describe "health_check/0" do
+    test "returns {:ok, body} when the bot is healthy" do
+      Req.Test.expect(IeeeTamuPortal.Discord.Client, fn conn ->
+        Req.Test.json(conn, %{"status" => "ok"})
+      end)
+
+      assert {:ok, %{"status" => "ok"}} = Client.health_check()
+    end
+
+    test "returns {:error, reason} when the bot is unhealthy" do
+      Req.Test.expect(IeeeTamuPortal.Discord.Client, fn conn ->
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.resp(503, Jason.encode!(%{"status" => "down"}))
+      end)
+
+      assert {:error, "Discord bot unhealthy: 503"} = Client.health_check()
+    end
+  end
+
+  describe "add_role/2" do
+    test "returns {:ok, response} on success" do
+      Req.Test.expect(IeeeTamuPortal.Discord.Client, fn conn ->
+        Req.Test.json(conn, %{"success" => true})
+      end)
+
+      assert {:ok, %{"success" => true}} = Client.add_role("123", "Member")
+    end
+
+    test "returns {:error, reason} on failure" do
+      Req.Test.expect(IeeeTamuPortal.Discord.Client, fn conn ->
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.resp(403, Jason.encode!(%{"message" => "missing permissions"}))
+      end)
+
+      assert {:error, "Failed to add role: 403"} = Client.add_role("123", "Member")
+    end
+  end
+
+  describe "remove_role/2" do
+    test "returns {:ok, response} on success" do
+      Req.Test.expect(IeeeTamuPortal.Discord.Client, fn conn ->
+        Req.Test.json(conn, %{"success" => true})
+      end)
+
+      assert {:ok, %{"success" => true}} = Client.remove_role("123", "Member")
+    end
+
+    test "returns {:error, reason} on failure" do
+      Req.Test.expect(IeeeTamuPortal.Discord.Client, fn conn ->
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.resp(500, Jason.encode!(%{"message" => "boom"}))
+      end)
+
+      assert {:error, "Failed to remove role: 500"} = Client.remove_role("123", "Member")
+    end
+  end
 end

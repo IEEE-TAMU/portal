@@ -4,7 +4,6 @@ defmodule IeeeTamuPortal.S3DeleteTest do
   import ExUnit.CaptureLog
 
   alias IeeeTamuPortal.S3Delete
-  alias IeeeTamuPortalWeb.Upload.SimpleS3Upload
 
   @uri "https://test-bucket.s3.amazonaws.com/resumes/test.pdf"
 
@@ -55,6 +54,23 @@ defmodule IeeeTamuPortal.S3DeleteTest do
       end)
 
     assert log =~ "S3 delete failed with status code: 403 for #{@uri}"
+  end
+
+  test "logs an error when the request cannot reach the storage endpoint" do
+    # The signed URI is used verbatim, so pointing it at a refused loopback
+    # port makes the request fail at the transport layer. Retries are
+    # disabled so the failure is immediate.
+    Application.put_env(:ieee_tamu_portal, :s3_delete_req_opts, retry: false)
+
+    bad_uri = "http://127.0.0.1:1/resumes/test.pdf"
+
+    log =
+      capture_log(fn ->
+        S3Delete.delete_object(S3Delete, bad_uri)
+        Process.sleep(200)
+      end)
+
+    assert log =~ "S3 delete failed with reason:"
   end
 
   # The S3Delete GenServer handles the delete asynchronously; wait until the

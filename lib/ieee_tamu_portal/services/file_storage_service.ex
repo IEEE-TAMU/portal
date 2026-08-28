@@ -99,8 +99,9 @@ defmodule IeeeTamuPortal.Services.FileStorageService do
     try do
       Resume.signed_url(resume, opts)
     rescue
-      ArgumentError ->
-        {:error, :configuration_missing}
+      # SimpleS3Upload.config!/0 raises RuntimeError when unconfigured
+      RuntimeError -> {:error, :configuration_missing}
+      ArgumentError -> {:error, :configuration_missing}
     end
   end
 

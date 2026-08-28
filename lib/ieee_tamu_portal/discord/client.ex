@@ -14,7 +14,7 @@ defmodule IeeeTamuPortal.Discord.Client do
   Returns {:ok, response} or {:error, reason}.
   """
   def health_check do
-    case Req.get(discord_bot_url("/health")) do
+    case Req.get(discord_bot_url("/health"), req_options()) do
       {:ok, %Req.Response{status: 200, body: body}} ->
         {:ok, body}
 

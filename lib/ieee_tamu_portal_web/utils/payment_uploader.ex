@@ -193,7 +193,7 @@ defmodule IeeeTamuPortalWeb.Utils.PaymentUploader do
     url = build_url(host, "/api/v1/payments")
     headers = auth_headers(api_key)
 
-    case Req.request(method: :get, url: url, headers: headers) do
+    case Req.request([method: :get, url: url, headers: headers] ++ req_options()) do
       {:ok, %{status: 200, body: body}} when is_list(body) ->
         ids =
           body
@@ -221,7 +221,9 @@ defmodule IeeeTamuPortalWeb.Utils.PaymentUploader do
       |> Enum.reject(fn {_k, v} -> is_nil(v) end)
       |> Map.new()
 
-    case Req.request(method: :post, url: url, headers: headers, json: json_body) do
+    case Req.request(
+           [method: :post, url: url, headers: headers, json: json_body] ++ req_options()
+         ) do
       {:ok, %{status: status, body: body}} when status in [200, 201] ->
         {:created, :ok, Map.get(body, "id") || Map.get(body, :id)}
 
@@ -231,6 +233,12 @@ defmodule IeeeTamuPortalWeb.Utils.PaymentUploader do
       {:error, reason} ->
         {:error, {:request_error, reason}, attrs}
     end
+  end
+
+  # Req options are injectable via application env so tests can stub the HTTP
+  # layer with Req.Test instead of hitting the real portal API.
+  defp req_options do
+    Application.get_env(:ieee_tamu_portal, :payment_uploader_req_opts, [])
   end
 
   defp auth_headers(api_key) do

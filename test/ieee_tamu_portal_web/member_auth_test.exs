@@ -321,7 +321,7 @@ defmodule IeeeTamuPortalWeb.Auth.MemberAuthTest do
                "You must submit your information to access the rest of the site."
     end
 
-    defp authed_socket(conn, member) do
+    defp authed_socket(_conn, member) do
       %LiveView.Socket{
         endpoint: IeeeTamuPortalWeb.Endpoint,
         assigns: %{__changed__: %{}, flash: %{}, current_member: member}

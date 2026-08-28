@@ -110,7 +110,7 @@ defmodule IeeeTamuPortal.ResumeZipService do
   end
 
   defp make_http_request(url) do
-    case Req.get(url, receive_timeout: 30_000) do
+    case Req.get(url, [receive_timeout: 30_000] ++ req_options()) do
       {:ok, %{status: 200, body: body}} ->
         {:ok, body}
 
@@ -120,6 +120,12 @@ defmodule IeeeTamuPortal.ResumeZipService do
       {:error, reason} ->
         {:error, reason}
     end
+  end
+
+  # Req options are injectable via application env so tests can stub the HTTP
+  # layer with Req.Test instead of hitting the real bucket.
+  defp req_options do
+    Application.get_env(:ieee_tamu_portal, :resume_zip_req_opts, [])
   end
 
   defp create_safe_filename(member) do
