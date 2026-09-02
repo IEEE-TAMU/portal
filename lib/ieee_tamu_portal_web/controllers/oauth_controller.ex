@@ -3,7 +3,12 @@ defmodule IeeeTamuPortalWeb.OAuthController do
 
   alias IeeeTamuPortal.Accounts
   alias Assent.Strategy.Discord
-  alias Assent.Strategy.Google
+
+  # Overridable in tests via Application config for the Google OAuth strategy.
+  defp google_adapter do
+    Application.get_env(:ieee_tamu_portal, __MODULE__, [])
+    |> Keyword.get(:google_adapter, Assent.Strategy.Google)
+  end
 
   @doc """
   Initiates OAuth flow for the specified provider (discord or google)
@@ -35,7 +40,7 @@ defmodule IeeeTamuPortalWeb.OAuthController do
 
   def authorize(conn, %{"provider" => "google"}) do
     google_config()
-    |> Google.authorize_url()
+    |> google_adapter().authorize_url()
     |> case do
       {:ok, %{url: url, session_params: session_params}} ->
         conn
@@ -126,7 +131,7 @@ defmodule IeeeTamuPortalWeb.OAuthController do
 
     google_config()
     |> Keyword.put(:session_params, session_params)
-    |> Google.callback(params)
+    |> google_adapter().callback(params)
     |> case do
       {:ok, info} ->
         # Check if user is authenticated to determine behavior
@@ -233,38 +238,110 @@ defmodule IeeeTamuPortalWeb.OAuthController do
 
       case Accounts.get_member_by_auth_sub(:google, google_sub) do
         nil ->
-          # No existing member found, create a new one
-          case create_member_from_google(user_info) do
-            {:ok, member} ->
-              conn
-              |> put_flash(
-                :info,
-                "Welcome! Your account has been automatically created and you are now logged in."
-              )
-              |> IeeeTamuPortalWeb.Auth.MemberAuth.log_in_member(member)
-
-            {:error, :already_exists} ->
-              conn
-              |> put_flash(
-                :error,
-                "Failed to create account - an account with that email already exists but is not linked to this google account."
-              )
-              |> redirect(to: ~p"/members/login")
-
-            {:error, _changeset} ->
-              conn
-              |> put_flash(
-                :error,
-                "Failed to create account. Please try again or register manually."
-              )
-              |> redirect(to: ~p"/members/login")
-          end
+          # No google-linked member found for this sub. The account may already
+          # exist as an email/password member that simply hasn't been linked to
+          # Google yet, so try to link it instead of failing.
+          handle_google_login_without_sub(conn, user_info, email, google_sub)
 
         member ->
           conn
           |> put_flash(:info, "Successfully logged in with Google!")
           |> IeeeTamuPortalWeb.Auth.MemberAuth.log_in_member(member)
       end
+    end
+  end
+
+  defp handle_google_login_without_sub(conn, user_info, email, google_sub) do
+    case Accounts.get_member_by_email(email) do
+      nil ->
+        # No member with this email at all yet, so create a new one.
+        case create_member_from_google(user_info) do
+          {:ok, member} ->
+            conn
+            |> put_flash(
+              :info,
+              "Welcome! Your account has been automatically created and you are now logged in."
+            )
+            |> IeeeTamuPortalWeb.Auth.MemberAuth.log_in_member(member)
+
+          {:error, :already_exists} ->
+            conn
+            |> put_flash(
+              :error,
+              "Failed to create account - an account with that email already exists but is not linked to this google account."
+            )
+            |> redirect(to: ~p"/members/login")
+
+          {:error, _changeset} ->
+            conn
+            |> put_flash(
+              :error,
+              "Failed to create account. Please try again or register manually."
+            )
+            |> redirect(to: ~p"/members/login")
+        end
+
+      existing_member ->
+        # A member exists with this email but has no Google method linked yet.
+        # Only link when Google has verified ownership of the email (an
+        # explicitly `false` value blocks linking, so a malicious Google
+        # account cannot claim someone else's email/password account), so a
+        # malicious Google account cannot claim someone else's email/password
+        # account.
+        if user_info["email_verified"] != false do
+          link_existing_member_to_google(conn, existing_member, user_info, google_sub)
+        else
+          conn
+          |> put_flash(
+            :error,
+            "We couldn't verify your Google email address. Please ensure your Google account's email is verified and try again."
+          )
+          |> redirect(to: ~p"/members/login")
+        end
+    end
+  end
+
+  defp link_existing_member_to_google(conn, member, user_info, google_sub) do
+    alias IeeeTamuPortal.Repo
+    alias IeeeTamuPortal.Accounts.Member
+
+    email = user_info["email"]
+
+    Ecto.Multi.new()
+    |> Ecto.Multi.run(:auth_method, fn _repo, _changes ->
+      Accounts.link_auth_method(member, %{
+        provider: :google,
+        sub: google_sub,
+        email: email,
+        email_verified: user_info["email_verified"] || true
+      })
+    end)
+    |> Ecto.Multi.run(:confirmed_member, fn _repo, _changes ->
+      # Google has verified the email, so confirm the account if it wasn't
+      # already (this also resolves members who never received a confirmation
+      # email).
+      if member.confirmed_at do
+        {:ok, member}
+      else
+        member
+        |> Member.confirm_changeset()
+        |> Repo.update()
+      end
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, _} ->
+        conn
+        |> put_flash(:info, "Successfully linked your Google account and signed in!")
+        |> IeeeTamuPortalWeb.Auth.MemberAuth.log_in_member(member)
+
+      {:error, _operation, _changeset, _changes_so_far} ->
+        conn
+        |> put_flash(
+          :error,
+          "Failed to link your Google account. Please try again or register manually."
+        )
+        |> redirect(to: ~p"/members/login")
     end
   end
 
