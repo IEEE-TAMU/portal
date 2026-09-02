@@ -230,14 +230,27 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLiveTest do
   end
 
   describe "next event suggestion" do
-    test "pre-populates event controls with next upcoming event when none is running", %{conn: conn} do
+    test "pre-populates event controls with next upcoming event when none is running", %{
+      conn: conn
+    } do
       Settings.stop_current_event()
 
       dt_start1 = DateTime.utc_now() |> DateTime.add(3600, :second) |> DateTime.truncate(:second)
       dt_start2 = DateTime.utc_now() |> DateTime.add(7200, :second) |> DateTime.truncate(:second)
 
-      _earlier = create_event(%{summary: "Earlier Event", dtstart: dt_start1, dtend: DateTime.add(dt_start1, 3600, :second)})
-      _later = create_event(%{summary: "Later Event", dtstart: dt_start2, dtend: DateTime.add(dt_start2, 3600, :second)})
+      _earlier =
+        create_event(%{
+          summary: "Earlier Event",
+          dtstart: dt_start1,
+          dtend: DateTime.add(dt_start1, 3600, :second)
+        })
+
+      _later =
+        create_event(%{
+          summary: "Later Event",
+          dtstart: dt_start2,
+          dtend: DateTime.add(dt_start2, 3600, :second)
+        })
 
       {:ok, _lv, html} =
         conn
@@ -250,7 +263,13 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLiveTest do
 
     test "populates event controls with next event after stopping current event", %{conn: conn} do
       dt_start = DateTime.utc_now() |> DateTime.add(3600, :second) |> DateTime.truncate(:second)
-      _next = create_event(%{summary: "Next Upcoming Event", dtstart: dt_start, dtend: DateTime.add(dt_start, 3600, :second)})
+
+      _next =
+        create_event(%{
+          summary: "Next Upcoming Event",
+          dtstart: dt_start,
+          dtend: DateTime.add(dt_start, 3600, :second)
+        })
 
       {:ok, lv, _html} =
         conn
