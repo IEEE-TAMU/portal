@@ -259,6 +259,7 @@ defmodule SeedHelpers do
   ]
   @genders [:Male, :Female, :Other]
   @tshirt_sizes [:S, :M, :L, :XL, :XXL]
+  @dietary_preferences [:None, :Vegetarian]
   @countries [
     "China",
     "India",
@@ -287,6 +288,7 @@ defmodule SeedHelpers do
   def random_major, do: Enum.random(@majors)
   def random_gender, do: Enum.random(@genders)
   def random_tshirt_size, do: Enum.random(@tshirt_sizes)
+  def random_dietary_preference, do: Enum.random(@dietary_preferences)
   def random_country, do: Enum.random(@countries)
 
   def random_major_other do
@@ -455,6 +457,7 @@ IO.puts("\n🚀 Generating 100 random users...")
             first_name: first_name,
             last_name: last_name,
             tshirt_size: SeedHelpers.random_tshirt_size(),
+            dietary_preference: SeedHelpers.random_dietary_preference(),
             gender: SeedHelpers.random_gender(),
             uin: SeedHelpers.random_uin(),
             major: selected_major,

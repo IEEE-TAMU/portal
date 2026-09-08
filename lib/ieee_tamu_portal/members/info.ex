@@ -16,6 +16,7 @@ defmodule IeeeTamuPortal.Members.Info do
     field :gender, Ecto.Enum, values: ~w(Male Female Other)a
     field :gender_other, :string
     field :tshirt_size, Ecto.Enum, values: ~w(S M L XL XXL)a
+    field :dietary_preference, Ecto.Enum, values: ~w(None Vegetarian)a, default: :None
     field :uin, :integer
     field :ieee_membership_number, :integer
 
@@ -34,6 +35,7 @@ defmodule IeeeTamuPortal.Members.Info do
       :last_name,
       :preferred_name,
       :tshirt_size,
+      :dietary_preference,
       :phone_number,
       :gender,
       :age
@@ -41,7 +43,8 @@ defmodule IeeeTamuPortal.Members.Info do
     |> validate_required([
       :first_name,
       :last_name,
-      :tshirt_size
+      :tshirt_size,
+      :dietary_preference
     ])
     |> validate_uin(opts)
     |> validate_phone_number()
@@ -78,6 +81,7 @@ defmodule IeeeTamuPortal.Members.Info do
       :first_name,
       :last_name,
       :tshirt_size,
+      :dietary_preference,
       :uin,
       :preferred_name,
       :phone_number,
@@ -92,6 +96,7 @@ defmodule IeeeTamuPortal.Members.Info do
       :first_name,
       :last_name,
       :tshirt_size,
+      :dietary_preference,
       :graduation_year,
       :major,
       :gender,

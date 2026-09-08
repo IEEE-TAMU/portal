@@ -262,7 +262,8 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
             uin: %Schema{type: :integer},
             major: %Schema{type: :string},
             graduation_year: %Schema{type: :integer},
-            tshirt_size: %Schema{type: :string}
+            tshirt_size: %Schema{type: :string},
+            dietary_preference: %Schema{type: :string}
           }
         }
       },
@@ -288,7 +289,8 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
                 uin: info.uin,
                 major: info.major,
                 graduation_year: info.graduation_year,
-                tshirt_size: info.tshirt_size && to_string(info.tshirt_size)
+                tshirt_size: to_string(info.tshirt_size),
+                dietary_preference: to_string(info.dietary_preference)
               }
           end
       }

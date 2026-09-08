@@ -114,6 +114,13 @@ defmodule IeeeTamuPortalWeb.MemberInfoLive do
               required
             />
             <.input
+              field={@info_form[:dietary_preference]}
+              label="Dietary preference *"
+              type="select"
+              options={Ecto.Enum.values(Members.Info, :dietary_preference)}
+              required
+            />
+            <.input
               field={@info_form[:phone_number]}
               label="Phone number"
               type="tel"

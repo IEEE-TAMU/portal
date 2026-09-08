@@ -524,6 +524,15 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                     </div>
                   </div>
                   <div>
+                    <label class="block text-sm font-medium text-gray-700">
+                      Dietary preference
+                    </label>
+                    <div class="mt-1 text-sm text-gray-900">
+                      {(@current_member.info && @current_member.info.dietary_preference) ||
+                        "Not provided"}
+                    </div>
+                  </div>
+                  <div>
                     <label class="block text-sm font-medium text-gray-700">Phone number</label>
                     <div class="mt-1 text-sm text-gray-900">
                       {(@current_member.info && @current_member.info.phone_number) || "Not provided"}
@@ -657,6 +666,13 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                       type="select"
                       prompt="Select a size"
                       options={Ecto.Enum.values(Members.Info, :tshirt_size)}
+                      required
+                    />
+                    <.input
+                      field={@member_info_form[:dietary_preference]}
+                      label="Dietary preference *"
+                      type="select"
+                      options={Ecto.Enum.values(Members.Info, :dietary_preference)}
                       required
                     />
                     <.input
