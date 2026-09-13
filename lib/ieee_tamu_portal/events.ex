@@ -259,6 +259,7 @@ defmodule IeeeTamuPortal.Events do
         first_name: i.first_name,
         last_name: i.last_name,
         preferred_name: i.preferred_name,
+        dietary_preference: i.dietary_preference,
         email: m.email,
         inserted_at: r.inserted_at
       },
@@ -306,7 +307,7 @@ defmodule IeeeTamuPortal.Events do
 
   @doc """
   Gets emails and names for RSVPs of a specific event for CSV export.
-  Returns a list of {created, email, name, uin, event_title} tuples.
+  Returns a list of {created, email, name, uin, dietary_preference, event_title} tuples.
   """
   def emails_and_names_for_event_rsvps(event_uid) do
     from(r in RSVP,
@@ -325,6 +326,7 @@ defmodule IeeeTamuPortal.Events do
           i.last_name
         ),
         i.uin,
+        i.dietary_preference,
         e.summary
       },
       order_by: [desc: r.inserted_at]

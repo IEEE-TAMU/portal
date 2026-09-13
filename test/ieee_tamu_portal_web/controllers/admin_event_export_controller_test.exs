@@ -71,6 +71,35 @@ defmodule IeeeTamuPortalWeb.AdminEventExportControllerTest do
     assert body =~ member.email
   end
 
+  test "includes dietary preference in RSVP CSV", %{conn: conn, event: event} do
+    member = confirmed_member_fixture()
+
+    {:ok, _info} =
+      Members.create_member_info(member, %{
+        uin: unique_uin(),
+        first_name: "Alice",
+        last_name: "Smith",
+        tshirt_size: :M,
+        graduation_year: 2026,
+        major: :ELEN,
+        gender: :Male,
+        international_student: false,
+        phone_number: "123-456-7890",
+        dietary_preference: :"Gluten-Free"
+      })
+
+    {:ok, _rsvp} = Events.create_rsvp(member.id, event.uid)
+
+    conn =
+      conn
+      |> admin_auth_conn()
+      |> get(~p"/admin/download-event-rsvps/#{event.uid}")
+
+    body = response(conn, 200)
+    assert body =~ "date,email,name,uin,dietary_preference"
+    assert body =~ "Gluten-Free"
+  end
+
   test "returns checkins CSV with headers", %{conn: conn, event: event} do
     conn =
       conn

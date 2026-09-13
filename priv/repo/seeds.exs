@@ -259,7 +259,7 @@ defmodule SeedHelpers do
   ]
   @genders [:Male, :Female, :Other]
   @tshirt_sizes [:S, :M, :L, :XL, :XXL]
-  @dietary_preferences [:None, :Vegetarian]
+  @dietary_preferences [:None, :Vegetarian, :Vegan, :"Gluten-Free", :"Nut-Free"]
   @countries [
     "China",
     "India",

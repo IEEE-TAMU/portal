@@ -60,6 +60,33 @@ defmodule IeeeTamuPortalWeb.AdminMemberExportControllerTest do
     assert body =~ member.email
   end
 
+  test "includes dietary preference in CSV", %{conn: conn} do
+    member = confirmed_member_fixture()
+
+    {:ok, _info} =
+      Members.create_member_info(member, %{
+        uin: unique_uin(),
+        first_name: "Alice",
+        last_name: "User",
+        tshirt_size: :M,
+        graduation_year: 2026,
+        major: :ELEN,
+        gender: :Male,
+        international_student: false,
+        phone_number: "123-456-7890",
+        dietary_preference: :Vegan
+      })
+
+    conn =
+      conn
+      |> admin_auth_conn()
+      |> get(~p"/admin/download-members")
+
+    body = response(conn, 200)
+    assert body =~ "dietary_preference"
+    assert body =~ "Vegan"
+  end
+
   test "filters by paid=true", %{conn: conn} do
     member = confirmed_member_fixture()
 

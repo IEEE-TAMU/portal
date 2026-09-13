@@ -408,15 +408,17 @@ defmodule IeeeTamuPortal.EventsTest do
           major: :ELEN,
           gender: :Male,
           international_student: false,
-          phone_number: "123-456-7890"
+          phone_number: "123-456-7890",
+          dietary_preference: :Vegan
         })
 
       {:ok, _} = Events.create_rsvp(member.id, event.uid)
 
       rows = Events.emails_and_names_for_event_rsvps(event.uid)
       assert length(rows) == 1
-      {_created, email, _name, _uin, event_title} = hd(rows)
+      {_created, email, _name, _uin, dietary_preference, event_title} = hd(rows)
       assert email == member.email
+      assert dietary_preference == :Vegan
       assert event_title == "CSV Export Event"
     end
 

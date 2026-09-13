@@ -10,8 +10,12 @@ defmodule IeeeTamuPortalWeb.AdminEventExportController do
 
     csv =
       rows
-      |> Enum.map(fn {created, email, name, uin, _event_title} -> [created, email, name, uin] end)
-      |> then(fn rs -> CSV.dump_to_iodata([["date", "email", "name", "uin"] | rs]) end)
+      |> Enum.map(fn {created, email, name, uin, dietary_preference, _event_title} ->
+        [created, email, name, uin, dietary_preference]
+      end)
+      |> then(fn rs ->
+        CSV.dump_to_iodata([["date", "email", "name", "uin", "dietary_preference"] | rs])
+      end)
 
     # Create filename-safe event name
     safe_event_name =

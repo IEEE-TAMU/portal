@@ -16,7 +16,11 @@ defmodule IeeeTamuPortal.Members.Info do
     field :gender, Ecto.Enum, values: ~w(Male Female Other)a
     field :gender_other, :string
     field :tshirt_size, Ecto.Enum, values: ~w(S M L XL XXL)a
-    field :dietary_preference, Ecto.Enum, values: ~w(None Vegetarian)a, default: :None
+
+    field :dietary_preference, Ecto.Enum,
+      values: ~w(None Vegetarian Vegan Gluten-Free Nut-Free)a,
+      default: :None
+
     field :uin, :integer
     field :ieee_membership_number, :integer
 

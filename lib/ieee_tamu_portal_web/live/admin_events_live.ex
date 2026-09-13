@@ -472,6 +472,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
                   <% end %>
                 </div>
                 <div class="text-sm text-gray-600">{rsvp.email}</div>
+                <div class="text-sm text-gray-600">Dietary: {rsvp.dietary_preference || "None"}</div>
               </div>
               <div class="text-sm text-gray-500">
                 {IeeeTamuPortalWeb.TimezoneHelper.format_local(
