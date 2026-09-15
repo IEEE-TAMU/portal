@@ -61,7 +61,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:gettext, "0.26.2"},
       {:jason, "== 1.4.5"},
       {:dns_cluster, "0.2.0"},
-      {:bandit, "== 1.12.0"},
+      {:bandit, "== 1.12.5"},
       {:open_api_spex, "== 3.22.3"},
       {:req, "== 0.6.3"},
       {:assent, "0.3.1"},
