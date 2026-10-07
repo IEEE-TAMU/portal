@@ -114,7 +114,78 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLiveTest do
 
       assert html =~ "Event Check-in QR"
       assert html =~ "checkin-qrcode"
+      refute html =~ "You haven't RSVPed"
+      refute html =~ "You're RSVPed"
     end
+
+    test "shows not-RSVPed banner when the active event is RSVPable", %{
+      conn: conn,
+      member: member
+    } do
+      {:ok, _registration} = paid_registration(member)
+
+      _event = rsvpable_active_event("RSVP Banner Event")
+
+      {:ok, _lv, html} = live(conn, ~p"/members/registration")
+
+      assert html =~ "You haven&#39;t RSVPed"
+      refute html =~ "You&#39;re RSVPed"
+    end
+
+    test "shows RSVPed banner when the member RSVPed to the active event", %{
+      conn: conn,
+      member: member
+    } do
+      {:ok, _registration} = paid_registration(member)
+
+      event = rsvpable_active_event("RSVP Banner Event")
+      {:ok, _rsvp} = Events.create_rsvp(member.id, event.uid)
+
+      {:ok, _lv, html} = live(conn, ~p"/members/registration")
+
+      assert html =~ "You&#39;re RSVPed"
+      refute html =~ "You haven&#39;t RSVPed"
+    end
+
+    test "hides the RSVP banner when the active event is not RSVPable", %{
+      conn: conn,
+      member: member
+    } do
+      {:ok, _registration} = paid_registration(member)
+
+      current_event_setting_fixture("Non RSVP Event")
+
+      {:ok, _event} =
+        Events.create_event(%{
+          dtstart: DateTime.utc_now() |> DateTime.truncate(:second),
+          summary: "Non RSVP Event",
+          rsvpable: false
+        })
+
+      {:ok, _lv, html} = live(conn, ~p"/members/registration")
+
+      refute html =~ "You haven&#39;t RSVPed"
+      refute html =~ "You&#39;re RSVPed"
+    end
+  end
+
+  defp paid_registration(member) do
+    year = Settings.get_registration_year!()
+    {:ok, registration} = Members.get_or_create_registration(member, year)
+    Members.update_registration(registration, %{payment_override: true})
+  end
+
+  defp rsvpable_active_event(summary) do
+    current_event_setting_fixture(summary)
+
+    {:ok, event} =
+      Events.create_event(%{
+        dtstart: DateTime.utc_now() |> DateTime.truncate(:second),
+        summary: summary,
+        rsvpable: true
+      })
+
+    event
   end
 
   describe "unauthenticated" do

@@ -72,6 +72,16 @@ defmodule IeeeTamuPortal.Events do
   end
 
   @doc """
+  Gets a single event by name, or `nil` if the Event does not exist.
+  """
+  def get_event_by_name(name) when is_binary(name) do
+    from(e in Event,
+      where: e.summary == ^name
+    )
+    |> Repo.one()
+  end
+
+  @doc """
   Creates a event.
 
   ## Examples

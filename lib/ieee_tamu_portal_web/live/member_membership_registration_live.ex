@@ -45,13 +45,24 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
     current_event = Settings.get_current_event!()
     already_checked_in? = EventCheckin.member_is_checked_in?(current_member.id)
 
+    active_event? =
+      is_binary(current_event) and current_event != Settings.default_current_event()
+
     checkin_qr_svg =
-      if paid? and not already_checked_in? and is_binary(current_event) and
-           current_event != IeeeTamuPortal.Settings.default_current_event() do
+      if paid? and not already_checked_in? and active_event? do
         url = url(~p"/admin/check-in?member_id=#{current_member.id}")
         EQRCode.encode(url) |> EQRCode.svg()
       else
         nil
+      end
+
+    # Only surface RSVP status when the active event actually supports RSVPs
+    current_event_rsvp =
+      with true <- active_event?,
+           %{rsvpable: true} = event <- Events.get_event_by_name(current_event) do
+        Map.put(event, :member_rsvped, Events.member_rsvped?(current_member.id, event.uid))
+      else
+        _ -> nil
       end
 
     # Compute next week's events (upcoming/ongoing limited to next 7 days)
@@ -79,6 +90,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
       |> assign(:current_event, current_event)
       |> assign(:already_checked_in?, already_checked_in?)
       |> assign(:checkin_qr_svg, checkin_qr_svg)
+      |> assign(:current_event_rsvp, current_event_rsvp)
       |> assign(:time_zone, time_zone)
       |> assign(:upcoming_week_events, upcoming_week_events)
       |> assign(:show_upcoming_events, false)
@@ -366,6 +378,12 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
               <.checked_in_message event_name={@current_event} />
             <% else %>
               <%= if @checkin_qr_svg do %>
+                <%= if @current_event_rsvp do %>
+                  <.rsvp_banner
+                    rsvped?={@current_event_rsvp.member_rsvped}
+                    event_name={@current_event}
+                  />
+                <% end %>
                 <.checkin_qr svg={@checkin_qr_svg} event_name={@current_event} />
               <% end %>
             <% end %>
@@ -610,6 +628,37 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
           </div>
         </div>
       </div>
+    </div>
+    """
+  end
+
+  # Small function component to render the RSVP status banner
+  def rsvp_banner(assigns) do
+    ~H"""
+    <div class={[
+      "border rounded-lg p-4 mb-6",
+      if(@rsvped?, do: "bg-green-50 border-green-200", else: "bg-yellow-50 border-yellow-200")
+    ]}>
+      <div class="flex items-center">
+        <.icon
+          name={if @rsvped?, do: "hero-check-circle", else: "hero-exclamation-triangle"}
+          class={[
+            "w-5 h-5 mr-2",
+            if(@rsvped?, do: "text-green-600", else: "text-yellow-600")
+          ]}
+        />
+        <h2 class={[
+          "font-medium",
+          if(@rsvped?, do: "text-green-800", else: "text-yellow-800")
+        ]}>
+          {if @rsvped?, do: "You're RSVPed", else: "You haven't RSVPed"}
+        </h2>
+      </div>
+      <p class={["mt-2", if(@rsvped?, do: "text-green-700", else: "text-yellow-700")]}>
+        {if @rsvped?,
+          do: "You have RSVPed for #{@event_name}.",
+          else: "You have not RSVPed for #{@event_name}."}
+      </p>
     </div>
     """
   end
