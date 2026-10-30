@@ -6,7 +6,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
   import IeeeTamuPortal.AccountsFixtures
   import IeeeTamuPortal.SettingsFixtures
 
-  alias IeeeTamuPortal.Members
+  alias IeeeTamuPortal.{Accounts, Members}
 
   setup do
     registration_year_setting_fixture("2025")
@@ -222,6 +222,67 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
       assert html =~ "View Member"
       assert html =~ "ViewTest"
       assert html =~ member.email
+    end
+
+    test "shows OAuth link status", %{conn: conn} do
+      member = confirmed_member_fixture()
+      create_member_info(member, %{first_name: "OAuth", last_name: "User"})
+
+      {:ok, _auth} =
+        Accounts.link_auth_method(member, %{
+          provider: :discord,
+          sub: "discord-1",
+          preferred_username: "discord-user"
+        })
+
+      {:ok, _auth} =
+        Accounts.link_auth_method(member, %{
+          provider: :google,
+          sub: "google-1",
+          email: "member@tamu.edu"
+        })
+
+      {:ok, _auth} =
+        Accounts.link_auth_method(member, %{
+          provider: :github,
+          sub: "github-1",
+          preferred_username: "github-user"
+        })
+
+      {:ok, lv, _html} =
+        conn
+        |> admin_auth_conn()
+        |> live(~p"/admin/members")
+
+      lv
+      |> element("button[phx-click='view_member'][phx-value-member_id='#{member.id}']")
+      |> render_click()
+
+      html = render(lv)
+
+      assert html =~ "OAuth Links"
+      assert html =~ "discord-user"
+      assert html =~ "member@tamu.edu"
+      assert html =~ "github-user"
+      assert html =~ "Linked"
+    end
+
+    test "shows Not linked for providers that are not connected", %{conn: conn} do
+      member = confirmed_member_fixture()
+      create_member_info(member, %{first_name: "OAuth", last_name: "User"})
+
+      {:ok, lv, _html} =
+        conn
+        |> admin_auth_conn()
+        |> live(~p"/admin/members")
+
+      lv
+      |> element("button[phx-click='view_member'][phx-value-member_id='#{member.id}']")
+      |> render_click()
+
+      html = render(lv)
+      assert html =~ "OAuth Links"
+      assert html =~ "Not linked"
     end
 
     test "view modal shows not provided for empty fields", %{conn: conn} do

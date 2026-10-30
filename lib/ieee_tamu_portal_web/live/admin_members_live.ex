@@ -126,7 +126,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
     member_id = String.to_integer(member_id)
 
     # Use Members context to load member with info
-    case Members.get_member_with_preloads(member_id, [:info]) do
+    case Members.get_member_with_preloads(member_id, [:info, :secondary_auth_methods]) do
       nil ->
         {:noreply, put_flash(socket, :error, "Member not found")}
 
@@ -148,7 +148,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
     member_id = String.to_integer(member_id)
 
     # Use Members context to load member with info
-    case Members.get_member_with_preloads(member_id, [:info]) do
+    case Members.get_member_with_preloads(member_id, [:info, :secondary_auth_methods]) do
       nil ->
         {:noreply, put_flash(socket, :error, "Member not found")}
 
@@ -220,6 +220,26 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
 
       {:error, changeset} ->
         {:noreply, assign(socket, member_info_form: to_form(changeset))}
+    end
+  end
+
+  defp oauth_accounts(member) do
+    methods = member.secondary_auth_methods || []
+
+    [
+      oauth_account(methods, :discord, "Discord", &(&1.preferred_username || &1.email)),
+      oauth_account(methods, :google, "Google", & &1.email),
+      oauth_account(methods, :github, "GitHub", & &1.preferred_username)
+    ]
+  end
+
+  defp oauth_account(methods, provider, name, detail_fun) do
+    case Enum.find(methods, &(&1.provider == provider)) do
+      nil ->
+        %{name: name, linked: false, detail: "Not linked"}
+
+      auth_method ->
+        %{name: name, linked: true, detail: detail_fun.(auth_method) || "Connected"}
     end
   end
 
@@ -612,6 +632,29 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                       {(@selected_member.info && @selected_member.info.graduation_year) ||
                         "Not provided"}
                     </div>
+                  </div>
+                </div>
+
+                <div class="border-t border-gray-200 pt-6">
+                  <h4 class="text-md font-semibold text-gray-900 mb-3">OAuth Links</h4>
+                  <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <%= for account <- oauth_accounts(@selected_member) do %>
+                      <div class="rounded-lg border border-gray-200 p-3">
+                        <div class="flex items-center justify-between gap-2">
+                          <span class="text-sm font-medium text-gray-900">{account.name}</span>
+                          <span class={[
+                            "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+                            if(account.linked,
+                              do: "bg-green-100 text-green-800",
+                              else: "bg-gray-100 text-gray-600"
+                            )
+                          ]}>
+                            {if account.linked, do: "Linked", else: "Not linked"}
+                          </span>
+                        </div>
+                        <p class="mt-1 truncate text-xs text-gray-500">{account.detail}</p>
+                      </div>
+                    <% end %>
                   </div>
                 </div>
 
