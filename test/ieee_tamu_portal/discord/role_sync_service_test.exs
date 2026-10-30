@@ -89,6 +89,29 @@ defmodule IeeeTamuPortal.Discord.RoleSyncServiceTest do
 
       assert Process.whereis(RoleSyncService)
     end
+
+    test "syncs the Officer role when a member's portal role changes" do
+      member = member_with_discord()
+      test_pid = self()
+
+      Req.Test.stub(IeeeTamuPortal.Discord.Client, fn conn ->
+        send(test_pid, {:discord_request, conn.method})
+
+        if conn.method == "GET" do
+          Req.Test.json(conn, %{"success" => true, "roles" => []})
+        else
+          Req.Test.json(conn, %{"success" => true})
+        end
+      end)
+
+      capture_log(fn ->
+        {:ok, _member} = Accounts.update_member_role(member, :officer)
+        sync_barrier()
+      end)
+
+      assert_received {:discord_request, "GET"}
+      assert_received {:discord_request, "PUT"}
+    end
   end
 
   describe "handle_info :sync_all_roles" do

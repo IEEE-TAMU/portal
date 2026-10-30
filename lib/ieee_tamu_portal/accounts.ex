@@ -128,9 +128,16 @@ defmodule IeeeTamuPortal.Accounts do
   """
   def update_member_role(%Member{} = member, role)
       when role in [:member, :officer, :admin] do
-    member
-    |> Member.role_changeset(%{role: role})
-    |> Repo.update()
+    with {:ok, updated_member} <-
+           member
+           |> Member.role_changeset(%{role: role})
+           |> Repo.update() do
+      # Keep the Discord Officer role in sync with the portal role. This is a
+      # no-op when Discord is not configured or the member has not linked an
+      # account.
+      IeeeTamuPortal.Discord.RoleSyncService.sync_member(updated_member)
+      {:ok, updated_member}
+    end
   end
 
   @doc """

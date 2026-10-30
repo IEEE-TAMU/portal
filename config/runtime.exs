@@ -33,6 +33,10 @@ config :ieee_tamu_portal,
        System.get_env("DISCORD_BOT_URL")
 
 config :ieee_tamu_portal,
+       :discord_officer_role,
+       System.get_env("DISCORD_OFFICER_ROLE", "Officer")
+
+config :ieee_tamu_portal,
        :frontend_time_zone,
        System.get_env("FRONTEND_TIME_ZONE", "America/Chicago")
 

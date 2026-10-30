@@ -1,6 +1,6 @@
 # Discord Role Management System
 
-This system automatically manages Discord roles for IEEE TAMU Portal members based on their authentication status and payment/registration status.
+This system automatically manages Discord roles for IEEE TAMU Portal members based on their authentication status, payment/registration status, and portal role.
 
 ## Overview
 
@@ -13,11 +13,13 @@ The Discord role management system consists of several components:
 ## Features
 
 - **Automatic Role Assignment**: Members who link their Discord account and have paid registration automatically get the "Member" role
-- **Role Removal**: Members who unlink Discord or lose paid status have the "Member" role removed
+- **Officer Role Assignment**: Members with the `:officer` or `:admin` portal role automatically get the "Officer" role
+- **Role Removal**: Members who unlink Discord or lose paid/officer status have the corresponding role removed
 - **Background Synchronization**: Periodic checks ensure roles stay in sync
 - **Event-Driven Updates**: Role changes triggered immediately when:
   - Discord accounts are linked/unlinked
   - Payment status changes (payment received or override toggled)
+  - Portal officer/admin roles are granted or revoked
 
 ## Configuration
 
@@ -33,6 +35,7 @@ DISCORD_BOT_URL=http://localhost:3000  # Default Discord bot API URL
 #### Production (required)
 ```bash
 DISCORD_BOT_URL=https://your-discord-bot.example.com  # Discord bot API URL
+DISCORD_OFFICER_ROLE=Officer                          # Optional, defaults to "Officer"
 ```
 
 ### Discord Bot API
@@ -53,7 +56,8 @@ The system automatically handles role synchronization when:
 1. **Discord Account Linking**: When a member links their Discord account via OAuth
 2. **Discord Account Unlinking**: When a member unlinks their Discord account
 3. **Payment Status Changes**: When payments are processed or payment overrides are toggled
-4. **Periodic Sync**: Every 6 hours (configurable in `RoleSyncService`)
+4. **Portal Role Changes**: When an officer/admin role is granted or revoked through the admin panel, mix task, or `ADMIN_EMAILS` bootstrap
+5. **Periodic Sync**: Every 6 hours (configurable in `RoleSyncService`)
 
 ### Manual Operations
 
@@ -90,6 +94,14 @@ A member receives the "Member" Discord role if and only if:
 2. **Valid Registration**: Member has a paid registration for the current academic year
    - Either has an associated payment record
    - Or has payment override enabled by an administrator
+
+A member receives the "Officer" Discord role if and only if:
+
+1. **Discord Account Linked**: Member has linked their Discord account via OAuth
+2. **Portal Role**: Member has the `:officer` or `:admin` portal role
+
+The Officer role is independent of local dues. Global IEEE membership is tracked
+separately in `member_infos.ieee_membership_number`.
 
 ## Database Schema
 

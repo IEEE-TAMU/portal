@@ -13,6 +13,7 @@ defmodule IeeeTamuPortal.Discord.RoleManagerTest do
     registration_year_setting_fixture("2026")
 
     Application.put_env(:ieee_tamu_portal, :discord_bot_url, @bot_url)
+    Application.put_env(:ieee_tamu_portal, :discord_officer_role, "Officer")
 
     Req.Test.set_req_test_to_shared()
 
@@ -24,14 +25,24 @@ defmodule IeeeTamuPortal.Discord.RoleManagerTest do
     on_exit(fn ->
       Application.delete_env(:ieee_tamu_portal, :discord_bot_url)
       Application.delete_env(:ieee_tamu_portal, :discord_bot_req_opts)
+      Application.delete_env(:ieee_tamu_portal, :discord_officer_role)
     end)
 
     :ok
   end
 
   defp member_with_discord(sub \\ "discord-user-1") do
-    member = confirmed_member_fixture()
+    confirmed_member_fixture()
+    |> link_discord(sub)
+  end
 
+  defp privileged_with_discord(role, sub \\ "discord-user-1") do
+    member = member_with_discord(sub)
+    {:ok, member} = Accounts.update_member_role(member, role)
+    member
+  end
+
+  defp link_discord(member, sub) do
     {:ok, _auth} =
       Accounts.link_auth_method(member, %{
         provider: :discord,
@@ -99,6 +110,75 @@ defmodule IeeeTamuPortal.Discord.RoleManagerTest do
 
       assert {:error, "Failed to add role: 500"} = RoleManager.sync_member_roles(member)
     end
+
+    test "adds the Officer role for an officer without it" do
+      member = privileged_with_discord(:officer)
+      stub_roles([])
+      stub_role_change()
+
+      assert {:ok, %{member_role: :no_change_needed, officer_role: :role_added}} =
+               RoleManager.sync_member_roles(member)
+    end
+
+    test "adds the Officer role for an admin without it" do
+      member = privileged_with_discord(:admin)
+      stub_roles([])
+      stub_role_change()
+
+      assert {:ok, %{member_role: :no_change_needed, officer_role: :role_added}} =
+               RoleManager.sync_member_roles(member)
+    end
+
+    test "removes the Officer role after the portal role is revoked" do
+      member = member_with_discord()
+      stub_roles([%{"name" => "Officer"}])
+      stub_role_change()
+
+      assert {:ok, %{member_role: :no_change_needed, officer_role: :role_removed}} =
+               RoleManager.sync_member_roles(member)
+    end
+
+    test "reconciles Member and Officer roles from a single role lookup" do
+      member = privileged_with_discord(:officer) |> paid()
+      stub_roles([])
+      stub_role_change()
+      stub_role_change()
+
+      assert {:ok, %{member_role: :role_added, officer_role: :role_added}} =
+               RoleManager.sync_member_roles(member)
+    end
+  end
+
+  describe "role policy" do
+    test "should_have_officer_role?/1 treats officers and admins as officers" do
+      assert RoleManager.should_have_officer_role?(%Accounts.Member{role: :officer})
+      assert RoleManager.should_have_officer_role?(%Accounts.Member{role: :admin})
+      refute RoleManager.should_have_officer_role?(%Accounts.Member{role: :member})
+    end
+
+    test "officer_role_name/0 defaults to Officer" do
+      Application.delete_env(:ieee_tamu_portal, :discord_officer_role)
+      assert RoleManager.officer_role_name() == "Officer"
+    end
+
+    test "officer_role_name/0 uses the configured role name" do
+      Application.put_env(:ieee_tamu_portal, :discord_officer_role, "Leadership")
+      assert RoleManager.officer_role_name() == "Leadership"
+    end
+  end
+
+  describe "remove_managed_roles/1" do
+    test "removes both Member and Officer roles" do
+      Req.Test.expect(IeeeTamuPortal.Discord.Client, fn conn ->
+        Req.Test.json(conn, %{"success" => true})
+      end)
+
+      Req.Test.expect(IeeeTamuPortal.Discord.Client, fn conn ->
+        Req.Test.json(conn, %{"success" => true})
+      end)
+
+      assert :ok = RoleManager.remove_managed_roles("discord-user-1")
+    end
   end
 
   describe "sync_all_discord_members/0" do
@@ -130,6 +210,19 @@ defmodule IeeeTamuPortal.Discord.RoleManagerTest do
 
       assert summary.roles_added == 1
       assert summary.roles_removed == 1
+      assert summary.errors == 0
+    end
+
+    test "counts Officer role changes in the summary" do
+      privileged_with_discord(:officer, "discord-user-1")
+
+      stub_roles([])
+      stub_role_change()
+
+      assert {:ok, summary} = RoleManager.sync_all_discord_members()
+
+      assert summary.total == 1
+      assert summary.roles_added == 1
       assert summary.errors == 0
     end
   end

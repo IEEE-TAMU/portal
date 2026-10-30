@@ -97,11 +97,12 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
             Enum.reject(auth_methods, &(&1.provider == :discord))
           end)
 
-        # Remove the Member role from the Discord account that was just unlinked
+        # Remove every portal-managed role from the Discord account that was
+        # just unlinked.
         discord_user_id = auth_method.sub
 
         if IeeeTamuPortal.Features.enabled?(:discord_bot) do
-          IeeeTamuPortal.Discord.Client.remove_role(discord_user_id, "Member")
+          IeeeTamuPortal.Discord.RoleManager.remove_managed_roles(discord_user_id)
         end
 
         socket =

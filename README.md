@@ -58,9 +58,9 @@ A comprehensive membership and event management system built with Phoenix LiveVi
 
 ### Discord Integration
 
-- **Automatic Role Management**: Members who link Discord and pay dues automatically receive the "Member" role
+- **Automatic Role Management**: Members who link Discord and pay dues automatically receive the "Member" role; portal officers/admins receive the "Officer" role
 - **OAuth Linking**: One-click Discord account connection via OAuth2
-- **Role Sync Service**: Background job ensures roles stay synchronized with payment status
+- **Role Sync Service**: Background job ensures roles stay synchronized with payment status and portal roles
 - **Admin API**: RESTful endpoints for bulk role assignment and management
 - **Real-Time Updates**: Role changes trigger immediately when payment status changes
 
@@ -250,6 +250,7 @@ GOOGLE_CLIENT_SECRET=<your-google-client-secret>
 
 # Discord Bot Integration
 DISCORD_BOT_URL=https://your-discord-bot.example.com
+DISCORD_OFFICER_ROLE=Officer
 
 # Admin Panel bootstrap (comma-separated member emails)
 ADMIN_EMAILS=officer@tamu.edu,advisor@tamu.edu
