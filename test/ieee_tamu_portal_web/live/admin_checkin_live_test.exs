@@ -16,9 +16,9 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLiveTest do
   end
 
   describe "admin auth requirement" do
-    test "requires admin basic auth", %{conn: conn} do
+    test "requires admin authentication", %{conn: conn} do
       conn = get(conn, ~p"/admin/checkin")
-      assert conn.status == 401
+      assert redirected_to(conn) == ~p"/members/login"
     end
   end
 

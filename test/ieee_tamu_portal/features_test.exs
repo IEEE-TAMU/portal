@@ -10,10 +10,6 @@ defmodule IeeeTamuPortal.FeaturesTest do
       assert Features.enabled?(:s3_resume_upload)
     end
 
-    test "returns true for admin_panel when creds are configured" do
-      assert Features.enabled?(:admin_panel)
-    end
-
     test "returns false for unknown feature key" do
       refute Features.enabled?(:nonexistent)
     end
@@ -81,7 +77,7 @@ defmodule IeeeTamuPortal.FeaturesTest do
   describe "list/0" do
     test "returns all feature definitions with enabled status" do
       all = Features.list()
-      assert length(all) == 6
+      assert length(all) == 5
       assert Enum.all?(all, &Map.has_key?(&1, :enabled))
       assert Enum.all?(all, &Map.has_key?(&1, :name))
       assert Enum.all?(all, &Map.has_key?(&1, :key))

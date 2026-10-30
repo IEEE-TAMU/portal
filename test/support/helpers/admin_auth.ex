@@ -3,12 +3,18 @@ defmodule IeeeTamuPortalWeb.TestHelpers.AdminAuth do
 
   import Plug.Conn, only: [put_req_header: 3]
 
-  # Helper to add basic auth headers for admin-only routes in LiveView/controller tests
+  # Logs the connection in as an admin member. The admin panel is session
+  # based now, so tests no longer need an Authorization header.
   def admin_auth_conn(conn) do
-    {:ok, config} = IeeeTamuPortal.Features.get_config(:admin_panel)
-    credentials = Base.encode64("#{config[:username]}:#{config[:password]}")
+    member = IeeeTamuPortal.AccountsFixtures.admin_member_fixture()
+    IeeeTamuPortalWeb.ConnCase.log_in_member(conn, member)
+  end
 
-    Plug.Conn.put_req_header(conn, "authorization", "Basic #{credentials}")
+  # Logs the connection in as an officer (admin panel access, but no role
+  # management).
+  def officer_auth_conn(conn) do
+    member = IeeeTamuPortal.AccountsFixtures.officer_member_fixture()
+    IeeeTamuPortalWeb.ConnCase.log_in_member(conn, member)
   end
 
   # Helper to add admin API key Bearer auth headers for admin-only API routes

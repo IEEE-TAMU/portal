@@ -114,7 +114,7 @@ defmodule IeeeTamuPortalWeb.Router do
     end
   end
 
-  # admin routes using basic auth
+  # admin routes require an authenticated member with the officer or admin role
   scope "/admin", IeeeTamuPortalWeb do
     pipe_through [:browser, :admin_auth]
     get "/download-resumes", AdminResumeZipController, :download
@@ -124,8 +124,8 @@ defmodule IeeeTamuPortalWeb.Router do
     get "/download-event-checkins/:event_uid", AdminEventExportController, :download_checkins
     get "/check-in", AdminCheckinController, :create
 
-    live_session :admin_auth,
-      # on_mount: [{IeeeTamuPortalWeb.Auth.AdminAuth, :admin_auth}],
+    live_session :admin_officer,
+      on_mount: [{IeeeTamuPortalWeb.Auth.AdminAuth, :ensure_admin}],
       layout: {IeeeTamuPortalWeb.Layouts, :admin} do
       live "/", AdminLive, :index
       live "/resumes", AdminResumesLive, :index

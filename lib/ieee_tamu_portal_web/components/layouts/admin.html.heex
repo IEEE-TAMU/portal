@@ -35,8 +35,19 @@
             />
           </nav>
         </div>
-        <div class="hidden md:flex items-center space-x-4">
-          <span class="text-sm text-gray-600">Admin Panel</span>
+        <div class="hidden md:flex items-center space-x-4 text-sm text-gray-600">
+          <span class="max-w-[22ch] truncate" title={@current_member.email}>
+            {@current_member.email}
+          </span>
+          <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
+            {IeeeTamuPortal.Accounts.Member.role_label(@current_member.role)}
+          </span>
+          <.navbar_button
+            name="Log out"
+            href={~p"/members/log_out"}
+            method="delete"
+            icon="hero-arrow-left-start-on-rectangle"
+          />
         </div>
       </div>
     </div>

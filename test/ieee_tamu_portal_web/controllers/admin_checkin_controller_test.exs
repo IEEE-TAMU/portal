@@ -8,15 +8,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinControllerTest do
   alias IeeeTamuPortal.Members.EventCheckin
 
   setup %{conn: conn} do
-    # Simulate admin auth by setting the expected basic auth header.
-    # The app uses AdminAuth plug; if it checks app config, you may need to
-    # adjust this helper to satisfy the plug's expectations.
-    conn =
-      Plug.Conn.put_req_header(
-        conn,
-        "authorization",
-        "Basic " <> Base.encode64("admin:test_password")
-      )
+    conn = log_in_member(conn, admin_member_fixture())
 
     # Ensure defaults for settings
     registration_year_setting_fixture("2025")

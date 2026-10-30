@@ -25,9 +25,9 @@ defmodule IeeeTamuPortalWeb.AdminEventsLiveTest do
   end
 
   describe "Admin Events page" do
-    test "requires admin basic auth", %{conn: conn} do
+    test "requires admin authentication", %{conn: conn} do
       conn = get(conn, ~p"/admin/events")
-      assert conn.status == 401
+      assert redirected_to(conn) == ~p"/members/login"
     end
 
     test "renders page with auth and shows header", %{conn: conn} do

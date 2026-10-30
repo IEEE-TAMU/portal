@@ -29,7 +29,7 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLiveTest do
     test "redirects if admin is not authenticated", %{conn: conn} do
       # The admin route should return 401 Unauthorized when not authenticated
       conn = get(conn, ~p"/admin/settings")
-      assert conn.status == 401
+      assert redirected_to(conn) == ~p"/members/login"
     end
 
     test "shows empty state when no settings exist", %{conn: conn} do

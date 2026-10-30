@@ -5,7 +5,7 @@ defmodule IeeeTamuPortalWeb.AdminResumeZipControllerTest do
 
   test "requires admin auth", %{conn: conn} do
     conn = get(conn, ~p"/admin/download-resumes")
-    assert conn.status == 401
+    assert redirected_to(conn) == ~p"/members/login"
   end
 
   test "redirects when S3 is not configured", %{conn: conn} do

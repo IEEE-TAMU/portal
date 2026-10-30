@@ -90,8 +90,4 @@ config :phoenix_live_view,
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
 
-config :ieee_tamu_portal, IeeeTamuPortalWeb.Auth.AdminAuth,
-  username: System.get_env("ADMIN_USERNAME", "admin"),
-  password: System.get_env("ADMIN_PASSWORD", "password")
-
 config :open_api_spex, :cache_adapter, OpenApiSpex.Plug.NoneCache

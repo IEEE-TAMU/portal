@@ -125,8 +125,4 @@ if config_env() == :prod and System.get_env("NIX_BUILD_ENV") not in ~w(true 1) d
   else
     _ -> :ok
   end
-
-  config :ieee_tamu_portal, IeeeTamuPortalWeb.Auth.AdminAuth,
-    username: System.get_env("ADMIN_USERNAME"),
-    password: System.get_env("ADMIN_PASSWORD")
 end

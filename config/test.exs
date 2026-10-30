@@ -39,11 +39,6 @@ config :phoenix, :plug_init_mode, :runtime
 config :phoenix_live_view,
   enable_expensive_runtime_checks: true
 
-# Admin auth configuration for tests
-config :ieee_tamu_portal, IeeeTamuPortalWeb.Auth.AdminAuth,
-  username: "admin",
-  password: "test_password"
-
 # S3 configuration for tests (mock values)
 config :ieee_tamu_portal, IeeeTamuPortalWeb.Upload.SimpleS3Upload,
   region: "us-east-1",

@@ -5,9 +5,9 @@ defmodule IeeeTamuPortalWeb.AdminResumesLiveTest do
   import IeeeTamuPortalWeb.TestHelpers.AdminAuth, only: [admin_auth_conn: 1]
 
   describe "Admin Resumes page" do
-    test "requires admin basic auth", %{conn: conn} do
+    test "requires admin authentication", %{conn: conn} do
       conn = get(conn, ~p"/admin/resumes")
-      assert conn.status == 401
+      assert redirected_to(conn) == ~p"/members/login"
     end
 
     test "renders page with admin auth", %{conn: conn} do

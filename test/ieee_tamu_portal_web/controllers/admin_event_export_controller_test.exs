@@ -22,12 +22,12 @@ defmodule IeeeTamuPortalWeb.AdminEventExportControllerTest do
 
   test "requires admin auth for rsvps download", %{conn: conn, event: event} do
     conn = get(conn, ~p"/admin/download-event-rsvps/#{event.uid}")
-    assert conn.status == 401
+    assert redirected_to(conn) == ~p"/members/login"
   end
 
   test "requires admin auth for checkins download", %{conn: conn, event: event} do
     conn = get(conn, ~p"/admin/download-event-checkins/#{event.uid}")
-    assert conn.status == 401
+    assert redirected_to(conn) == ~p"/members/login"
   end
 
   test "returns RSVP CSV with headers", %{conn: conn, event: event} do

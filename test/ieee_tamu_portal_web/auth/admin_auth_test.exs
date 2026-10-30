@@ -1,48 +1,62 @@
 defmodule IeeeTamuPortalWeb.Auth.AdminAuthTest do
   use IeeeTamuPortalWeb.ConnCase
 
+  import IeeeTamuPortal.AccountsFixtures
+
   alias IeeeTamuPortalWeb.Auth.AdminAuth
 
   describe "admin_auth/2" do
-    test "allows access with correct credentials", %{conn: conn} do
-      {:ok, config} = IeeeTamuPortal.Features.get_config(:admin_panel)
-      credentials = Base.encode64("#{config[:username]}:#{config[:password]}")
+    test "redirects unauthenticated visitors to login", %{conn: conn} do
+      conn =
+        conn
+        |> init_test_session(%{})
+        |> fetch_flash()
+        |> assign(:current_member, nil)
+        |> AdminAuth.admin_auth([])
+
+      assert conn.halted
+      assert redirected_to(conn) == ~p"/members/login"
+    end
+
+    test "denies a regular member and redirects home", %{conn: conn} do
+      member = confirmed_member_fixture()
 
       conn =
         conn
-        |> put_req_header("authorization", "Basic #{credentials}")
+        |> log_in_member(member)
+        |> fetch_flash()
+        |> assign(:current_member, member)
+        |> AdminAuth.admin_auth([])
+
+      assert conn.halted
+      assert redirected_to(conn) == ~p"/"
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~
+               "do not have permission"
+    end
+
+    test "allows an officer", %{conn: conn} do
+      member = officer_member_fixture()
+
+      conn =
+        conn
+        |> log_in_member(member)
+        |> assign(:current_member, member)
         |> AdminAuth.admin_auth([])
 
       refute conn.halted
     end
 
-    test "denies access with incorrect credentials", %{conn: conn} do
-      credentials = Base.encode64("wrong:credentials")
+    test "allows an admin", %{conn: conn} do
+      member = admin_member_fixture()
 
       conn =
         conn
-        |> put_req_header("authorization", "Basic #{credentials}")
+        |> log_in_member(member)
+        |> assign(:current_member, member)
         |> AdminAuth.admin_auth([])
 
-      assert conn.halted
-      assert conn.status == 401
-    end
-
-    test "denies access with no credentials", %{conn: conn} do
-      conn = AdminAuth.admin_auth(conn, [])
-
-      assert conn.halted
-      assert conn.status == 401
-    end
-
-    test "denies access with malformed authorization header", %{conn: conn} do
-      conn =
-        conn
-        |> put_req_header("authorization", "Invalid header")
-        |> AdminAuth.admin_auth([])
-
-      assert conn.halted
-      assert conn.status == 401
+      refute conn.halted
     end
   end
 end

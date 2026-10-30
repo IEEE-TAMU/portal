@@ -14,9 +14,9 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
   end
 
   describe "admin auth requirement" do
-    test "requires admin basic auth", %{conn: conn} do
+    test "requires admin authentication", %{conn: conn} do
       conn = get(conn, ~p"/admin/members")
-      assert conn.status == 401
+      assert redirected_to(conn) == ~p"/members/login"
     end
   end
 
@@ -150,12 +150,20 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
       assert html =~ "Clear"
     end
 
-    test "shows empty state when no members exist", %{conn: conn} do
-      # No members created
-      {:ok, _lv, html} =
+    test "shows empty state when no members match the filter", %{conn: conn} do
+      # The authenticated admin is a member, so filter for an address that
+      # cannot exist instead of expecting an entirely empty table.
+      {:ok, lv, _html} =
         conn
         |> admin_auth_conn()
         |> live(~p"/admin/members")
+
+      html =
+        lv
+        |> form("#filter_form", %{
+          "filters" => %{"0" => %{"value" => "no-such-member@tamu.edu"}}
+        })
+        |> render_change()
 
       assert html =~ "No members match your search criteria"
     end
@@ -207,7 +215,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
         |> live(~p"/admin/members")
 
       lv
-      |> element("button", "View")
+      |> element("button[phx-click='view_member'][phx-value-member_id='#{member.id}']")
       |> render_click()
 
       html = render(lv)
@@ -217,7 +225,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
     end
 
     test "view modal shows not provided for empty fields", %{conn: conn} do
-      _member = confirmed_member_fixture()
+      member = confirmed_member_fixture()
 
       {:ok, lv, _html} =
         conn
@@ -225,7 +233,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
         |> live(~p"/admin/members")
 
       lv
-      |> element("button", "View")
+      |> element("button[phx-click='view_member'][phx-value-member_id='#{member.id}']")
       |> render_click()
 
       html = render(lv)
@@ -233,7 +241,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
     end
 
     test "view modal has Edit Member button", %{conn: conn} do
-      _member = confirmed_member_fixture()
+      member = confirmed_member_fixture()
 
       {:ok, lv, _html} =
         conn
@@ -241,7 +249,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
         |> live(~p"/admin/members")
 
       lv
-      |> element("button", "View")
+      |> element("button[phx-click='view_member'][phx-value-member_id='#{member.id}']")
       |> render_click()
 
       html = render(lv)
@@ -249,7 +257,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
     end
 
     test "closes view modal", %{conn: conn} do
-      _member = confirmed_member_fixture()
+      member = confirmed_member_fixture()
 
       {:ok, lv, _html} =
         conn
@@ -257,7 +265,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
         |> live(~p"/admin/members")
 
       lv
-      |> element("button", "View")
+      |> element("button[phx-click='view_member'][phx-value-member_id='#{member.id}']")
       |> render_click()
 
       lv
@@ -280,7 +288,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
         |> live(~p"/admin/members")
 
       lv
-      |> element("button", "Edit")
+      |> element("button[phx-click='show_member'][phx-value-member_id='#{member.id}']")
       |> render_click()
 
       html = render(lv)
@@ -299,7 +307,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
         |> live(~p"/admin/members")
 
       lv
-      |> element("button", "Edit")
+      |> element("button[phx-click='show_member'][phx-value-member_id='#{member.id}']")
       |> render_click()
 
       lv
@@ -311,7 +319,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
     end
 
     test "closes edit modal", %{conn: conn} do
-      _member = confirmed_member_fixture()
+      member = confirmed_member_fixture()
 
       {:ok, lv, _html} =
         conn
@@ -319,7 +327,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLiveTest do
         |> live(~p"/admin/members")
 
       lv
-      |> element("button", "Edit")
+      |> element("button[phx-click='show_member'][phx-value-member_id='#{member.id}']")
       |> render_click()
 
       lv

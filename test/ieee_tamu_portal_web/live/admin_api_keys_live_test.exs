@@ -25,9 +25,9 @@ defmodule IeeeTamuPortalWeb.AdminApiKeysLiveTest do
       assert html =~ "Create API Key"
     end
 
-    test "returns 401 if admin is not authenticated", %{conn: conn} do
+    test "redirects if admin is not authenticated", %{conn: conn} do
       conn = get(conn, ~p"/admin/api-keys")
-      assert conn.status == 401
+      assert redirected_to(conn) == ~p"/members/login"
     end
 
     test "shows empty state when no API keys exist", %{conn: conn} do

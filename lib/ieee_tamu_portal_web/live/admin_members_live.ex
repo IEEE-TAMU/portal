@@ -19,10 +19,10 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
       |> assign(:page_title, "IEEE Admin - Members")
       |> assign(:show_resume_modal, false)
       |> assign(:current_resume_url, nil)
-      |> assign(:current_member_email, nil)
+      |> assign(:selected_member_email, nil)
       |> assign(:current_resume_member_id, nil)
       |> assign(:show_member_modal, false)
-      |> assign(:current_member, nil)
+      |> assign(:selected_member, nil)
       |> assign(:member_info_form, nil)
       |> assign(:view_only_mode, false)
       |> assign(year: current_year)
@@ -77,7 +77,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
            socket
            |> assign(:show_resume_modal, true)
            |> assign(:current_resume_url, signed_url)
-           |> assign(:current_member_email, email)
+           |> assign(:selected_member_email, email)
            |> assign(:current_resume_member_id, member_id)}
       end
     else
@@ -91,7 +91,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
      socket
      |> assign(:show_resume_modal, false)
      |> assign(:current_resume_url, nil)
-     |> assign(:current_member_email, nil)
+     |> assign(:selected_member_email, nil)
      |> assign(:current_resume_member_id, nil)}
   end
 
@@ -137,7 +137,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
         {:noreply,
          socket
          |> assign(:show_member_modal, true)
-         |> assign(:current_member, member)
+         |> assign(:selected_member, member)
          |> assign(:member_info_form, info_form)
          |> assign(:view_only_mode, true)}
     end
@@ -159,7 +159,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
         {:noreply,
          socket
          |> assign(:show_member_modal, true)
-         |> assign(:current_member, member)
+         |> assign(:selected_member, member)
          |> assign(:member_info_form, info_form)
          |> assign(:view_only_mode, false)}
     end
@@ -170,7 +170,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
     {:noreply,
      socket
      |> assign(:show_member_modal, false)
-     |> assign(:current_member, nil)
+     |> assign(:selected_member, nil)
      |> assign(:member_info_form, nil)
      |> assign(:view_only_mode, false)}
   end
@@ -178,7 +178,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   @impl true
   def handle_event("validate_member_info", params, socket) do
     %{"info" => info_params} = params
-    member = socket.assigns.current_member
+    member = socket.assigns.selected_member
 
     info_form =
       member.info
@@ -192,7 +192,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
   @impl true
   def handle_event("update_member_info", params, socket) do
     %{"info" => info_params} = params
-    %Accounts.Member{} = member = socket.assigns.current_member
+    %Accounts.Member{} = member = socket.assigns.selected_member
 
     update_or_create_info = fn
       %Members.Info{} = info -> Members.update_member_info(info, info_params)
@@ -213,7 +213,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
         {:noreply,
          socket
          |> Phoenix.LiveView.put_flash(:info, "Member information updated successfully.")
-         |> assign(:current_member, updated_member)
+         |> assign(:selected_member, updated_member)
          |> assign(:member_info_form, info_form)
          |> assign(:members, members)
          |> assign(:meta, meta)}
@@ -433,7 +433,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
           <div class="mt-3">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-semibold text-gray-900">
-                Resume - {@current_member_email}
+                Resume - {@selected_member_email}
               </h3>
               <button
                 phx-click="close_resume_modal"
@@ -464,7 +464,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
       </div>
     <% end %>
 
-    <%= if @show_member_modal && @current_member do %>
+    <%= if @show_member_modal && @selected_member do %>
       <div
         class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
         phx-click="close_member_modal"
@@ -479,9 +479,9 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-semibold text-gray-900">
                 <%= if @view_only_mode do %>
-                  View Member - {@current_member.email}
+                  View Member - {@selected_member.email}
                 <% else %>
-                  Edit Member - {@current_member.email}
+                  Edit Member - {@selected_member.email}
                 <% end %>
               </h3>
               <button
@@ -499,13 +499,13 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                   <div>
                     <label class="block text-sm font-medium text-gray-700">First name</label>
                     <div class="mt-1 text-sm text-gray-900">
-                      {(@current_member.info && @current_member.info.first_name) || "Not provided"}
+                      {(@selected_member.info && @selected_member.info.first_name) || "Not provided"}
                     </div>
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-700">Last name</label>
                     <div class="mt-1 text-sm text-gray-900">
-                      {(@current_member.info && @current_member.info.last_name) || "Not provided"}
+                      {(@selected_member.info && @selected_member.info.last_name) || "Not provided"}
                     </div>
                   </div>
                   <div>
@@ -513,14 +513,14 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                       Preferred first name
                     </label>
                     <div class="mt-1 text-sm text-gray-900">
-                      {(@current_member.info && @current_member.info.preferred_name) ||
+                      {(@selected_member.info && @selected_member.info.preferred_name) ||
                         "Not provided"}
                     </div>
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-700">T-shirt size</label>
                     <div class="mt-1 text-sm text-gray-900">
-                      {(@current_member.info && @current_member.info.tshirt_size) || "Not provided"}
+                      {(@selected_member.info && @selected_member.info.tshirt_size) || "Not provided"}
                     </div>
                   </div>
                   <div>
@@ -528,30 +528,30 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                       Dietary preference
                     </label>
                     <div class="mt-1 text-sm text-gray-900">
-                      {(@current_member.info && @current_member.info.dietary_preference) ||
+                      {(@selected_member.info && @selected_member.info.dietary_preference) ||
                         "Not provided"}
                     </div>
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-700">Phone number</label>
                     <div class="mt-1 text-sm text-gray-900">
-                      {(@current_member.info && @current_member.info.phone_number) || "Not provided"}
+                      {(@selected_member.info && @selected_member.info.phone_number) || "Not provided"}
                     </div>
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-700">Age</label>
                     <div class="mt-1 text-sm text-gray-900">
-                      {(@current_member.info && @current_member.info.age) || "Not provided"}
+                      {(@selected_member.info && @selected_member.info.age) || "Not provided"}
                     </div>
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-700">Gender</label>
                     <div class="mt-1 text-sm text-gray-900">
-                      <%= if @current_member.info && @current_member.info.gender do %>
-                        <%= if @current_member.info.gender == :other do %>
-                          {@current_member.info.gender_other || "Other"}
+                      <%= if @selected_member.info && @selected_member.info.gender do %>
+                        <%= if @selected_member.info.gender == :other do %>
+                          {@selected_member.info.gender_other || "Other"}
                         <% else %>
-                          {@current_member.info.gender}
+                          {@selected_member.info.gender}
                         <% end %>
                       <% else %>
                         Not provided
@@ -565,7 +565,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                   <div>
                     <label class="block text-sm font-medium text-gray-700">UIN</label>
                     <div class="mt-1 text-sm text-gray-900">
-                      {(@current_member.info && @current_member.info.uin) || "Not provided"}
+                      {(@selected_member.info && @selected_member.info.uin) || "Not provided"}
                     </div>
                   </div>
                   <div>
@@ -573,18 +573,18 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                       IEEE Membership Number
                     </label>
                     <div class="mt-1 text-sm text-gray-900">
-                      {(@current_member.info && @current_member.info.ieee_membership_number) ||
+                      {(@selected_member.info && @selected_member.info.ieee_membership_number) ||
                         "Not provided"}
                     </div>
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-700">Major</label>
                     <div class="mt-1 text-sm text-gray-900">
-                      <%= if @current_member.info && @current_member.info.major do %>
-                        <%= if @current_member.info.major == :other do %>
-                          {@current_member.info.major_other || "Other"}
+                      <%= if @selected_member.info && @selected_member.info.major do %>
+                        <%= if @selected_member.info.major == :other do %>
+                          {@selected_member.info.major_other || "Other"}
                         <% else %>
-                          {@current_member.info.major}
+                          {@selected_member.info.major}
                         <% end %>
                       <% else %>
                         Not provided
@@ -596,10 +596,10 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                       International student
                     </label>
                     <div class="mt-1 text-sm text-gray-900">
-                      <%= if @current_member.info && @current_member.info.international_student do %>
+                      <%= if @selected_member.info && @selected_member.info.international_student do %>
                         Yes
-                        <%= if @current_member.info.international_country do %>
-                          ({@current_member.info.international_country})
+                        <%= if @selected_member.info.international_country do %>
+                          ({@selected_member.info.international_country})
                         <% end %>
                       <% else %>
                         No
@@ -609,7 +609,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                   <div>
                     <label class="block text-sm font-medium text-gray-700">Graduation year</label>
                     <div class="mt-1 text-sm text-gray-900">
-                      {(@current_member.info && @current_member.info.graduation_year) ||
+                      {(@selected_member.info && @selected_member.info.graduation_year) ||
                         "Not provided"}
                     </div>
                   </div>
@@ -620,7 +620,7 @@ defmodule IeeeTamuPortalWeb.AdminMembersLive do
                     <.button
                       type="button"
                       phx-click="show_member"
-                      phx-value-member_id={@current_member.id}
+                      phx-value-member_id={@selected_member.id}
                       class="bg-indigo-600 hover:bg-indigo-700 text-white"
                     >
                       Edit Member

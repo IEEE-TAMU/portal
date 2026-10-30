@@ -9,9 +9,9 @@ defmodule IeeeTamuPortalWeb.AdminLiveTest do
   alias IeeeTamuPortal.Members
 
   describe "Admin Dashboard page" do
-    test "requires admin basic auth", %{conn: conn} do
+    test "requires admin authentication", %{conn: conn} do
       conn = get(conn, ~p"/admin")
-      assert conn.status == 401
+      assert redirected_to(conn) == ~p"/members/login"
     end
 
     test "renders dashboard with admin auth", %{conn: conn} do

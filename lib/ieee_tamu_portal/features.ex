@@ -6,16 +6,9 @@ defmodule IeeeTamuPortal.Features do
   which features are available based on configured credentials/keys.
   """
 
-  alias IeeeTamuPortalWeb.Auth.AdminAuth
   alias IeeeTamuPortalWeb.Upload.SimpleS3Upload
 
   @features [
-    %{
-      key: :admin_panel,
-      name: "Admin Panel",
-      config_key: AdminAuth,
-      required_keys: [:username, :password]
-    },
     %{
       key: :s3_resume_upload,
       name: "Resume Upload",
@@ -84,8 +77,8 @@ defmodule IeeeTamuPortal.Features do
 
   Returns `:error` when the feature is not configured or unknown.
 
-      iex> Features.get_config(:admin_panel)
-      {:ok, username: "admin", password: "password"}
+      iex> Features.get_config(:mautic)
+      {:ok, base_url: "https://mautic.example.com", username: "user", password: "password"}
   """
   def get_config(feature_key) do
     with feature when not is_nil(feature) <- Enum.find(@features, &(&1.key == feature_key)),

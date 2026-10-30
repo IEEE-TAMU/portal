@@ -14,7 +14,7 @@ defmodule IeeeTamuPortalWeb.AdminMemberExportControllerTest do
 
   test "requires admin auth", %{conn: conn} do
     conn = get(conn, ~p"/admin/download-members")
-    assert conn.status == 401
+    assert redirected_to(conn) == ~p"/members/login"
   end
 
   test "returns CSV with headers", %{conn: conn} do
