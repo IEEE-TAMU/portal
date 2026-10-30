@@ -25,6 +25,8 @@ defmodule IeeeTamuPortal.Application do
         ([
            if(Features.enabled?(:s3_resume_upload), do: IeeeTamuPortal.S3Delete),
            if(Features.enabled?(:discord_bot), do: IeeeTamuPortal.Discord.RoleSyncService),
+           if(Features.enabled?(:github_org), do: IeeeTamuPortal.Github.Auth),
+           if(Features.enabled?(:github_org), do: IeeeTamuPortal.Github.TeamSyncService),
            if(Features.enabled?(:mautic), do: IeeeTamuPortal.Mautic.SyncService)
          ]
          |> Enum.reject(&is_nil/1)) ++

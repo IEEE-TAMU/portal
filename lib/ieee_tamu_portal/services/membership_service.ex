@@ -119,7 +119,9 @@ defmodule IeeeTamuPortal.Services.MembershipService do
 
   # Private function to handle side effects of payment status changes
   defp notify_payment_status_changed(member, _registration) do
-    # For now, directly call Discord sync. In the future, this could use events.
+    # For now, directly call external organization syncs. In the future, this
+    # could use events.
     IeeeTamuPortal.Discord.RoleSyncService.sync_member(member)
+    IeeeTamuPortal.Github.TeamSyncService.sync_member(member)
   end
 end

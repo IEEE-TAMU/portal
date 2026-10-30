@@ -507,8 +507,9 @@ defmodule IeeeTamuPortal.Members do
 
       case update_registration(registration, %{payment_override: new_override_value}) do
         {:ok, updated_registration} ->
-          # Trigger Discord role synchronization when payment status changes
+          # Trigger external organization sync when payment status changes.
           IeeeTamuPortal.Discord.RoleSyncService.sync_member(member)
+          IeeeTamuPortal.Github.TeamSyncService.sync_member(member)
           {:ok, updated_registration}
 
         {:error, changeset} ->
@@ -581,9 +582,10 @@ defmodule IeeeTamuPortal.Members do
                  |> Payment.registration_changeset(%{registration_id: registration.id})
                  |> Repo.update() do
               {:ok, updated_payment} ->
-                # Get the member for Discord role sync
+                # Get the member for external organization sync
                 member = Repo.get!(IeeeTamuPortal.Accounts.Member, registration.member_id)
                 IeeeTamuPortal.Discord.RoleSyncService.sync_member(member)
+                IeeeTamuPortal.Github.TeamSyncService.sync_member(member)
                 {:ok, updated_payment}
 
               {:error, changeset} ->

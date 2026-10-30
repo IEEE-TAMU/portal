@@ -77,7 +77,7 @@ defmodule IeeeTamuPortal.FeaturesTest do
   describe "list/0" do
     test "returns all feature definitions with enabled status" do
       all = Features.list()
-      assert length(all) == 5
+      assert length(all) == 6
       assert Enum.all?(all, &Map.has_key?(&1, :enabled))
       assert Enum.all?(all, &Map.has_key?(&1, :name))
       assert Enum.all?(all, &Map.has_key?(&1, :key))

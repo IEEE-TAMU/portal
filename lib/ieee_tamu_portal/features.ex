@@ -38,6 +38,12 @@ defmodule IeeeTamuPortal.Features do
       name: "Google OAuth Login",
       config_key: :google_oauth,
       required_keys: [:client_id, :client_secret]
+    },
+    %{
+      key: :github_org,
+      name: "GitHub Org Sync",
+      config_key: :github_app,
+      required_keys: [:app_id, :installation_id, :private_key]
     }
   ]
 

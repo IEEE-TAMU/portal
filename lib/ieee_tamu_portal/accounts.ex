@@ -152,10 +152,11 @@ defmodule IeeeTamuPortal.Accounts do
            member
            |> Member.role_changeset(%{role: role})
            |> Repo.update() do
-      # Keep the Discord Officer role in sync with the portal role. This is a
-      # no-op when Discord is not configured or the member has not linked an
-      # account.
+      # Keep external organization roles in sync with the portal role. These
+      # are no-ops when the integrations are not configured or the member has
+      # not linked the corresponding account.
       IeeeTamuPortal.Discord.RoleSyncService.sync_member(updated_member)
+      IeeeTamuPortal.Github.TeamSyncService.sync_member(updated_member)
       {:ok, updated_member}
     end
   end

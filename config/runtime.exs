@@ -28,6 +28,30 @@ config :ieee_tamu_portal, :google_oauth,
   client_id: System.get_env("GOOGLE_CLIENT_ID"),
   client_secret: System.get_env("GOOGLE_CLIENT_SECRET")
 
+github_app_private_key =
+  cond do
+    path = System.get_env("GITHUB_APP_PRIVATE_KEY_PATH") ->
+      if File.exists?(path), do: File.read!(path)
+
+    pem = System.get_env("GITHUB_APP_PRIVATE_KEY") ->
+      String.replace(pem, "\\n", "\n")
+
+    true ->
+      nil
+  end
+
+config :ieee_tamu_portal, :github_app,
+  app_id: System.get_env("GITHUB_APP_ID"),
+  installation_id: System.get_env("GITHUB_APP_INSTALLATION_ID"),
+  private_key: github_app_private_key
+
+config :ieee_tamu_portal, :github_org, System.get_env("GITHUB_ORG", "IEEE-TAMU")
+config :ieee_tamu_portal, :github_members_team, System.get_env("GITHUB_MEMBERS_TEAM", "members")
+
+config :ieee_tamu_portal,
+       :github_officers_team,
+       System.get_env("GITHUB_OFFICERS_TEAM", "officers")
+
 config :ieee_tamu_portal,
        :discord_bot_url,
        System.get_env("DISCORD_BOT_URL")
