@@ -897,6 +897,37 @@ defmodule IeeeTamuPortal.AccountsTest do
       assert Accounts.count_admins() == 2
     end
 
+    test "list_privileged_members_missing_ieee_number/0 filters by role and number" do
+      officer_without_info = officer_member_fixture()
+      admin_without_info = admin_member_fixture()
+
+      officer_with_number = officer_member_fixture()
+
+      {:ok, _info} =
+        IeeeTamuPortal.Members.create_member_info(officer_with_number, %{
+          uin: 123_001_299,
+          first_name: "Test",
+          last_name: "Officer",
+          tshirt_size: :M,
+          graduation_year: 2026,
+          major: :ELEN,
+          gender: :Male,
+          international_student: false,
+          ieee_membership_number: 97_775_579
+        })
+
+      regular_without_number = confirmed_member_fixture()
+
+      member_ids =
+        Accounts.list_privileged_members_missing_ieee_number()
+        |> Enum.map(& &1.id)
+
+      assert officer_without_info.id in member_ids
+      assert admin_without_info.id in member_ids
+      refute officer_with_number.id in member_ids
+      refute regular_without_number.id in member_ids
+    end
+
     test "sync_admin_emails/0 promotes configured accounts without demoting others" do
       configured = confirmed_member_fixture()
       admin = admin_member_fixture()

@@ -7,7 +7,7 @@ defmodule IeeeTamuPortalWeb.AdminOfficersLiveTest do
   import IeeeTamuPortalWeb.TestHelpers.AdminAuth,
     only: [admin_auth_conn: 1, officer_auth_conn: 1]
 
-  alias IeeeTamuPortal.Accounts
+  alias IeeeTamuPortal.{Accounts, Members}
 
   describe "access control" do
     test "redirects unauthenticated visitors to login", %{conn: conn} do
@@ -149,5 +149,74 @@ defmodule IeeeTamuPortalWeb.AdminOfficersLiveTest do
       assert html =~ "must confirm their email address"
       assert Accounts.get_member!(member.id).role == :member
     end
+  end
+
+  describe "officers missing an IEEE membership number" do
+    test "lists officers and admins without a number, including members with no info row", %{
+      conn: conn
+    } do
+      officer_without_info = officer_member_fixture()
+
+      admin_with_nil_number = admin_member_fixture()
+      create_member_info(admin_with_nil_number, %{ieee_membership_number: nil})
+
+      officer_with_number = officer_member_fixture()
+      create_member_info(officer_with_number, %{ieee_membership_number: 97_775_577})
+
+      regular_without_number = confirmed_member_fixture()
+      create_member_info(regular_without_number, %{ieee_membership_number: nil})
+
+      {:ok, lv, _html} =
+        conn
+        |> admin_auth_conn()
+        |> live(~p"/admin/officers")
+
+      missing_html = render(element(lv, "#missing-ieee-members"))
+
+      assert missing_html =~ "Officers missing an IEEE membership number"
+      assert missing_html =~ officer_without_info.email
+      assert missing_html =~ admin_with_nil_number.email
+      refute missing_html =~ officer_with_number.email
+      refute missing_html =~ regular_without_number.email
+    end
+
+    test "shows an all-clear message when every privileged account has a number", %{
+      conn: conn
+    } do
+      admin = admin_member_fixture()
+      create_member_info(admin, %{ieee_membership_number: 97_775_578})
+
+      {:ok, lv, _html} =
+        conn
+        |> log_in_member(admin)
+        |> live(~p"/admin/officers")
+
+      missing_html = render(element(lv, "#missing-ieee-members"))
+
+      assert missing_html =~ "All officers and admins have an IEEE membership number."
+    end
+  end
+
+  defp create_member_info(member, overrides) do
+    defaults = %{
+      uin: unique_uin(),
+      first_name: "Test",
+      last_name: "User",
+      tshirt_size: :M,
+      graduation_year: 2026,
+      major: :ELEN,
+      gender: :Male,
+      international_student: false,
+      phone_number: "123-456-7890"
+    }
+
+    attrs = Map.merge(defaults, overrides)
+
+    {:ok, _info} = Members.create_member_info(member, attrs)
+  end
+
+  defp unique_uin do
+    n = System.unique_integer([:positive])
+    "#{rem(n, 900) + 100}00#{rem(n * 7, 9000) + 1000}" |> String.to_integer()
   end
 end

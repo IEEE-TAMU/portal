@@ -106,6 +106,26 @@ defmodule IeeeTamuPortal.Accounts do
   end
 
   @doc """
+  Lists officers and admins who have not entered an IEEE membership number.
+
+  Uses a left join so privileged members without a `member_infos` row are
+  included too. This is a profile-level check and is intentionally independent
+  of local dues or the current registration year.
+  """
+  def list_privileged_members_missing_ieee_number do
+    import Ecto.Query
+
+    from(m in Member,
+      where: m.role in ^[:officer, :admin],
+      left_join: info in assoc(m, :info),
+      where: is_nil(info.ieee_membership_number),
+      preload: [info: info]
+    )
+    |> Repo.all()
+    |> Enum.sort_by(fn member -> {member.role != :admin, member.email} end)
+  end
+
+  @doc """
   Counts members with the admin role.
   """
   def count_admins do

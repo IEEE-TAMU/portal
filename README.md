@@ -84,6 +84,7 @@ Access is controlled by the member account's `role` field:
 - **API Key Management**: Generate and revoke API keys for external integrations
 - **Settings Management**: Configure registration year and current event
 - **Officer Management**: Admins can grant and revoke admin panel access
+- **IEEE Membership Check**: Admins can see officers/admins missing a global IEEE membership number (separate from local dues)
 
 To bootstrap the first admin, set `ADMIN_EMAILS` to a comma-separated list of
 member emails. Those accounts are promoted to admin on boot and can then manage

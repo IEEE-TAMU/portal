@@ -9,7 +9,7 @@ defmodule IeeeTamuPortalWeb.AdminOfficersLive do
     {:ok,
      socket
      |> assign(:page_title, "IEEE Admin - Officers")
-     |> assign(:privileged_members, Accounts.list_privileged_members())}
+     |> assign_member_lists()}
   end
 
   @impl true
@@ -46,6 +46,13 @@ defmodule IeeeTamuPortalWeb.AdminOfficersLive do
     end
   end
 
+  defp assign_member_lists(socket) do
+    assign(socket,
+      privileged_members: Accounts.list_privileged_members(),
+      missing_ieee_members: Accounts.list_privileged_members_missing_ieee_number()
+    )
+  end
+
   defp apply_role_change(socket, member, role) do
     current_member = socket.assigns.current_member
 
@@ -77,7 +84,7 @@ defmodule IeeeTamuPortalWeb.AdminOfficersLive do
         case Accounts.update_member_role(member, role) do
           {:ok, updated_member} ->
             socket
-            |> assign(:privileged_members, Accounts.list_privileged_members())
+            |> assign_member_lists()
             |> put_flash(
               :info,
               "#{updated_member.email} is now #{Member.role_label(updated_member.role)}."
@@ -174,6 +181,56 @@ defmodule IeeeTamuPortalWeb.AdminOfficersLive do
         </button>
       </form>
     </div>
+
+    <section
+      id="missing-ieee-members"
+      class="bg-amber-50 border border-amber-200 rounded-lg p-6 mb-8"
+    >
+      <h2 class="text-xl font-semibold text-amber-900 mb-1">
+        Officers missing an IEEE membership number
+      </h2>
+      <p class="text-sm text-amber-800 mb-4">
+        Officers are required to hold global IEEE membership. This is separate from
+        local branch dues. Update the number from the member's profile in the directory.
+      </p>
+
+      <%= if @missing_ieee_members == [] do %>
+        <p class="rounded-md bg-green-50 px-3 py-2 text-sm text-green-800">
+          All officers and admins have an IEEE membership number.
+        </p>
+      <% else %>
+        <p class="mb-3 text-sm font-medium text-amber-900">
+          {length(@missing_ieee_members)} account(s) need an IEEE membership number.
+        </p>
+
+        <ul class="divide-y divide-amber-200 overflow-hidden rounded-md border border-amber-200 bg-white">
+          <li
+            :for={member <- @missing_ieee_members}
+            class="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+          >
+            <div class="min-w-0">
+              <p class="truncate text-sm font-medium text-gray-900">{member_name(member)}</p>
+              <p class="truncate text-sm text-gray-600">{member.email}</p>
+            </div>
+            <span class={[
+              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+              role_badge_class(member.role)
+            ]}>
+              {Member.role_label(member.role)}
+            </span>
+          </li>
+        </ul>
+
+        <div class="mt-4">
+          <.link
+            navigate={~p"/admin/members"}
+            class="text-sm font-medium text-amber-900 underline hover:text-amber-700"
+          >
+            Open the member directory to update numbers
+          </.link>
+        </div>
+      <% end %>
+    </section>
 
     <div class="bg-white rounded-lg shadow overflow-hidden">
       <div class="px-6 py-4 border-b border-gray-200">
