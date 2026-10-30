@@ -70,7 +70,13 @@ Team membership is reconciled when:
 - A payment is created or a payment override is toggled
 - A portal officer/admin role is granted or revoked
 - The periodic sync runs every 6 hours
-- `IeeeTamuPortal.Github.TeamSyncService.force_sync_all/0` is called
+- `mix github.teams.sync` or `IeeeTamuPortal.Github.TeamSyncService.force_sync_all/0` is called
+
+Run the initial backfill after configuring the app:
+
+```bash
+mix github.teams.sync
+```
 
 Adding a user who is not yet an organization member causes GitHub to send an
 organization invitation; the team membership remains pending until accepted.
