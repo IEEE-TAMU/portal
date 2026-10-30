@@ -83,6 +83,61 @@ defmodule IeeeTamuPortal.Accounts do
     |> Repo.preload(:resume)
   end
 
+  ## Roles
+
+  @doc """
+  Lists members with officer or admin access, preloading their profile info.
+
+  Admins are returned first so the highest-privilege accounts are easiest to
+  find in the officer management screen.
+  """
+  def list_privileged_members do
+    import Ecto.Query
+
+    from(m in Member,
+      where: m.role in ^[:officer, :admin],
+      left_join: info in assoc(m, :info),
+      preload: [info: info]
+    )
+    |> Repo.all()
+    |> Enum.sort_by(fn member -> {member.role != :admin, member.email} end)
+  end
+
+  @doc """
+  Counts members with the admin role.
+  """
+  def count_admins do
+    import Ecto.Query
+
+    Repo.aggregate(from(m in Member, where: m.role == :admin), :count, :id)
+  end
+
+  @doc """
+  Updates a member's portal role.
+
+  ## Examples
+
+      iex> update_member_role(member, :officer)
+      {:ok, %Member{role: :officer}}
+
+      iex> update_member_role(member, :owner)
+      ** (FunctionClauseError)
+
+  """
+  def update_member_role(%Member{} = member, role)
+      when role in [:member, :officer, :admin] do
+    member
+    |> Member.role_changeset(%{role: role})
+    |> Repo.update()
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for changing a member's role.
+  """
+  def change_member_role(%Member{} = member, attrs \\ %{}) do
+    Member.role_changeset(member, attrs)
+  end
+
   @doc """
   Paginated/filtered member listing via Flop.
   """

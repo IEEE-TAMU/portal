@@ -33,6 +33,18 @@ defmodule IeeeTamuPortal.AccountsFixtures do
     updated
   end
 
+  def officer_member_fixture(attrs \\ %{}) do
+    member = confirmed_member_fixture(attrs)
+    {:ok, officer} = IeeeTamuPortal.Accounts.update_member_role(member, :officer)
+    officer
+  end
+
+  def admin_member_fixture(attrs \\ %{}) do
+    member = confirmed_member_fixture(attrs)
+    {:ok, admin} = IeeeTamuPortal.Accounts.update_member_role(member, :admin)
+    admin
+  end
+
   def extract_member_token(fun) do
     {:ok, captured_email} = fun.(&"[TOKEN]#{&1}[TOKEN]")
     [_, token | _] = String.split(captured_email.text_body, "[TOKEN]")

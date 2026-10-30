@@ -850,4 +850,51 @@ defmodule IeeeTamuPortal.AccountsTest do
       assert meta.total_count == 0
     end
   end
+
+  describe "roles" do
+    test "new members default to the member role" do
+      assert member_fixture().role == :member
+    end
+
+    test "update_member_role/2 changes the role" do
+      member = confirmed_member_fixture()
+
+      assert {:ok, updated} = Accounts.update_member_role(member, :officer)
+      assert updated.role == :officer
+
+      assert {:ok, updated} = Accounts.update_member_role(updated, :admin)
+      assert updated.role == :admin
+    end
+
+    test "officer?/1 is true for officers and admins" do
+      assert Member.officer?(%Member{role: :officer})
+      assert Member.officer?(%Member{role: :admin})
+      refute Member.officer?(%Member{role: :member})
+      refute Member.officer?(nil)
+    end
+
+    test "admin?/1 is true only for admins" do
+      assert Member.admin?(%Member{role: :admin})
+      refute Member.admin?(%Member{role: :officer})
+      refute Member.admin?(%Member{role: :member})
+    end
+
+    test "list_privileged_members/0 returns only officers and admins" do
+      member_fixture()
+      officer = officer_member_fixture()
+      admin = admin_member_fixture()
+
+      members = Accounts.list_privileged_members()
+
+      assert Enum.map(members, & &1.id) == [admin.id, officer.id]
+    end
+
+    test "count_admins/0 counts only admins" do
+      officer_member_fixture()
+      admin_member_fixture()
+      admin_member_fixture()
+
+      assert Accounts.count_admins() == 2
+    end
+  end
 end

@@ -2,10 +2,12 @@ defmodule IeeeTamuPortal.Accounts.Member do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @roles [:member, :officer, :admin]
+
   @derive {
     Flop.Schema,
-    filterable: [:confirmed_at, :email, :inserted_at, :updated_at, :full_name],
-    sortable: [:id, :email, :confirmed_at, :inserted_at, :updated_at],
+    filterable: [:confirmed_at, :email, :inserted_at, :updated_at, :full_name, :role],
+    sortable: [:id, :email, :confirmed_at, :inserted_at, :updated_at, :role],
     join_fields: [
       first_name: [
         binding: :info,
@@ -33,6 +35,7 @@ defmodule IeeeTamuPortal.Accounts.Member do
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
+    field :role, Ecto.Enum, values: @roles, default: :member
 
     timestamps(type: :utc_datetime)
     has_many :tokens, IeeeTamuPortal.Accounts.MemberToken
@@ -176,6 +179,40 @@ defmodule IeeeTamuPortal.Accounts.Member do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
     change(member, confirmed_at: now)
   end
+
+  @doc """
+  Returns the roles a member can have, from lowest to highest privilege.
+  """
+  def roles, do: @roles
+
+  @doc """
+  A member changeset for changing the member's portal role.
+  """
+  def role_changeset(member, attrs) do
+    member
+    |> cast(attrs, [:role])
+    |> validate_required([:role])
+    |> validate_inclusion(:role, @roles)
+  end
+
+  @doc """
+  Returns true for officers and admins, i.e. members allowed into the admin panel.
+  """
+  def officer?(%__MODULE__{role: role}), do: role in [:officer, :admin]
+  def officer?(_), do: false
+
+  @doc """
+  Returns true only for admins, who can manage other members' roles.
+  """
+  def admin?(%__MODULE__{role: :admin}), do: true
+  def admin?(_), do: false
+
+  @doc """
+  Human-readable label for a role.
+  """
+  def role_label(:admin), do: "Admin"
+  def role_label(:officer), do: "Officer"
+  def role_label(_), do: "Member"
 
   @doc """
   Verifies the password.
