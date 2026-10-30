@@ -5,6 +5,8 @@ defmodule IeeeTamuPortal.Application do
 
   use Application
 
+  require Logger
+
   alias IeeeTamuPortal.Features
 
   @impl true
@@ -34,7 +36,21 @@ defmodule IeeeTamuPortal.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: IeeeTamuPortal.Supervisor]
-    Supervisor.start_link(children, opts)
+
+    with {:ok, pid} <- Supervisor.start_link(children, opts) do
+      promote_configured_admins()
+      {:ok, pid}
+    end
+  end
+
+  # Promote bootstrap admins from ADMIN_EMAILS after the repo is available.
+  # The database may not be migrated yet on a first boot, so never let this
+  # prevent the application from starting.
+  defp promote_configured_admins do
+    IeeeTamuPortal.Accounts.sync_admin_emails()
+  rescue
+    error ->
+      Logger.warning("Skipping ADMIN_EMAILS bootstrap: #{Exception.message(error)}")
   end
 
   # Tell Phoenix to update the endpoint configuration

@@ -36,6 +36,14 @@ config :ieee_tamu_portal,
        :frontend_time_zone,
        System.get_env("FRONTEND_TIME_ZONE", "America/Chicago")
 
+# Comma-separated list of member emails that should always have the admin role.
+# Used to bootstrap the first admin and as a break-glass recovery path.
+config :ieee_tamu_portal,
+       :admin_emails,
+       System.get_env("ADMIN_EMAILS", "")
+       |> String.split(",", trim: true)
+       |> Enum.map(&String.trim/1)
+
 config :ieee_tamu_portal, :mautic,
   base_url: System.get_env("MAUTIC_BASE_URL"),
   username: System.get_env("MAUTIC_USERNAME"),

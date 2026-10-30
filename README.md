@@ -71,12 +71,24 @@ See the full [Discord Role Management documentation](lib/ieee_tamu_portal/discor
 
 ### Admin Panel
 
+Access is controlled by the member account's `role` field:
+
+- **Officer**: can use every admin panel page (members, events, check-in, verification, etc.)
+- **Admin**: everything an officer can do, plus grant/revoke officer and admin access from `/admin/officers`
+- **Member**: cannot access the admin panel
+
 - **Member Directory**: Browse, filter, and manage all members with [Flop](https://hex.pm/packages/flop) pagination
 - **Payment Override**: Manually mark members as paid when needed
 - **Resume Management**: Preview uploaded resumes and bulk download
 - **Event Analytics**: View RSVP and check-in counts per event
 - **API Key Management**: Generate and revoke API keys for external integrations
 - **Settings Management**: Configure registration year and current event
+- **Officer Management**: Admins can grant and revoke admin panel access
+
+To bootstrap the first admin, set `ADMIN_EMAILS` to a comma-separated list of
+member emails. Those accounts are promoted to admin on boot and can then manage
+roles from the UI. You can also use `mix members.role EMAIL admin` and list
+current privileged accounts with `mix members.roles`.
 
 ![Admin Dashboard](docs/screenshots/admin-dashboard.png)
 *Admin dashboard with key metrics*
@@ -148,9 +160,7 @@ See the full [Discord Role Management documentation](lib/ieee_tamu_portal/discor
 
 After running `mix setup`, the following test accounts are available:
 
-- **Test Member**: `test@tamu.edu` / `password`
-- **Admin Panel**:
-`admin` / `password`
+- **Test Member / Admin**: `test@tamu.edu` / `password` (seeded as an admin, so it can access `/admin` and manage officer roles)
 
 ## Development Workflow
 
@@ -241,9 +251,8 @@ GOOGLE_CLIENT_SECRET=<your-google-client-secret>
 # Discord Bot Integration
 DISCORD_BOT_URL=https://your-discord-bot.example.com
 
-# Admin Panel
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=<secure-password>
+# Admin Panel bootstrap (comma-separated member emails)
+ADMIN_EMAILS=officer@tamu.edu,advisor@tamu.edu
 ```
 
 ### CI/CD

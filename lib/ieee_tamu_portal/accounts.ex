@@ -45,6 +45,8 @@ defmodule IeeeTamuPortal.Accounts do
       total_members = Accounts.count_members()
   """
 
+  require Logger
+
   alias IeeeTamuPortal.Repo
 
   alias IeeeTamuPortal.Accounts.{
@@ -136,6 +138,39 @@ defmodule IeeeTamuPortal.Accounts do
   """
   def change_member_role(%Member{} = member, attrs \\ %{}) do
     Member.role_changeset(member, attrs)
+  end
+
+  @doc """
+  Promotes members listed in the `:admin_emails` application setting to admins.
+
+  Used as a bootstrap/recovery mechanism: the environment's admin list is
+  applied on every boot, but it never demotes anyone. Roles removed from the
+  environment must be changed from the officer management screen or a mix task.
+  """
+  def sync_admin_emails do
+    :ieee_tamu_portal
+    |> Application.get_env(:admin_emails, [])
+    |> List.wrap()
+    |> Enum.map(&String.trim/1)
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.each(fn email ->
+      case get_member_by_email(email) do
+        nil ->
+          Logger.warning("ADMIN_EMAILS: no member account found for #{email}")
+
+        %Member{role: :admin} ->
+          :ok
+
+        member ->
+          case update_member_role(member, :admin) do
+            {:ok, _member} ->
+              Logger.info("Promoted #{email} to admin from ADMIN_EMAILS")
+
+            {:error, changeset} ->
+              Logger.error("Could not promote #{email} to admin: #{inspect(changeset.errors)}")
+          end
+      end
+    end)
   end
 
   @doc """

@@ -24,7 +24,8 @@
 
 ### admin panel
 - [x] basic auth?
-- [ ] user management
+- [x] officer/admin roles with in-app management
+- [x] user management
 - [ ] resume management
 - [ ] sponsor creation
 - [ ] sponsor management

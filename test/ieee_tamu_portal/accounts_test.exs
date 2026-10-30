@@ -896,5 +896,22 @@ defmodule IeeeTamuPortal.AccountsTest do
 
       assert Accounts.count_admins() == 2
     end
+
+    test "sync_admin_emails/0 promotes configured accounts without demoting others" do
+      configured = confirmed_member_fixture()
+      admin = admin_member_fixture()
+
+      original = Application.get_env(:ieee_tamu_portal, :admin_emails)
+      Application.put_env(:ieee_tamu_portal, :admin_emails, [configured.email])
+
+      on_exit(fn ->
+        Application.put_env(:ieee_tamu_portal, :admin_emails, original)
+      end)
+
+      Accounts.sync_admin_emails()
+
+      assert Accounts.get_member!(configured.id).role == :admin
+      assert Accounts.get_member!(admin.id).role == :admin
+    end
   end
 end

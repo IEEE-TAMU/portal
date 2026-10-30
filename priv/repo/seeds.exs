@@ -378,15 +378,18 @@ case Accounts.register_member(%{
        password: "password"
      }) do
   {:ok, member} ->
-    # Confirm the member account
+    # Confirm the member account and make it an admin so the admin panel can be
+    # used immediately in development.
     confirmed_member =
       IeeeTamuPortal.Repo.update!(IeeeTamuPortal.Accounts.Member.confirm_changeset(member))
 
+    {:ok, admin_member} = Accounts.update_member_role(confirmed_member, :admin)
+
     IO.puts("✓ Created test user: test@tamu.edu with password 'password'")
-    IO.puts("  Member ID: #{confirmed_member.id}")
+    IO.puts("  Member ID: #{admin_member.id} (role: admin)")
 
     # Create member info
-    case Members.create_member_info(confirmed_member, %{
+    case Members.create_member_info(admin_member, %{
            first_name: "Caleb",
            last_name: "Norton",
            tshirt_size: :M,

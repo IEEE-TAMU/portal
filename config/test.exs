@@ -39,6 +39,9 @@ config :phoenix, :plug_init_mode, :runtime
 config :phoenix_live_view,
   enable_expensive_runtime_checks: true
 
+# Do not promote any bootstrap admins during tests.
+config :ieee_tamu_portal, :admin_emails, []
+
 # S3 configuration for tests (mock values)
 config :ieee_tamu_portal, IeeeTamuPortalWeb.Upload.SimpleS3Upload,
   region: "us-east-1",
