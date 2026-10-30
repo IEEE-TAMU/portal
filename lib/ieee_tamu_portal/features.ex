@@ -40,6 +40,12 @@ defmodule IeeeTamuPortal.Features do
       required_keys: [:client_id, :client_secret]
     },
     %{
+      key: :github_oauth,
+      name: "GitHub OAuth Login",
+      config_key: :github_oauth,
+      required_keys: [:client_id, :client_secret]
+    },
+    %{
       key: :github_org,
       name: "GitHub Org Sync",
       config_key: :github_app,

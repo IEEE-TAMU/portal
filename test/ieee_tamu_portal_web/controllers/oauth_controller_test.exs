@@ -253,4 +253,118 @@ defmodule IeeeTamuPortalWeb.OAuthControllerTest do
       assert Phoenix.Flash.get(conn.assigns.flash, :info) == "Successfully logged in with Google!"
     end
   end
+
+  describe "GitHub OAuth" do
+    defmodule FakeGithubAdapter do
+      def authorize_url(_config),
+        do: {:ok, %{url: "https://github.com/login/oauth/authorize?fake=1", session_params: %{}}}
+
+      def callback(_config, _params) do
+        user =
+          Application.get_env(:ieee_tamu_portal, FakeGithubAdapter, [])[:user] ||
+            %{"sub" => "github-sub", "preferred_username" => "octocat"}
+
+        {:ok, %{user: user}}
+      end
+    end
+
+    setup do
+      on_exit(fn ->
+        Application.delete_env(:ieee_tamu_portal, IeeeTamuPortalWeb.OAuthController)
+        Application.delete_env(:ieee_tamu_portal, FakeGithubAdapter)
+      end)
+
+      :ok
+    end
+
+    test "authorize redirects to GitHub", %{conn: conn} do
+      with_github_user(%{"sub" => "github-sub"})
+
+      conn = get(conn, ~p"/auth/github")
+      assert redirected_to(conn) =~ "github.com/login/oauth/authorize"
+    end
+
+    test "callback without a stored flow redirects instead of crashing", %{conn: conn} do
+      conn = get(conn, ~p"/auth/github/callback?code=abc&state=xyz")
+
+      assert redirected_to(conn) == ~p"/members/login"
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+               "GitHub login session expired. Please try again."
+    end
+
+    test "links GitHub while logged in", %{conn: conn} do
+      member = confirmed_member_fixture()
+
+      with_github_user(%{
+        "sub" => "github-sub-link",
+        "preferred_username" => "octocat-link",
+        "email" => member.email,
+        "email_verified" => true
+      })
+
+      conn =
+        conn
+        |> log_in_member(member)
+        |> put_session(:oauth_session_params, %{state: "test-state"})
+        |> get(~p"/auth/github/callback?code=123")
+
+      assert redirected_to(conn) == ~p"/members/settings"
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) ==
+               "External account linked successfully!"
+
+      assert %AuthMethod{provider: :github, preferred_username: "octocat-link"} =
+               IeeeTamuPortal.Accounts.get_auth_method(member, :github)
+    end
+
+    test "logs in when the GitHub sub is already linked", %{conn: conn} do
+      member = confirmed_member_fixture()
+
+      {:ok, _auth} =
+        IeeeTamuPortal.Accounts.link_auth_method(member, %{
+          provider: :github,
+          sub: "github-sub-linked",
+          preferred_username: "octocat-linked"
+        })
+
+      with_github_user(%{
+        "sub" => "github-sub-linked",
+        "preferred_username" => "octocat-renamed"
+      })
+
+      conn =
+        conn
+        |> init_test_session(%{oauth_session_params: %{state: "test-state"}})
+        |> get(~p"/auth/github/callback?code=123")
+
+      assert get_session(conn, :member_token)
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) == "Successfully logged in with GitHub!"
+
+      assert IeeeTamuPortal.Accounts.get_auth_method(member, :github).preferred_username ==
+               "octocat-renamed"
+    end
+
+    test "does not auto-create an account for an unknown GitHub user", %{conn: conn} do
+      with_github_user(%{"sub" => "github-sub-unknown", "preferred_username" => "unknown"})
+
+      conn =
+        conn
+        |> init_test_session(%{oauth_session_params: %{state: "test-state"}})
+        |> get(~p"/auth/github/callback?code=123")
+
+      assert redirected_to(conn) == ~p"/members/login"
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+               "No account found linked to this GitHub account. Log in normally and link GitHub in settings."
+    end
+
+    defp with_github_user(user) do
+      Application.put_env(:ieee_tamu_portal, IeeeTamuPortalWeb.OAuthController,
+        github_adapter: FakeGithubAdapter
+      )
+
+      Application.put_env(:ieee_tamu_portal, FakeGithubAdapter, user: user)
+    end
+  end
 end

@@ -29,9 +29,15 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
     Enum.any?(auth_methods, &(&1.provider == :google))
   end
 
+  defp github_linked?(assigns) do
+    auth_methods = assigns.current_member.secondary_auth_methods || []
+    Enum.any?(auth_methods, &(&1.provider == :github))
+  end
+
   defp show_external_accounts?(assigns) do
-    discord_linked?(assigns) or google_linked?(assigns) or
-      assigns.discord_oauth_enabled or assigns.google_oauth_enabled
+    discord_linked?(assigns) or google_linked?(assigns) or github_linked?(assigns) or
+      assigns.discord_oauth_enabled or assigns.google_oauth_enabled or
+      assigns.github_oauth_enabled
   end
 
   defp get_discord_username(assigns) do
@@ -49,6 +55,15 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
     case Enum.find(auth_methods, &(&1.provider == :google)) do
       nil -> ""
       auth_method -> auth_method.email || "Unknown"
+    end
+  end
+
+  defp get_github_username(assigns) do
+    auth_methods = assigns.current_member.secondary_auth_methods || []
+
+    case Enum.find(auth_methods, &(&1.provider == :github)) do
+      nil -> ""
+      auth_method -> auth_method.preferred_username || "Unknown"
     end
   end
 
@@ -145,6 +160,37 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
 
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Failed to unlink Google account.")}
+    end
+  end
+
+  @impl true
+  def handle_event("unlink_github", _params, socket) do
+    member = socket.assigns.current_member
+
+    case Accounts.unlink_auth_method(member, :github) do
+      {:ok, auth_method} ->
+        if IeeeTamuPortal.Features.enabled?(:github_org) do
+          IeeeTamuPortal.Github.TeamManager.remove_managed_teams(auth_method.preferred_username)
+        end
+
+        updated_member =
+          member
+          |> Map.update!(:secondary_auth_methods, fn auth_methods ->
+            Enum.reject(auth_methods, &(&1.provider == :github))
+          end)
+
+        socket =
+          socket
+          |> assign(:current_member, updated_member)
+          |> put_flash(:info, "GitHub account unlinked successfully!")
+
+        {:noreply, socket}
+
+      {:error, :not_found} ->
+        {:noreply, put_flash(socket, :error, "GitHub account not found.")}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Failed to unlink GitHub account.")}
     end
   end
 
@@ -258,6 +304,50 @@ defmodule IeeeTamuPortalWeb.MemberSettingsLive do
                   <.link
                     href={~p"/auth/google"}
                     class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Connect
+                  </.link>
+                </div>
+              <% end %>
+            <% end %>
+
+            <%= if github_linked?(assigns) do %>
+              <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg mt-4">
+                <div class="flex items-center space-x-3">
+                  <div class="w-8 h-8 aspect-square bg-gray-900 rounded flex-none flex items-center justify-center text-white text-[10px] font-bold">
+                    GH
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">GitHub</p>
+                    <p class="text-sm text-gray-500">
+                      Connected as {get_github_username(assigns)}
+                    </p>
+                  </div>
+                </div>
+                <.button
+                  type="button"
+                  phx-click="unlink_github"
+                  class="bg-red-600 hover:bg-red-700"
+                  data-confirm="Are you sure you want to unlink your GitHub account?"
+                >
+                  Unlink
+                </.button>
+              </div>
+            <% else %>
+              <%= if @github_oauth_enabled do %>
+                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg mt-4">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 aspect-square bg-gray-400 rounded flex-none flex items-center justify-center text-white text-[10px] font-bold">
+                      GH
+                    </div>
+                    <div>
+                      <p class="text-sm font-medium text-gray-900">GitHub</p>
+                      <p class="text-sm text-gray-500">Not connected</p>
+                    </div>
+                  </div>
+                  <.link
+                    href={~p"/auth/github"}
+                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700"
                   >
                     Connect
                   </.link>

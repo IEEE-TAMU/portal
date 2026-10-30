@@ -69,6 +69,15 @@ A comprehensive membership and event management system built with Phoenix LiveVi
 
 See the full [Discord Role Management documentation](lib/ieee_tamu_portal/discord/DISCORD_ROLE_MANAGEMENT.md) for technical details.
 
+### GitHub Integration
+
+- **GitHub Linking**: Members can link GitHub from account settings and use it for subsequent logins
+- **Organization Team Sync**: A GitHub App keeps the `Members` and `Officers` teams in sync with payment status and portal roles
+- **Officer Handling**: Officers and admins receive the `Officers` team and remain in `Members` even if they do not pay local dues
+- **Periodic + Event-Driven Sync**: Team membership updates on link/unlink, payment changes, role changes, and a 6-hour background sync
+
+See [GitHub Integration](lib/ieee_tamu_portal/github/GITHUB_INTEGRATION.md) for OAuth App and GitHub App setup.
+
 ### Admin Panel
 
 Access is controlled by the member account's `role` field:
@@ -248,10 +257,20 @@ DISCORD_CLIENT_ID=<your-discord-client-id>
 DISCORD_CLIENT_SECRET=<your-discord-client-secret>
 GOOGLE_CLIENT_ID=<your-google-client-id>
 GOOGLE_CLIENT_SECRET=<your-google-client-secret>
+GITHUB_CLIENT_ID=<your-github-oauth-client-id>
+GITHUB_CLIENT_SECRET=<your-github-oauth-client-secret>
 
 # Discord Bot Integration
 DISCORD_BOT_URL=https://your-discord-bot.example.com
 DISCORD_OFFICER_ROLE=Officer
+
+# GitHub App (organization team sync)
+GITHUB_APP_ID=<your-github-app-id>
+GITHUB_APP_INSTALLATION_ID=<your-github-app-installation-id>
+GITHUB_APP_PRIVATE_KEY_PATH=/run/secrets/github-app.pem
+GITHUB_ORG=IEEE-TAMU
+GITHUB_MEMBERS_TEAM=members
+GITHUB_OFFICERS_TEAM=officers
 
 # Admin Panel bootstrap (comma-separated member emails)
 ADMIN_EMAILS=officer@tamu.edu,advisor@tamu.edu

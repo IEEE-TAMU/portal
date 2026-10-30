@@ -251,6 +251,9 @@ defmodule IeeeTamuPortalWeb.Auth.MemberAuth do
     |> Phoenix.Component.assign_new(:google_oauth_enabled, fn ->
       IeeeTamuPortal.Features.enabled?(:google_oauth)
     end)
+    |> Phoenix.Component.assign_new(:github_oauth_enabled, fn ->
+      IeeeTamuPortal.Features.enabled?(:github_oauth)
+    end)
   end
 
   @doc """

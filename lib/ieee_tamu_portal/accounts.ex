@@ -691,6 +691,17 @@ defmodule IeeeTamuPortal.Accounts do
   end
 
   @doc """
+  Updates metadata for an existing linked authentication method.
+
+  Useful for refreshing a provider username or email when it changes remotely.
+  """
+  def update_auth_method(%AuthMethod{} = auth_method, attrs) do
+    auth_method
+    |> AuthMethod.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
   Gets an authentication method by member and provider.
 
   ## Examples

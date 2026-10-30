@@ -22,6 +22,28 @@ defmodule IeeeTamuPortalWeb.MemberLoginLiveTest do
 
       assert {:ok, _conn} = result
     end
+
+    test "shows GitHub login when configured", %{conn: conn} do
+      original = Application.get_env(:ieee_tamu_portal, :github_oauth)
+
+      Application.put_env(:ieee_tamu_portal, :github_oauth,
+        client_id: "test-client-id",
+        client_secret: "test-client-secret"
+      )
+
+      on_exit(fn ->
+        if original do
+          Application.put_env(:ieee_tamu_portal, :github_oauth, original)
+        else
+          Application.delete_env(:ieee_tamu_portal, :github_oauth)
+        end
+      end)
+
+      {:ok, _lv, html} = live(conn, ~p"/members/login")
+
+      assert html =~ "Login with GitHub"
+      assert html =~ ~p"/auth/github"
+    end
   end
 
   describe "member login" do

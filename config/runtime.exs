@@ -28,6 +28,10 @@ config :ieee_tamu_portal, :google_oauth,
   client_id: System.get_env("GOOGLE_CLIENT_ID"),
   client_secret: System.get_env("GOOGLE_CLIENT_SECRET")
 
+config :ieee_tamu_portal, :github_oauth,
+  client_id: System.get_env("GITHUB_CLIENT_ID"),
+  client_secret: System.get_env("GITHUB_CLIENT_SECRET")
+
 github_app_private_key =
   cond do
     path = System.get_env("GITHUB_APP_PRIVATE_KEY_PATH") ->

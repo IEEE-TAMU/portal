@@ -2,7 +2,7 @@ defmodule IeeeTamuPortalWeb.OAuthController do
   use IeeeTamuPortalWeb, :controller
 
   alias IeeeTamuPortal.Accounts
-  alias Assent.Strategy.Discord
+  alias Assent.Strategy.{Discord, Github}
 
   # Overridable in tests via Application config for the Google OAuth strategy.
   defp google_adapter do
@@ -10,8 +10,14 @@ defmodule IeeeTamuPortalWeb.OAuthController do
     |> Keyword.get(:google_adapter, Assent.Strategy.Google)
   end
 
+  # Overridable in tests via Application config for the GitHub OAuth strategy.
+  defp github_adapter do
+    Application.get_env(:ieee_tamu_portal, __MODULE__, [])
+    |> Keyword.get(:github_adapter, Github)
+  end
+
   @doc """
-  Initiates OAuth flow for the specified provider (discord or google)
+  Initiates OAuth flow for the specified provider (discord, google, or github)
   """
   def authorize(conn, %{"provider" => "discord"}) do
     discord_config()
@@ -54,6 +60,29 @@ defmodule IeeeTamuPortalWeb.OAuthController do
             {~p"/members/settings", "Failed to initiate Google authentication. Please try again."}
           else
             {~p"/members/login", "Failed to initiate Google login. Please try again."}
+          end
+
+        conn
+        |> put_flash(:error, error_message)
+        |> redirect(to: redirect_location)
+    end
+  end
+
+  def authorize(conn, %{"provider" => "github"}) do
+    github_config()
+    |> github_adapter().authorize_url()
+    |> case do
+      {:ok, %{url: url, session_params: session_params}} ->
+        conn
+        |> put_session(:oauth_session_params, session_params)
+        |> redirect(external: url)
+
+      {:error, _error} ->
+        {redirect_location, error_message} =
+          if conn.assigns[:current_member] do
+            {~p"/members/settings", "Failed to initiate GitHub authentication. Please try again."}
+          else
+            {~p"/members/login", "Failed to initiate GitHub login. Please try again."}
           end
 
         conn
@@ -132,6 +161,19 @@ defmodule IeeeTamuPortalWeb.OAuthController do
     |> redirect(to: redirect_location)
   end
 
+  def callback(conn, %{"provider" => "github", "error" => _error}) do
+    {redirect_location, error_message} =
+      if conn.assigns[:current_member] do
+        {~p"/members/settings", "GitHub authentication was cancelled or failed."}
+      else
+        {~p"/members/login", "GitHub login was cancelled or failed."}
+      end
+
+    conn
+    |> put_flash(:error, error_message)
+    |> redirect(to: redirect_location)
+  end
+
   def callback(conn, %{"provider" => "google"} = params) do
     session_params = get_session(conn, :oauth_session_params)
     conn = delete_session(conn, :oauth_session_params)
@@ -168,6 +210,69 @@ defmodule IeeeTamuPortalWeb.OAuthController do
     end
   end
 
+  def callback(conn, %{"provider" => "github"} = params) do
+    session_params = get_session(conn, :oauth_session_params)
+    conn = delete_session(conn, :oauth_session_params)
+
+    if valid_session_params?(session_params) do
+      github_config()
+      |> Keyword.put(:session_params, session_params)
+      |> github_adapter().callback(params)
+      |> case do
+        {:ok, info} ->
+          if conn.assigns[:current_member] do
+            handle_successful_auth(conn, info, :github)
+          else
+            handle_github_login(conn, info)
+          end
+
+        {:error, _error} ->
+          {redirect_location, error_message} =
+            if conn.assigns[:current_member] do
+              {~p"/members/settings", "GitHub authentication failed. Please try again."}
+            else
+              {~p"/members/login", "GitHub login failed. Please try again."}
+            end
+
+          conn
+          |> put_flash(:error, error_message)
+          |> redirect(to: redirect_location)
+      end
+    else
+      oauth_error_redirect(conn, "GitHub login session expired. Please try again.")
+    end
+  end
+
+  defp handle_github_login(conn, %{user: user_info}) do
+    github_sub = user_info["sub"]
+
+    case Accounts.get_member_by_auth_sub(:github, github_sub) do
+      nil ->
+        conn
+        |> put_flash(
+          :error,
+          "No account found linked to this GitHub account. Log in normally and link GitHub in settings."
+        )
+        |> redirect(to: ~p"/members/login")
+
+      member ->
+        refresh_github_auth_method(member, user_info)
+
+        conn
+        |> put_flash(:info, "Successfully logged in with GitHub!")
+        |> IeeeTamuPortalWeb.Auth.MemberAuth.log_in_member(member)
+    end
+  end
+
+  defp refresh_github_auth_method(member, user_info) do
+    attrs = Map.take(user_info, ~w[preferred_username email email_verified])
+
+    case Accounts.get_auth_method(member, :github) do
+      nil -> :ok
+      auth_method -> Accounts.update_auth_method(auth_method, attrs)
+    end
+  end
+
   defp handle_google_linking(conn, %{user: user_info}) do
     email = user_info["email"] || ""
 
@@ -189,9 +294,12 @@ defmodule IeeeTamuPortalWeb.OAuthController do
 
     case Accounts.link_auth_method(current_member, member_auth_attrs) do
       {:ok, _auth_method} ->
-        # Trigger Discord role synchronization after successful Discord linking
         if provider == :discord do
           IeeeTamuPortal.Discord.RoleSyncService.sync_member(current_member)
+        end
+
+        if provider == :github do
+          IeeeTamuPortal.Github.TeamSyncService.sync_member(current_member)
         end
 
         conn
@@ -439,6 +547,16 @@ defmodule IeeeTamuPortalWeb.OAuthController do
       client_id: config[:client_id],
       client_secret: config[:client_secret],
       redirect_uri: url(~p"/auth/google/callback")
+    ]
+  end
+
+  defp github_config do
+    config = Application.get_env(:ieee_tamu_portal, :github_oauth)
+
+    [
+      client_id: config[:client_id],
+      client_secret: config[:client_secret],
+      redirect_uri: url(~p"/auth/github/callback")
     ]
   end
 end
