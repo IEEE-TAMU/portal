@@ -1,7 +1,7 @@
 defmodule IeeeTamuPortalWeb.AdminOfficersLive do
   use IeeeTamuPortalWeb, :live_view
 
-  alias IeeeTamuPortal.Accounts
+  alias IeeeTamuPortal.{Accounts, Settings}
   alias IeeeTamuPortal.Accounts.Member
 
   @impl true
@@ -9,6 +9,7 @@ defmodule IeeeTamuPortalWeb.AdminOfficersLive do
     {:ok,
      socket
      |> assign(:page_title, "IEEE Admin - Officers")
+     |> assign(:year, Settings.get_registration_year!())
      |> assign_member_lists()}
   end
 
@@ -48,7 +49,7 @@ defmodule IeeeTamuPortalWeb.AdminOfficersLive do
 
   defp assign_member_lists(socket) do
     assign(socket,
-      privileged_members: Accounts.list_privileged_members(),
+      privileged_members: Accounts.list_privileged_members_with_status(socket.assigns.year),
       missing_ieee_members: Accounts.list_privileged_members_missing_ieee_number()
     )
   end
@@ -125,6 +126,31 @@ defmodule IeeeTamuPortalWeb.AdminOfficersLive do
   defp role_badge_class(:officer), do: "bg-blue-100 text-blue-800"
   defp role_badge_class(_), do: "bg-gray-100 text-gray-700"
 
+  # The registration list is already scoped to the current year by the query,
+  # so the first entry is sufficient.
+  defp current_registration(member), do: List.first(member.registrations || [])
+
+  defp payment_status(member) do
+    case current_registration(member) do
+      nil -> nil
+      registration -> registration.payment_status
+    end
+  end
+
+  defp payment_label(nil), do: "Not registered"
+  defp payment_label(:override), do: "Override"
+  defp payment_label(:paid), do: "Paid"
+  defp payment_label(:pending), do: "Pending"
+
+  defp payment_badge_class(nil), do: "bg-gray-100 text-gray-700"
+  defp payment_badge_class(:override), do: "bg-emerald-100 text-emerald-800"
+  defp payment_badge_class(:paid), do: "bg-green-100 text-green-800"
+  defp payment_badge_class(:pending), do: "bg-amber-100 text-amber-800"
+
+  defp discord_account(member) do
+    Enum.find(member.secondary_auth_methods || [], &(&1.provider == :discord))
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -133,6 +159,10 @@ defmodule IeeeTamuPortalWeb.AdminOfficersLive do
       <p class="text-gray-600 mt-2">
         Officers can access the admin panel. Admins can additionally grant and revoke
         officer and admin access for other members.
+      </p>
+      <p class="text-sm text-gray-500 mt-2">
+        Payment status "Override" means an admin manually verified that the officer's
+        global IEEE membership is currently active.
       </p>
     </div>
 
@@ -250,6 +280,12 @@ defmodule IeeeTamuPortalWeb.AdminOfficersLive do
                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Role
                 </th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Payment {@year}
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Discord
+                </th>
                 <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                   Actions
                 </th>
@@ -271,6 +307,28 @@ defmodule IeeeTamuPortalWeb.AdminOfficersLive do
                   ]}>
                     {Member.role_label(member.role)}
                   </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class={[
+                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                    payment_badge_class(payment_status(member))
+                  ]}>
+                    {payment_label(payment_status(member))}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                  <%= if discord = discord_account(member) do %>
+                    <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                      Linked
+                    </span>
+                    <div class="mt-1 text-xs text-gray-500">
+                      {discord.preferred_username || discord.email || "Connected"}
+                    </div>
+                  <% else %>
+                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                      Not linked
+                    </span>
+                  <% end %>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                   <%= if member.id == @current_member.id do %>

@@ -106,6 +106,32 @@ defmodule IeeeTamuPortal.Accounts do
   end
 
   @doc """
+  Lists officers and admins with their profile, linked auth methods, and
+  payment status for the given registration year.
+  """
+  def list_privileged_members_with_status(year) do
+    alias IeeeTamuPortal.Members.Registration
+    import Ecto.Query
+
+    registrations_query =
+      Registration
+      |> where([r], r.year == ^year)
+      |> Registration.with_payment_status()
+
+    from(m in Member,
+      where: m.role in ^[:officer, :admin],
+      left_join: info in assoc(m, :info),
+      preload: [
+        info: info,
+        secondary_auth_methods: [],
+        registrations: ^registrations_query
+      ]
+    )
+    |> Repo.all()
+    |> Enum.sort_by(fn member -> {member.role != :admin, member.email} end)
+  end
+
+  @doc """
   Lists officers and admins who have not entered an IEEE membership number.
 
   Uses a left join so privileged members without a `member_infos` row are

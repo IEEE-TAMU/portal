@@ -3,11 +3,17 @@ defmodule IeeeTamuPortalWeb.AdminOfficersLiveTest do
 
   import Phoenix.LiveViewTest
   import IeeeTamuPortal.AccountsFixtures
+  import IeeeTamuPortal.SettingsFixtures
 
   import IeeeTamuPortalWeb.TestHelpers.AdminAuth,
     only: [admin_auth_conn: 1, officer_auth_conn: 1]
 
   alias IeeeTamuPortal.{Accounts, Members}
+
+  setup do
+    registration_year_setting_fixture("2026")
+    :ok
+  end
 
   describe "access control" do
     test "redirects unauthenticated visitors to login", %{conn: conn} do
@@ -148,6 +154,52 @@ defmodule IeeeTamuPortalWeb.AdminOfficersLiveTest do
 
       assert html =~ "must confirm their email address"
       assert Accounts.get_member!(member.id).role == :member
+    end
+  end
+
+  describe "officer status" do
+    test "shows the current-year payment override status", %{conn: conn} do
+      officer = officer_member_fixture()
+      {:ok, registration} = Members.get_or_create_registration(officer, 2026)
+      {:ok, _registration} = Members.update_registration(registration, %{payment_override: true})
+
+      {:ok, _lv, html} =
+        conn
+        |> admin_auth_conn()
+        |> live(~p"/admin/officers")
+
+      assert html =~ officer.email
+      assert html =~ "Override"
+    end
+
+    test "shows the linked Discord username", %{conn: conn} do
+      officer = officer_member_fixture()
+
+      {:ok, _auth} =
+        Accounts.link_auth_method(officer, %{
+          provider: :discord,
+          sub: "discord-officer",
+          preferred_username: "officer-discord"
+        })
+
+      {:ok, _lv, html} =
+        conn
+        |> admin_auth_conn()
+        |> live(~p"/admin/officers")
+
+      assert html =~ "officer-discord"
+      assert html =~ "Linked"
+    end
+
+    test "shows Not linked for officers without Discord", %{conn: conn} do
+      officer_member_fixture()
+
+      {:ok, _lv, html} =
+        conn
+        |> admin_auth_conn()
+        |> live(~p"/admin/officers")
+
+      assert html =~ "Not linked"
     end
   end
 
