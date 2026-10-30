@@ -2,7 +2,10 @@ defmodule IeeeTamuPortalWeb.AdminVerificationLiveTest do
   use IeeeTamuPortalWeb.ConnCase
 
   import Phoenix.LiveViewTest
-  import IeeeTamuPortalWeb.TestHelpers.AdminAuth, only: [admin_auth_conn: 1]
+
+  import IeeeTamuPortalWeb.TestHelpers.AdminAuth,
+    only: [admin_auth_conn: 1, officer_auth_conn: 1]
+
   import IeeeTamuPortal.AccountsFixtures
   import IeeeTamuPortal.SettingsFixtures
 
@@ -145,6 +148,56 @@ defmodule IeeeTamuPortalWeb.AdminVerificationLiveTest do
       lv
       |> element(~s([phx-click="approve"]), "Approve")
       |> render_click()
+
+      registration = Members.get_registration(member.id, 2025)
+      assert registration != nil
+      assert registration.payment_override == true
+    end
+  end
+
+  describe "officer verification permissions" do
+    test "officers cannot verify officer accounts", %{conn: conn} do
+      officer = officer_member_fixture()
+      create_member_info(officer, %{first_name: "Officer", ieee_membership_number: "97775577"})
+
+      {:ok, lv, _html} =
+        conn
+        |> officer_auth_conn()
+        |> live(~p"/admin/verification")
+
+      html =
+        render_click(lv, "approve", %{"member_id" => officer.id})
+
+      assert html =~ "Only admins can verify officer accounts."
+      assert Members.get_registration(officer.id, 2025) == nil
+    end
+
+    test "admins can verify officer accounts", %{conn: conn} do
+      officer = officer_member_fixture()
+      create_member_info(officer, %{first_name: "Officer", ieee_membership_number: "97775577"})
+
+      {:ok, lv, _html} =
+        conn
+        |> admin_auth_conn()
+        |> live(~p"/admin/verification")
+
+      render_click(lv, "approve", %{"member_id" => officer.id})
+
+      registration = Members.get_registration(officer.id, 2025)
+      assert registration != nil
+      assert registration.payment_override == true
+    end
+
+    test "officers can still verify regular members", %{conn: conn} do
+      member = confirmed_member_fixture()
+      create_member_info(member, %{first_name: "Member", ieee_membership_number: "97775577"})
+
+      {:ok, lv, _html} =
+        conn
+        |> officer_auth_conn()
+        |> live(~p"/admin/verification")
+
+      render_click(lv, "approve", %{"member_id" => member.id})
 
       registration = Members.get_registration(member.id, 2025)
       assert registration != nil

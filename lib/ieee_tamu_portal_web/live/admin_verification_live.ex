@@ -2,6 +2,7 @@ defmodule IeeeTamuPortalWeb.AdminVerificationLive do
   use IeeeTamuPortalWeb, :live_view
 
   alias IeeeTamuPortal.{Accounts, Members, Settings}
+  alias IeeeTamuPortal.Accounts.Member
   import IeeeTamuPortalWeb.PaginationComponents
 
   @impl true
@@ -41,25 +42,35 @@ defmodule IeeeTamuPortalWeb.AdminVerificationLive do
 
   @impl true
   def handle_event("approve", %{"member_id" => member_id}, socket) do
-    member_id = String.to_integer(member_id)
+    member_id = member_id |> to_string() |> String.to_integer()
     current_year = socket.assigns.year
+    current_member = socket.assigns.current_member
 
     member = Enum.find(socket.assigns.members, &(&1.id == member_id))
 
-    case Members.toggle_payment_override(member, current_year) do
-      {:ok, _updated_registration} ->
-        params = Map.get(socket.assigns, :filter_params, %{})
-        {members, meta} = Accounts.list_members_pending_verification(current_year, params)
+    cond do
+      is_nil(member) ->
+        {:noreply, put_flash(socket, :error, "Member not found.")}
 
-        {:noreply,
-         socket
-         |> assign(:members, members)
-         |> assign(:meta, meta)
-         |> put_flash(:info, "Payment override approved for #{member.email}")}
+      Member.officer?(member) and not Member.admin?(current_member) ->
+        {:noreply, put_flash(socket, :error, "Only admins can verify officer accounts.")}
 
-      {:error, _changeset} ->
-        {:noreply,
-         put_flash(socket, :error, "Failed to approve payment override for #{member.email}")}
+      true ->
+        case Members.toggle_payment_override(member, current_year) do
+          {:ok, _updated_registration} ->
+            params = Map.get(socket.assigns, :filter_params, %{})
+            {members, meta} = Accounts.list_members_pending_verification(current_year, params)
+
+            {:noreply,
+             socket
+             |> assign(:members, members)
+             |> assign(:meta, meta)
+             |> put_flash(:info, "Payment override approved for #{member.email}")}
+
+          {:error, _changeset} ->
+            {:noreply,
+             put_flash(socket, :error, "Failed to approve payment override for #{member.email}")}
+        end
     end
   end
 
@@ -136,6 +147,11 @@ defmodule IeeeTamuPortalWeb.AdminVerificationLive do
                         <% else %>
                           {member.email}
                         <% end %>
+                        <div :if={Member.officer?(member)} class="mt-1">
+                          <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-800">
+                            {Member.role_label(member.role)}
+                          </span>
+                        </div>
                       </td>
                       <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900 font-mono">
                         {member.info.ieee_membership_number}
@@ -163,13 +179,19 @@ defmodule IeeeTamuPortalWeb.AdminVerificationLive do
                         </form>
                       </td>
                       <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <button
-                          phx-click="approve"
-                          phx-value-member_id={member.id}
-                          class="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 hover:bg-green-200 cursor-pointer transition-colors"
-                        >
-                          Approve
-                        </button>
+                        <%= if Member.officer?(member) and not Member.admin?(@current_member) do %>
+                          <span class="text-xs font-normal text-gray-500">
+                            Admin approval required
+                          </span>
+                        <% else %>
+                          <button
+                            phx-click="approve"
+                            phx-value-member_id={member.id}
+                            class="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 hover:bg-green-200 cursor-pointer transition-colors"
+                          >
+                            Approve
+                          </button>
+                        <% end %>
                       </td>
                     </tr>
                   <% end %>
