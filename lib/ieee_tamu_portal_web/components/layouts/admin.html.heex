@@ -33,6 +33,12 @@
               navigate={~p"/admin/verification"}
               icon="hero-check-badge"
             />
+            <.navbar_button
+              :if={@current_member.role == :admin}
+              name="Officers"
+              navigate={~p"/admin/officers"}
+              icon="hero-shield-check"
+            />
           </nav>
         </div>
         <div class="hidden md:flex items-center space-x-4 text-sm text-gray-600">

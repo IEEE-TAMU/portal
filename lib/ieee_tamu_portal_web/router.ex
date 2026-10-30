@@ -136,5 +136,12 @@ defmodule IeeeTamuPortalWeb.Router do
       live "/events", AdminEventsLive, :index
       live "/verification", AdminVerificationLive, :index
     end
+
+    # Only admins can grant or revoke officer/admin roles.
+    live_session :admin_super_admin,
+      on_mount: [{IeeeTamuPortalWeb.Auth.AdminAuth, :ensure_super_admin}],
+      layout: {IeeeTamuPortalWeb.Layouts, :admin} do
+      live "/officers", AdminOfficersLive, :index
+    end
   end
 end

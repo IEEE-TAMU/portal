@@ -111,6 +111,14 @@ defmodule IeeeTamuPortalWeb.AdminLive do
           href={~p"/admin/resumes"}
           disabled={!@s3_configured}
         />
+
+        <.quick_action_card
+          :if={@current_member.role == :admin}
+          title="Officers"
+          description="Grant or revoke officer and admin access"
+          icon="hero-shield-check"
+          href={~p"/admin/officers"}
+        />
       </div>
     </div>
     """
