@@ -470,7 +470,11 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
                   <option value="">Select an event</option>
                   <%= for event <- @startable_events do %>
                     <option value={event.uid} selected={event.uid == @suggested_event_uid}>
-                      {event.summary} — {Calendar.strftime(event.dtstart, "%b %d, %Y %I:%M %p")}
+                      {event.summary} — {IeeeTamuPortalWeb.TimezoneHelper.format_local(
+                        event.dtstart,
+                        @time_zone,
+                        "%b %d, %Y %I:%M %p"
+                      )}
                     </option>
                   <% end %>
                 </select>

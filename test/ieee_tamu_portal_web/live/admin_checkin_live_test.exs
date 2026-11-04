@@ -288,6 +288,25 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLiveTest do
       assert html =~ ~s(value="#{earlier.uid}")
     end
 
+    test "formats event selector times in the client time zone", %{conn: conn} do
+      Settings.stop_current_event()
+
+      _event =
+        create_event(%{
+          summary: "Timezone Event",
+          dtstart: ~U[2026-11-05 02:00:00Z],
+          dtend: ~U[2026-11-05 03:00:00Z]
+        })
+
+      {:ok, _lv, html} =
+        conn
+        |> admin_auth_conn()
+        |> live(~p"/admin/checkin", connect_params: %{"timeZone" => "America/Chicago"})
+
+      assert html =~ "Timezone Event"
+      assert html =~ "Nov 04, 2026 08:00 PM"
+    end
+
     test "populates event controls with next event after stopping current event", %{conn: conn} do
       dt_start = DateTime.utc_now() |> DateTime.add(3600, :second) |> DateTime.truncate(:second)
 
