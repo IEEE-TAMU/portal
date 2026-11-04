@@ -11,8 +11,9 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLiveTest do
 
   setup do
     registration_year_setting_fixture("2025")
-    current_event_setting_fixture("general_meeting")
-    :ok
+    event = create_event(%{summary: "general_meeting"})
+    {:ok, _event} = Settings.set_current_event_uid(event.uid)
+    {:ok, event: event}
   end
 
   describe "admin auth requirement" do
@@ -84,7 +85,26 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLiveTest do
   end
 
   describe "event control operations" do
-    test "set event updates current event", %{conn: conn} do
+    test "set event updates current event by uid", %{conn: conn} do
+      Settings.stop_current_event()
+      event = create_event(%{summary: "test_event"})
+
+      {:ok, lv, _html} =
+        conn
+        |> admin_auth_conn()
+        |> live(~p"/admin/checkin")
+
+      lv
+      |> element("form[phx-submit=set_event]")
+      |> render_submit(%{"event_uid" => event.uid})
+
+      html = render(lv)
+      assert html =~ "Stop Event"
+      assert Settings.current_event_uid() == event.uid
+      assert Settings.current_event_title() == "test_event"
+    end
+
+    test "set event creates an ad-hoc event when a new title is provided", %{conn: conn} do
       Settings.stop_current_event()
 
       {:ok, lv, _html} =
@@ -94,11 +114,15 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLiveTest do
 
       lv
       |> element("form[phx-submit=set_event]")
-      |> render_submit(%{"event_name" => "test_event"})
+      |> render_submit(%{"new_event_summary" => "Ad Hoc Meeting"})
 
       html = render(lv)
       assert html =~ "Stop Event"
-      assert Settings.get_current_event!() == "test_event"
+
+      event = Settings.current_event()
+      assert event.summary == "Ad Hoc Meeting"
+      assert event.private
+      refute event.rsvpable
     end
 
     test "stop event disables scanning", %{conn: conn} do
@@ -203,15 +227,17 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLiveTest do
 
   describe "event selection for export" do
     test "select event updates selected_event", %{conn: conn} do
+      event = create_event(%{summary: "special_meeting"})
+
       {:ok, lv, _html} =
         conn
         |> admin_auth_conn()
         |> live(~p"/admin/checkin")
 
-      render_hook(lv, "select_event", %{"event_name" => "special_meeting"})
+      render_hook(lv, "select_event", %{"event_name" => event.uid})
 
       html = render(lv)
-      assert html =~ ~p"/admin/download-checkins?event_name=special_meeting"
+      assert html =~ "event_uid=#{event.uid}"
     end
   end
 
@@ -238,7 +264,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLiveTest do
       dt_start1 = DateTime.utc_now() |> DateTime.add(3600, :second) |> DateTime.truncate(:second)
       dt_start2 = DateTime.utc_now() |> DateTime.add(7200, :second) |> DateTime.truncate(:second)
 
-      _earlier =
+      earlier =
         create_event(%{
           summary: "Earlier Event",
           dtstart: dt_start1,
@@ -258,13 +284,14 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLiveTest do
         |> live(~p"/admin/checkin")
 
       assert html =~ "Start Event"
-      assert html =~ ~s(value="Earlier Event")
+      assert html =~ "Earlier Event"
+      assert html =~ ~s(value="#{earlier.uid}")
     end
 
     test "populates event controls with next event after stopping current event", %{conn: conn} do
       dt_start = DateTime.utc_now() |> DateTime.add(3600, :second) |> DateTime.truncate(:second)
 
-      _next =
+      next_event =
         create_event(%{
           summary: "Next Upcoming Event",
           dtstart: dt_start,
@@ -284,7 +311,8 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLiveTest do
 
       html = render(lv)
       assert html =~ "Start Event"
-      assert html =~ ~s(value="Next Upcoming Event")
+      assert html =~ "Next Upcoming Event"
+      assert html =~ ~s(value="#{next_event.uid}")
     end
   end
 
@@ -303,7 +331,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLiveTest do
       })
   end
 
-  defp create_event(attrs \\ %{}) do
+  defp create_event(attrs) do
     base = %{
       summary: "Test Event",
       dtstart: DateTime.utc_now() |> DateTime.truncate(:second),

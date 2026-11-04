@@ -4,6 +4,7 @@ defmodule IeeeTamuPortal.SettingsTest do
   alias IeeeTamuPortal.Settings
   alias IeeeTamuPortal.Settings.Setting
 
+  import IeeeTamuPortal.EventsFixtures
   import IeeeTamuPortal.SettingsFixtures
 
   setup do
@@ -267,15 +268,33 @@ defmodule IeeeTamuPortal.SettingsTest do
     end
   end
 
-  describe "get_current_event!/0" do
-    test "returns the current event name when setting exists" do
-      current_event_setting_fixture("first_meeting")
-      assert Settings.get_current_event!() == "first_meeting"
+  describe "current event settings" do
+    test "set_current_event_uid/1 stores the uid" do
+      event = event_fixture(%{summary: "first_meeting"})
+
+      assert {:ok, ^event} = Settings.set_current_event_uid(event.uid)
+      assert Settings.current_event_uid() == event.uid
+      assert Settings.current_event() == event
+      assert Settings.current_event_title() == "first_meeting"
     end
 
-    test "returns default event when current_event setting does not exist" do
-      # setup removed all settings
-      assert is_binary(Settings.get_current_event!())
+    test "set_current_event_uid/1 rejects unknown events" do
+      assert {:error, :event_not_found} = Settings.set_current_event_uid(Ecto.UUID.generate())
+      assert is_nil(Settings.current_event_uid())
+    end
+
+    test "stop_current_event/0 clears the uid" do
+      event = current_event_fixture(%{summary: "first_meeting"})
+      assert Settings.current_event_uid() == event.uid
+
+      assert {:ok, _setting} = Settings.stop_current_event()
+      assert is_nil(Settings.current_event_uid())
+      assert is_nil(Settings.current_event_title())
+    end
+
+    test "returns nil when no current event is set" do
+      assert is_nil(Settings.current_event_uid())
+      assert is_nil(Settings.current_event_title())
     end
   end
 end

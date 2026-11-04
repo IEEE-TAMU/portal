@@ -3,6 +3,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinsExportControllerTest do
 
   import IeeeTamuPortalWeb.TestHelpers.AdminAuth, only: [admin_auth_conn: 1]
   import IeeeTamuPortal.AccountsFixtures
+  import IeeeTamuPortal.EventsFixtures
   import IeeeTamuPortal.SettingsFixtures
 
   alias IeeeTamuPortal.Members
@@ -10,8 +11,8 @@ defmodule IeeeTamuPortalWeb.AdminCheckinsExportControllerTest do
 
   setup do
     registration_year_setting_fixture("2025")
-    current_event_setting_fixture("test_event")
-    :ok
+    event = current_event_fixture(%{summary: "test_event"})
+    {:ok, event: event}
   end
 
   test "requires admin auth", %{conn: conn} do
@@ -62,7 +63,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinsExportControllerTest do
     assert body =~ "test_event"
   end
 
-  test "filters by event_name", %{conn: conn} do
+  test "filters by event uid", %{conn: conn, event: event} do
     uin = unique_uin()
     member = confirmed_member_fixture()
 
@@ -84,7 +85,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinsExportControllerTest do
     conn =
       conn
       |> admin_auth_conn()
-      |> get(~p"/admin/download-checkins?event_name=test_event")
+      |> get(~p"/admin/download-checkins?event_uid=#{event.uid}")
 
     body = response(conn, 200)
     assert body =~ "test_event"
@@ -100,14 +101,14 @@ defmodule IeeeTamuPortalWeb.AdminCheckinsExportControllerTest do
     assert disposition =~ "checkins_2025_"
   end
 
-  test "filename includes event name when filtered", %{conn: conn} do
+  test "filename includes event title when filtered by uid", %{conn: conn, event: event} do
     conn =
       conn
       |> admin_auth_conn()
-      |> get(~p"/admin/download-checkins?event_name=my_event")
+      |> get(~p"/admin/download-checkins?event_uid=#{event.uid}")
 
     disposition = get_resp_header(conn, "content-disposition") |> List.first()
-    assert disposition =~ "my_event"
+    assert disposition =~ "test_event"
   end
 
   defp unique_uin do

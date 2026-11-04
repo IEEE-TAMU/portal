@@ -20,21 +20,18 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
       PubSub.subscribe(IeeeTamuPortal.PubSub, "checkins")
     end
 
-    year = Settings.get_registration_year!()
-    events = EventCheckin.list_event_names_for_year(year)
-    current_event = Settings.get_current_event!()
-    scanning_enabled = current_event != Settings.default_current_event()
+    default_tz = Application.fetch_env!(:ieee_tamu_portal, :frontend_time_zone)
 
-    suggested_event =
-      if scanning_enabled do
-        nil
+    time_zone =
+      if connected?(socket) do
+        get_connect_params(socket)["timeZone"] || default_tz
       else
-        Events.next_event()
-        |> case do
-          nil -> nil
-          e -> e.summary
-        end
+        default_tz
       end
+
+    year = Settings.get_registration_year!()
+    current_event = Settings.current_event()
+    scanning_enabled = not is_nil(current_event)
 
     {:ok,
      socket
@@ -46,9 +43,11 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
      |> assign(:scanning_enabled, scanning_enabled)
      |> assign(:current_event, current_event)
      |> assign(:year, year)
-     |> assign(:events, events)
+     |> assign(:export_options, export_options_for_year(year))
+     |> assign(:startable_events, startable_events())
      |> assign(:selected_event, "")
-     |> assign(:suggested_event, suggested_event)}
+     |> assign(:suggested_event_uid, suggested_event_uid())
+     |> assign(:time_zone, time_zone)}
   end
 
   @impl true
@@ -109,20 +108,30 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
   end
 
   @impl true
-  def handle_event("set_event", %{"event_name" => event_name}, socket) do
-    case Settings.set_current_event(String.trim(event_name || "")) do
-      {:ok, _setting} ->
-        {:noreply,
-         socket
-         |> assign(
-           current_event: Settings.get_current_event!(),
-           scanning_enabled: true,
-           scanner_active: false
-         )
-         |> put_flash(:info, "Event started")}
+  def handle_event("set_event", params, socket) do
+    event_uid = String.trim(params["event_uid"] || "")
+    new_summary = String.trim(params["new_event_summary"] || "")
 
-      {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Failed to start event")}
+    cond do
+      new_summary != "" ->
+        dtstart = parse_local_to_utc(params["new_event_dtstart"], socket.assigns.time_zone)
+
+        case Events.create_adhoc_event(new_summary, dtstart) do
+          {:ok, event} ->
+            start_event(socket, event)
+
+          {:error, changeset} ->
+            {:noreply, put_flash(socket, :error, changeset_error(changeset))}
+        end
+
+      event_uid != "" ->
+        case Events.get_event(event_uid) do
+          nil -> {:noreply, put_flash(socket, :error, "Event not found")}
+          event -> start_event(socket, event)
+        end
+
+      true ->
+        {:noreply, put_flash(socket, :error, "Select an event or enter an ad-hoc event title")}
     end
   end
 
@@ -130,20 +139,14 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
   def handle_event("stop_event", _params, socket) do
     case Settings.stop_current_event() do
       {:ok, _setting} ->
-        suggested_event =
-          Events.next_event()
-          |> case do
-            nil -> nil
-            e -> e.summary
-          end
-
         {:noreply,
          socket
          |> assign(
-           current_event: Settings.get_current_event!(),
+           current_event: nil,
            scanning_enabled: false,
            scanner_active: false,
-           suggested_event: suggested_event
+           suggested_event_uid: suggested_event_uid(),
+           startable_events: startable_events()
          )
          |> put_flash(:info, "Event stopped")}
 
@@ -165,6 +168,77 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
   @impl true
   def handle_info(:clear_success, socket) do
     {:noreply, assign(socket, :status, :idle)}
+  end
+
+  defp start_event(socket, event) do
+    case Settings.set_current_event_uid(event.uid) do
+      {:ok, event} ->
+        {:noreply,
+         socket
+         |> assign(
+           current_event: event,
+           scanning_enabled: true,
+           scanner_active: false,
+           startable_events: startable_events()
+         )
+         |> put_flash(:info, "Event started")}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Failed to start event")}
+    end
+  end
+
+  defp startable_events do
+    cutoff = DateTime.add(DateTime.utc_now(), -30, :day)
+    Events.list_events(after: cutoff, include_private: true)
+  end
+
+  defp suggested_event_uid do
+    case Events.next_event() do
+      nil -> nil
+      event -> event.uid
+    end
+  end
+
+  defp export_options_for_year(year) do
+    EventCheckin.list_events_for_year(year)
+    |> Enum.map(fn event -> {event.uid, event.summary} end)
+  end
+
+  defp export_params(nil), do: []
+  defp export_params(""), do: []
+  defp export_params(event_uid), do: [event_uid: event_uid]
+
+  # Returns a UTC DateTime from a browser-local datetime-local value, or nil
+  # when the field is blank/unparseable (callers default to "now").
+  defp parse_local_to_utc(nil, _tz), do: nil
+  defp parse_local_to_utc("", _tz), do: nil
+
+  defp parse_local_to_utc(value, tz) when is_binary(value) do
+    naive_result =
+      case NaiveDateTime.from_iso8601(value) do
+        {:ok, naive} -> {:ok, naive}
+        _ -> NaiveDateTime.from_iso8601(value <> ":00")
+      end
+
+    with {:ok, naive} <- naive_result,
+         {:ok, local} <- DateTime.from_naive(naive, tz),
+         {:ok, utc} <- DateTime.shift_zone(local, "Etc/UTC") do
+      utc
+    else
+      {:ambiguous, first, _second} ->
+        {:ok, utc} = DateTime.shift_zone(first, "Etc/UTC")
+        utc
+
+      _ ->
+        nil
+    end
+  end
+
+  defp changeset_error(changeset) do
+    changeset
+    |> Ecto.Changeset.traverse_errors(fn {message, _opts} -> message end)
+    |> Enum.map_join(", ", fn {field, messages} -> "#{field} #{Enum.join(messages, ", ")}" end)
   end
 
   defp extract_member_id(content) when is_binary(content) do
@@ -380,45 +454,60 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
         <div class="grid gap-6 mb-6">
           <div class="bg-white p-4 rounded-lg shadow">
             <h2 class="text-lg font-semibold mb-2">Event Controls</h2>
-            <p class="text-sm text-gray-600 mb-3" hidden={!@scanning_enabled}>
-              Current: <span class="font-medium">{@current_event}</span>
+            <p :if={@current_event} class="text-sm text-gray-600 mb-3">
+              Current: <span class="font-medium">{@current_event.summary}</span>
             </p>
             <.form
               for={%{}}
               id="set_event_form"
               phx-submit="set_event"
-              class="flex flex-wrap items-center gap-2"
+              class="space-y-3"
+              hidden={@scanning_enabled}
             >
+              <label class="block text-sm">
+                <span class="text-gray-700">Existing event</span>
+                <select name="event_uid" class="mt-1 block w-full border-gray-300 rounded-md text-sm">
+                  <option value="">Select an event</option>
+                  <%= for event <- @startable_events do %>
+                    <option value={event.uid} selected={event.uid == @suggested_event_uid}>
+                      {event.summary} — {Calendar.strftime(event.dtstart, "%b %d, %Y %I:%M %p")}
+                    </option>
+                  <% end %>
+                </select>
+              </label>
+
+              <div class="text-xs uppercase tracking-wide text-gray-500">
+                or create an ad-hoc event
+              </div>
               <input
                 type="text"
-                name="event_name"
-                placeholder="e.g., general_meeting"
-                hidden={@scanning_enabled}
-                class="flex-1 min-w-[14rem] px-3 py-2 border border-gray-300 rounded-md text-sm"
-                value={
-                  if @scanning_enabled do
-                    @current_event
-                  else
-                    @suggested_event || ""
-                  end
-                }
+                name="new_event_summary"
+                placeholder="Ad-hoc event title"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
               />
-              <.button
-                type="submit"
-                class="bg-green-600 hover:bg-green-700 text-sm"
-                hidden={@scanning_enabled}
-              >
+              <label class="block text-sm">
+                <span class="text-gray-700">Start time (optional)</span>
+                <input
+                  type="datetime-local"
+                  name="new_event_dtstart"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+              </label>
+              <p class="text-xs text-gray-500">
+                Leave blank to use the current time. An ad-hoc title takes precedence over the selected event.
+              </p>
+              <.button type="submit" class="bg-green-600 hover:bg-green-700 text-sm">
                 Start Event
               </.button>
-              <.button
-                type="button"
-                phx-click="stop_event"
-                class="bg-red-600 hover:bg-red-700 text-sm"
-                hidden={!@scanning_enabled}
-              >
-                Stop Event
-              </.button>
             </.form>
+            <.button
+              :if={@scanning_enabled}
+              type="button"
+              phx-click="stop_event"
+              class="bg-red-600 hover:bg-red-700 text-sm"
+            >
+              Stop Event
+            </.button>
           </div>
         </div>
 
@@ -436,14 +525,14 @@ defmodule IeeeTamuPortalWeb.AdminCheckinLive do
               <span class="text-gray-700">Event (optional)</span>
               <select name="event_name" class="mt-1 block w-full border-gray-300 rounded-md">
                 <option value="">All events</option>
-                <%= for ev <- @events do %>
-                  <option value={ev} selected={@selected_event == ev}>{ev}</option>
+                <%= for {value, label} <- @export_options do %>
+                  <option value={value} selected={@selected_event == value}>{label}</option>
                 <% end %>
               </select>
             </label>
           </.form>
           <.link
-            href={~p"/admin/download-checkins?#{[event_name: @selected_event]}"}
+            href={~p"/admin/download-checkins?#{export_params(@selected_event)}"}
             class="inline-flex items-center px-3 py-2 mt-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
           >
             <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Download CSV

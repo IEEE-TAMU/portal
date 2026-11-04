@@ -179,8 +179,14 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
          |> assign(:events, events_with_rsvps)
          |> put_flash(:info, "Event deleted successfully")}
 
-      {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Failed to delete event")}
+      {:error, changeset} ->
+        message =
+          case changeset.errors[:uid] do
+            {message, _opts} -> "Cannot delete event: #{message}"
+            _ -> "Failed to delete event"
+          end
+
+        {:noreply, put_flash(socket, :error, message)}
     end
   end
 
@@ -201,7 +207,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
   @impl true
   def handle_event("show_event_checkins", %{"uid" => uid}, socket) do
     event = Events.get_event!(uid)
-    checkins = Events.list_event_checkins(event.summary)
+    checkins = Events.list_event_checkins(event.uid)
 
     {:noreply,
      assign(socket,
@@ -891,7 +897,7 @@ defmodule IeeeTamuPortalWeb.AdminEventsLive do
     Events.list_events(after: two_weeks_ago, include_private: true)
     |> Enum.map(fn event ->
       rsvp_count = Events.count_rsvps(event.uid)
-      checkin_count = Events.count_event_checkins(event.summary)
+      checkin_count = Events.count_event_checkins(event.uid)
 
       event
       |> Map.put(:rsvp_count, rsvp_count)

@@ -33,7 +33,7 @@ defmodule IeeeTamuPortalWeb.AdminEventExportController do
 
   def download_checkins(conn, %{"event_uid" => event_uid}) do
     event = Events.get_event!(event_uid)
-    rows = Events.emails_and_names_for_event_checkins(event.summary)
+    rows = Events.emails_and_names_for_event_checkins(event_uid)
 
     csv =
       rows

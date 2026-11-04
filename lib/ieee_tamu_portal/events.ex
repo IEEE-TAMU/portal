@@ -61,24 +61,26 @@ defmodule IeeeTamuPortal.Events do
   def get_event!(uid), do: Repo.get!(Event, uid)
 
   @doc """
-  Gets a single event by name.
-  Raises `Ecto.NoResultsError` if the Event does not exist.
+  Gets a single event by uid, or `nil` if it does not exist.
   """
-  def get_event_by_name!(name) when is_binary(name) do
-    from(e in Event,
-      where: e.summary == ^name
-    )
-    |> Repo.one!()
-  end
+  def get_event(uid), do: Repo.get(Event, uid)
 
   @doc """
-  Gets a single event by name, or `nil` if the Event does not exist.
+  Creates a real event for an ad-hoc check-in.
+
+  Ad-hoc events are private and non-RSVPable by default. `dtstart` defaults to
+  now because the events table requires a start time.
   """
-  def get_event_by_name(name) when is_binary(name) do
-    from(e in Event,
-      where: e.summary == ^name
-    )
-    |> Repo.one()
+  def create_adhoc_event(summary, dtstart \\ nil) when is_binary(summary) do
+    summary = String.trim(summary)
+    dtstart = dtstart || DateTime.utc_now() |> DateTime.truncate(:second)
+
+    create_event(%{
+      summary: summary,
+      dtstart: dtstart,
+      private: true,
+      rsvpable: false
+    })
   end
 
   @doc """
@@ -130,7 +132,13 @@ defmodule IeeeTamuPortal.Events do
 
   """
   def delete_event(%Event{} = event) do
-    Repo.delete(event)
+    event
+    |> Ecto.Changeset.change()
+    |> Ecto.Changeset.foreign_key_constraint(:uid,
+      name: :event_checkins_event_uid_fkey,
+      message: "has check-ins and cannot be deleted"
+    )
+    |> Repo.delete()
   end
 
   @doc """
@@ -279,16 +287,16 @@ defmodule IeeeTamuPortal.Events do
   end
 
   @doc """
-  Gets a list of checkins for an event (by event name) with member details.
+  Gets a list of checkins for an event (by event uid) with member details.
   Returns a list of maps with member information.
   """
-  def list_event_checkins(event_name, year \\ nil) do
+  def list_event_checkins(event_uid, year \\ nil) do
     year = year || IeeeTamuPortal.Settings.get_registration_year!()
 
     from(c in IeeeTamuPortal.Members.EventCheckin,
       join: m in assoc(c, :member),
       join: i in assoc(m, :info),
-      where: c.event_name == ^event_name and c.event_year == ^year,
+      where: c.event_uid == ^event_uid and c.event_year == ^year,
       select: %{
         checkin_id: c.id,
         member_id: m.id,
@@ -304,13 +312,13 @@ defmodule IeeeTamuPortal.Events do
   end
 
   @doc """
-  Gets the count of checkins for an event (by event name).
+  Gets the count of checkins for an event (by event uid).
   """
-  def count_event_checkins(event_name, year \\ nil) do
+  def count_event_checkins(event_uid, year \\ nil) do
     year = year || IeeeTamuPortal.Settings.get_registration_year!()
 
     from(c in IeeeTamuPortal.Members.EventCheckin,
-      where: c.event_name == ^event_name and c.event_year == ^year
+      where: c.event_uid == ^event_uid and c.event_year == ^year
     )
     |> Repo.aggregate(:count)
   end
@@ -346,15 +354,17 @@ defmodule IeeeTamuPortal.Events do
 
   @doc """
   Gets emails and names for checkins of a specific event for CSV export.
-  Returns a list of {created, email, name, uin, event_name} tuples.
+  Returns a list of {created, email, name, uin, event_title} tuples.
   """
-  def emails_and_names_for_event_checkins(event_name, year \\ nil) do
+  def emails_and_names_for_event_checkins(event_uid, year \\ nil) do
     year = year || IeeeTamuPortal.Settings.get_registration_year!()
 
     from(c in IeeeTamuPortal.Members.EventCheckin,
       join: m in assoc(c, :member),
       join: i in assoc(m, :info),
-      where: c.event_name == ^event_name and c.event_year == ^year,
+      left_join: e in Event,
+      on: e.uid == c.event_uid,
+      where: c.event_uid == ^event_uid and c.event_year == ^year,
       select: {
         c.inserted_at,
         m.email,
@@ -366,7 +376,7 @@ defmodule IeeeTamuPortal.Events do
           i.last_name
         ),
         i.uin,
-        c.event_name
+        fragment("COALESCE(?, ?)", e.summary, c.event_name)
       },
       order_by: [desc: c.inserted_at]
     )

@@ -3,6 +3,7 @@ defmodule IeeeTamuPortal.EventsTest do
 
   alias IeeeTamuPortal.Events
   alias IeeeTamuPortal.Events.Event
+  alias IeeeTamuPortal.Repo
 
   describe "events" do
     def valid_attrs(attrs \\ %{}) do
@@ -38,6 +39,23 @@ defmodule IeeeTamuPortal.EventsTest do
       {:ok, event} = Events.create_event(valid_attrs())
       assert %Event{uid: uid} = Events.get_event!(event.uid)
       assert uid == event.uid
+    end
+
+    test "get_event/1 returns nil for an unknown uid" do
+      assert is_nil(Events.get_event(Ecto.UUID.generate()))
+    end
+
+    test "create_adhoc_event/1 defaults to now and is private/non-RSVPable" do
+      assert {:ok, event} = Events.create_adhoc_event("Ad Hoc Check-in")
+      assert event.summary == "Ad Hoc Check-in"
+      assert event.private
+      refute event.rsvpable
+      assert event.dtstart
+    end
+
+    test "create_adhoc_event/1 rejects a blank title" do
+      assert {:error, changeset} = Events.create_adhoc_event("   ")
+      assert %{summary: ["can't be blank"]} = errors_on(changeset)
     end
 
     test "create_event/1 with valid data creates an event" do
@@ -350,17 +368,18 @@ defmodule IeeeTamuPortal.EventsTest do
 
   describe "checkins" do
     import IeeeTamuPortal.AccountsFixtures
+    import IeeeTamuPortal.EventsFixtures
     import IeeeTamuPortal.SettingsFixtures
     alias IeeeTamuPortal.Members
     alias IeeeTamuPortal.Members.EventCheckin
 
     setup do
       registration_year_setting_fixture("2025")
-      current_event_setting_fixture("test_event")
-      :ok
+      event = current_event_fixture(%{summary: "test_event"})
+      {:ok, event: event}
     end
 
-    test "list_event_checkins/1 returns checkins with member info" do
+    test "list_event_checkins/1 returns checkins with member info", %{event: event} do
       member = member_fixture()
 
       {:ok, _info} =
@@ -378,18 +397,30 @@ defmodule IeeeTamuPortal.EventsTest do
 
       EventCheckin.insert_for_member_id(member.id)
 
-      checkins = Events.list_event_checkins("test_event", 2025)
+      checkins = Events.list_event_checkins(event.uid, 2025)
       assert length(checkins) == 1
       assert hd(checkins).first_name == "Alice"
     end
 
-    test "count_event_checkins/2 returns count of checkins" do
-      assert Events.count_event_checkins("test_event", 2025) == 0
+    test "count_event_checkins/2 returns count of checkins", %{event: event} do
+      assert Events.count_event_checkins(event.uid, 2025) == 0
 
       member = member_fixture()
       EventCheckin.insert_for_member_id(member.id)
 
-      assert Events.count_event_checkins("test_event", 2025) == 1
+      assert Events.count_event_checkins(event.uid, 2025) == 1
+    end
+
+    test "an event with check-ins cannot be deleted", %{event: event} do
+      member = member_fixture()
+      EventCheckin.insert_for_member_id(member.id)
+
+      assert {:error, changeset} = Events.delete_event(event)
+
+      assert %{uid: ["has check-ins and cannot be deleted"]} =
+               errors_on(changeset)
+
+      assert Events.get_event(event.uid)
     end
 
     test "emails_and_names_for_event_rsvps/1 returns CSV export data" do
@@ -422,7 +453,7 @@ defmodule IeeeTamuPortal.EventsTest do
       assert event_title == "CSV Export Event"
     end
 
-    test "emails_and_names_for_event_checkins/2 returns CSV export data" do
+    test "emails_and_names_for_event_checkins/2 returns CSV export data", %{event: event} do
       member = member_fixture()
 
       {:ok, _info} =
@@ -440,11 +471,27 @@ defmodule IeeeTamuPortal.EventsTest do
 
       EventCheckin.insert_for_member_id(member.id)
 
-      rows = Events.emails_and_names_for_event_checkins("test_event", 2025)
+      rows = Events.emails_and_names_for_event_checkins(event.uid, 2025)
       assert length(rows) == 1
       {_created, email, _name, _uin, event_name} = hd(rows)
       assert email == member.email
       assert event_name == "test_event"
+    end
+
+    test "checkin queries isolate events that share a summary", %{event: event} do
+      other = event_fixture(%{summary: "test_event"})
+      member = member_fixture()
+
+      {:ok, _} =
+        Repo.insert(%EventCheckin{
+          member_id: member.id,
+          event_uid: other.uid,
+          event_name: other.summary,
+          event_year: 2025
+        })
+
+      assert Events.count_event_checkins(event.uid, 2025) == 0
+      assert Events.count_event_checkins(other.uid, 2025) == 1
     end
 
     test "next_event/0 returns soonest upcoming event" do

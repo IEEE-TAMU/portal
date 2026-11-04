@@ -1,30 +1,32 @@
 defmodule IeeeTamuPortal.Members.EventCheckinTest do
   use IeeeTamuPortal.DataCase
 
+  import Ecto.Query
   import IeeeTamuPortal.AccountsFixtures
+  import IeeeTamuPortal.EventsFixtures
+  import IeeeTamuPortal.SettingsFixtures
 
   alias IeeeTamuPortal.Members.EventCheckin
   alias IeeeTamuPortal.Repo
 
   describe "member_is_checked_in?/1" do
     setup do
-      case Repo.get_by(IeeeTamuPortal.Settings.Setting, key: "current_event") do
-        nil -> :ok
-        existing -> Repo.delete!(existing)
-      end
+      Repo.delete_all(
+        from(s in IeeeTamuPortal.Settings.Setting,
+          where: s.key in ["current_event", "current_event_uid"]
+        )
+      )
 
       :ok
     end
 
-    test "returns false when current event is the default" do
+    test "returns false when no current event is set" do
       member = member_fixture()
       refute EventCheckin.member_is_checked_in?(member)
     end
 
     test "returns false when member is not checked in" do
-      import IeeeTamuPortal.SettingsFixtures
-
-      current_event_setting_fixture("general_meeting")
+      _event = current_event_fixture(%{summary: "general_meeting"})
       registration_year_setting_fixture("2024")
 
       member = member_fixture()
@@ -32,9 +34,7 @@ defmodule IeeeTamuPortal.Members.EventCheckinTest do
     end
 
     test "returns true when member has an event checkin for current event and year" do
-      import IeeeTamuPortal.SettingsFixtures
-
-      current_event_setting_fixture("general_meeting")
+      event = current_event_fixture(%{summary: "general_meeting"})
       registration_year_setting_fixture("2024")
 
       member = member_fixture()
@@ -43,7 +43,8 @@ defmodule IeeeTamuPortal.Members.EventCheckinTest do
         Repo.insert(
           %EventCheckin{
             member_id: member.id,
-            event_name: "general_meeting",
+            event_uid: event.uid,
+            event_name: event.summary,
             event_year: 2024
           },
           on_conflict: :nothing
@@ -53,9 +54,7 @@ defmodule IeeeTamuPortal.Members.EventCheckinTest do
     end
 
     test "works with member id integer" do
-      import IeeeTamuPortal.SettingsFixtures
-
-      current_event_setting_fixture("general_meeting")
+      event = current_event_fixture(%{summary: "general_meeting"})
       registration_year_setting_fixture("2024")
 
       member = member_fixture()
@@ -64,7 +63,8 @@ defmodule IeeeTamuPortal.Members.EventCheckinTest do
         Repo.insert(
           %EventCheckin{
             member_id: member.id,
-            event_name: "general_meeting",
+            event_uid: event.uid,
+            event_name: event.summary,
             event_year: 2024
           },
           on_conflict: :nothing
@@ -74,9 +74,7 @@ defmodule IeeeTamuPortal.Members.EventCheckinTest do
     end
 
     test "works with member id binary string" do
-      import IeeeTamuPortal.SettingsFixtures
-
-      current_event_setting_fixture("general_meeting")
+      event = current_event_fixture(%{summary: "general_meeting"})
       registration_year_setting_fixture("2024")
 
       member = member_fixture()
@@ -85,7 +83,8 @@ defmodule IeeeTamuPortal.Members.EventCheckinTest do
         Repo.insert(
           %EventCheckin{
             member_id: member.id,
-            event_name: "general_meeting",
+            event_uid: event.uid,
+            event_name: event.summary,
             event_year: 2024
           },
           on_conflict: :nothing
@@ -94,10 +93,9 @@ defmodule IeeeTamuPortal.Members.EventCheckinTest do
       assert EventCheckin.member_is_checked_in?("#{member.id}")
     end
 
-    test "returns false when checkin is for different event" do
-      import IeeeTamuPortal.SettingsFixtures
-
-      current_event_setting_fixture("general_meeting")
+    test "returns false when checkin is for a different event with the same title" do
+      _current = current_event_fixture(%{summary: "general_meeting"})
+      other = event_fixture(%{summary: "general_meeting"})
       registration_year_setting_fixture("2024")
 
       member = member_fixture()
@@ -106,7 +104,8 @@ defmodule IeeeTamuPortal.Members.EventCheckinTest do
         Repo.insert(
           %EventCheckin{
             member_id: member.id,
-            event_name: "other_event",
+            event_uid: other.uid,
+            event_name: other.summary,
             event_year: 2024
           },
           on_conflict: :nothing
@@ -116,9 +115,7 @@ defmodule IeeeTamuPortal.Members.EventCheckinTest do
     end
 
     test "returns false when checkin is for different year" do
-      import IeeeTamuPortal.SettingsFixtures
-
-      current_event_setting_fixture("general_meeting")
+      event = current_event_fixture(%{summary: "general_meeting"})
       registration_year_setting_fixture("2024")
 
       member = member_fixture()
@@ -127,7 +124,8 @@ defmodule IeeeTamuPortal.Members.EventCheckinTest do
         Repo.insert(
           %EventCheckin{
             member_id: member.id,
-            event_name: "general_meeting",
+            event_uid: event.uid,
+            event_name: event.summary,
             event_year: 2023
           },
           on_conflict: :nothing
@@ -137,12 +135,36 @@ defmodule IeeeTamuPortal.Members.EventCheckinTest do
     end
 
     test "returns false for non-parseable binary id" do
-      import IeeeTamuPortal.SettingsFixtures
-
-      current_event_setting_fixture("general_meeting")
+      _event = current_event_fixture(%{summary: "general_meeting"})
       registration_year_setting_fixture("2024")
 
       refute EventCheckin.member_is_checked_in?("not_a_number")
+    end
+  end
+
+  describe "insert_for_member_id/1" do
+    test "stores the active event uid and title snapshot" do
+      event = current_event_fixture(%{summary: "ad_hoc_event"})
+      registration_year_setting_fixture("2024")
+
+      member = member_fixture()
+
+      assert {:ok, checkin} = EventCheckin.insert_for_member_id(member.id)
+      assert checkin.event_uid == event.uid
+      assert checkin.event_name == "ad_hoc_event"
+      assert checkin.event_year == 2024
+    end
+
+    test "returns an error when no event is active" do
+      Repo.delete_all(
+        from(s in IeeeTamuPortal.Settings.Setting,
+          where: s.key in ["current_event", "current_event_uid"]
+        )
+      )
+
+      member = member_fixture()
+
+      assert {:error, :no_current_event} = EventCheckin.insert_for_member_id(member.id)
     end
   end
 end

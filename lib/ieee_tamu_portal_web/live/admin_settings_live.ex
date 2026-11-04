@@ -5,7 +5,12 @@ defmodule IeeeTamuPortalWeb.AdminSettingsLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    settings = Settings.all_settings()
+    # The current event is managed from the Check-in page by uid; editing the
+    # raw settings here would let the title and uid drift apart.
+    settings =
+      Settings.all_settings()
+      |> Enum.reject(&(&1.key == "current_event_uid"))
+
     create_changeset = Settings.change_setting(%Settings.Setting{})
 
     {:ok,

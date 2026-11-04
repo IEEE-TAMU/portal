@@ -3,6 +3,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLiveTest do
 
   import Phoenix.LiveViewTest
   import IeeeTamuPortal.AccountsFixtures
+  import IeeeTamuPortal.EventsFixtures
   import IeeeTamuPortal.SettingsFixtures
   import IeeeTamuPortal.MembersFixtures
 
@@ -108,7 +109,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLiveTest do
       {:ok, registration} = Members.get_or_create_registration(member, year)
       {:ok, _updated} = Members.update_registration(registration, %{payment_override: true})
 
-      current_event_setting_fixture("active_event")
+      _event = current_event_fixture(%{summary: "active_event", rsvpable: false})
 
       {:ok, _lv, html} = live(conn, ~p"/members/registration")
 
@@ -147,17 +148,28 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLiveTest do
       refute html =~ "You haven&#39;t RSVPed"
     end
 
+    test "resolves the active event by uid when summaries are duplicated", %{
+      conn: conn,
+      member: member
+    } do
+      {:ok, _registration} = paid_registration(member)
+
+      _other = event_fixture(%{summary: "Repeated Event", rsvpable: true})
+      current = event_fixture(%{summary: "Repeated Event", rsvpable: true})
+      {:ok, _event} = Settings.set_current_event_uid(current.uid)
+
+      assert {:ok, _lv, html} = live(conn, ~p"/members/registration")
+      assert html =~ "You haven&#39;t RSVPed"
+    end
+
     test "hides the RSVP banner when the active event is not RSVPable", %{
       conn: conn,
       member: member
     } do
       {:ok, _registration} = paid_registration(member)
 
-      current_event_setting_fixture("Non RSVP Event")
-
-      {:ok, _event} =
-        Events.create_event(%{
-          dtstart: DateTime.utc_now() |> DateTime.truncate(:second),
+      _event =
+        current_event_fixture(%{
           summary: "Non RSVP Event",
           rsvpable: false
         })
@@ -176,15 +188,8 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLiveTest do
   end
 
   defp rsvpable_active_event(summary) do
-    current_event_setting_fixture(summary)
-
-    {:ok, event} =
-      Events.create_event(%{
-        dtstart: DateTime.utc_now() |> DateTime.truncate(:second),
-        summary: summary,
-        rsvpable: true
-      })
-
+    event = event_fixture(%{summary: summary, rsvpable: true})
+    {:ok, _event} = Settings.set_current_event_uid(event.uid)
     event
   end
 

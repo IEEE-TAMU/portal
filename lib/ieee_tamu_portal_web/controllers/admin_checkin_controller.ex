@@ -17,6 +17,11 @@ defmodule IeeeTamuPortalWeb.AdminCheckinController do
 
         conn |> put_status(:created) |> text("checked-in")
 
+      {:error, :no_current_event} ->
+        conn
+        |> put_status(:conflict)
+        |> json(%{error: "no_current_event"})
+
       {:error, _changeset} ->
         conn
         |> put_status(:unprocessable_entity)

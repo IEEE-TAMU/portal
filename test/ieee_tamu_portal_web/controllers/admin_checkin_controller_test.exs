@@ -2,6 +2,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinControllerTest do
   use IeeeTamuPortalWeb.ConnCase, async: true
 
   import IeeeTamuPortal.AccountsFixtures
+  import IeeeTamuPortal.EventsFixtures
   import IeeeTamuPortal.SettingsFixtures
 
   alias IeeeTamuPortal.{Repo}
@@ -12,12 +13,15 @@ defmodule IeeeTamuPortalWeb.AdminCheckinControllerTest do
 
     # Ensure defaults for settings
     registration_year_setting_fixture("2025")
-    current_event_setting_fixture("test_event")
+    event = current_event_fixture(%{summary: "test_event"})
 
-    {:ok, conn: conn}
+    {:ok, conn: conn, event: event}
   end
 
-  test "GET /admin/check-in creates a check-in for the member", %{conn: conn} do
+  test "GET /admin/check-in creates a check-in for the member", %{
+    conn: conn,
+    event: event
+  } do
     member = confirmed_member_fixture()
 
     conn = get(conn, ~p"/admin/check-in", member_id: member.id)
@@ -27,6 +31,7 @@ defmodule IeeeTamuPortalWeb.AdminCheckinControllerTest do
     assert length(checkins) == 1
     [checkin] = checkins
     assert checkin.member_id == member.id
+    assert checkin.event_uid == event.uid
     assert checkin.event_name == "test_event"
     assert checkin.event_year == 2025
   end
@@ -52,5 +57,13 @@ defmodule IeeeTamuPortalWeb.AdminCheckinControllerTest do
   test "GET /admin/check-in returns 422 for non-existent member id", %{conn: conn} do
     conn = get(conn, ~p"/admin/check-in", member_id: 999_999)
     assert %{"error" => "validation_error"} = json_response(conn, 422)
+  end
+
+  test "GET /admin/check-in returns 409 when no event is active", %{conn: conn} do
+    {:ok, _} = IeeeTamuPortal.Settings.stop_current_event()
+    member = confirmed_member_fixture()
+
+    conn = get(conn, ~p"/admin/check-in", member_id: member.id)
+    assert %{"error" => "no_current_event"} = json_response(conn, 409)
   end
 end

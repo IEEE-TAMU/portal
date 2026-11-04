@@ -42,11 +42,10 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
     status = if paid?, do: :paid, else: :pending
 
     # Build QR code or show message depending on check-in state
-    current_event = Settings.get_current_event!()
+    current_event = Settings.current_event()
     already_checked_in? = EventCheckin.member_is_checked_in?(current_member.id)
 
-    active_event? =
-      is_binary(current_event) and current_event != Settings.default_current_event()
+    active_event? = not is_nil(current_event)
 
     checkin_qr_svg =
       if paid? and not already_checked_in? and active_event? do
@@ -58,8 +57,7 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
 
     # Only surface RSVP status when the active event actually supports RSVPs
     current_event_rsvp =
-      with true <- active_event?,
-           %{rsvpable: true} = event <- Events.get_event_by_name(current_event) do
+      with %{rsvpable: true} = event <- current_event do
         Map.put(event, :member_rsvped, Events.member_rsvped?(current_member.id, event.uid))
       else
         _ -> nil
@@ -375,20 +373,20 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
             </div>
           <% :paid -> %>
             <%= if @already_checked_in? do %>
-              <.checked_in_message event_name={@current_event} />
+              <.checked_in_message event_name={@current_event && @current_event.summary} />
             <% else %>
               <%= if @checkin_qr_svg do %>
                 <%= if @current_event_rsvp do %>
                   <.rsvp_banner
                     rsvped?={@current_event_rsvp.member_rsvped}
-                    event_name={@current_event}
+                    event_name={@current_event.summary}
                   />
                 <% end %>
-                <.checkin_qr svg={@checkin_qr_svg} event_name={@current_event} />
+                <.checkin_qr svg={@checkin_qr_svg} event_name={@current_event.summary} />
               <% end %>
             <% end %>
 
-            <%= if @current_event == Settings.default_current_event() do %>
+            <%= if is_nil(@current_event) do %>
               <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
                 <button
                   type="button"

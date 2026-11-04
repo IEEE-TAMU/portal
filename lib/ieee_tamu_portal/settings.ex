@@ -21,11 +21,13 @@ defmodule IeeeTamuPortal.Settings do
 
   alias IeeeTamuPortal.Repo
   alias IeeeTamuPortal.Settings.Setting
+  alias IeeeTamuPortal.Events
+  alias IeeeTamuPortal.Events.Event
 
   require Logger
 
   @default_year 2025
-  @default_current_event "NONE"
+  @current_event_uid_key "current_event_uid"
 
   # Gets a setting by its key.
   # Returns the setting struct if found, nil otherwise.
@@ -170,41 +172,70 @@ defmodule IeeeTamuPortal.Settings do
   end
 
   @doc """
-  Gets the current event name as a string used for event check-ins.
-
-  This reads the "current_event" setting. If not present, returns a sensible
-  default value.
-
-  ## Examples
-
-      iex> get_current_event!()
-      "general_meeting"
+  Returns the uid of the current event, or `nil` when no event is active.
   """
-  def get_current_event! do
-    case get_setting("current_event") do
-      nil -> @default_current_event
-      setting -> setting.value
+  def current_event_uid do
+    case get_setting(@current_event_uid_key) do
+      nil ->
+        nil
+
+      %Setting{value: value} ->
+        case Ecto.UUID.cast(value) do
+          {:ok, uid} -> uid
+          :error -> nil
+        end
     end
   end
 
-  def default_current_event, do: @default_current_event
-
   @doc """
-  Sets the current event name (string) used for check-ins.
-
-  Creates or updates the `current_event` setting. Returns `{:ok, %Setting{}}` or `{:error, changeset}`.
+  Returns the current event struct, or `nil` when no event is active.
   """
-  def set_current_event(event_name) when is_binary(event_name) do
-    upsert_setting("current_event", event_name)
+  def current_event do
+    case current_event_uid() do
+      nil -> nil
+      uid -> Repo.get(Event, uid)
+    end
   end
 
   @doc """
-  Stops the current event by resetting it to the default value ("NONE").
+  Returns the display title for the current event, or `nil`.
+  """
+  def current_event_title do
+    case current_event() do
+      nil -> nil
+      event -> event.summary
+    end
+  end
 
-  Returns `{:ok, %Setting{}}` or `{:error, changeset}`.
+  @doc """
+  Sets the current event by uid.
+
+  Returns `{:ok, %Event{}}`, `{:error, :event_not_found}`, or an update error.
+  """
+  def set_current_event_uid(uid) when is_binary(uid) do
+    case Events.get_event(uid) do
+      nil ->
+        {:error, :event_not_found}
+
+      %Event{} = event ->
+        case upsert_setting(@current_event_uid_key, event.uid) do
+          {:ok, _setting} -> {:ok, event}
+          {:error, changeset} -> {:error, changeset}
+        end
+    end
+  end
+
+  @doc """
+  Stops the current event by deleting the uid setting.
+
+  Returns `{:ok, %Setting{}}` when a setting was deleted, `{:ok, nil}` when
+  there was no active event, or `{:error, changeset}`.
   """
   def stop_current_event do
-    upsert_setting("current_event", @default_current_event)
+    case get_setting(@current_event_uid_key) do
+      nil -> {:ok, nil}
+      setting -> delete_setting(setting)
+    end
   end
 
   # Creates or updates a setting by key with the provided value.
