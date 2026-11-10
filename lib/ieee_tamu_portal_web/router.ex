@@ -19,6 +19,11 @@ defmodule IeeeTamuPortalWeb.Router do
     plug OpenApiSpex.Plug.PutApiSpec, module: IeeeTamuPortalWeb.Api.Spec
   end
 
+  # OIDC endpoints are called by other applications, not browsers. They must
+  # not use the portal session or CSRF protection.
+  pipeline :oidc do
+  end
+
   scope "/api", IeeeTamuPortalWeb.Api do
     pipe_through :api
 
@@ -59,6 +64,18 @@ defmodule IeeeTamuPortalWeb.Router do
     end
   end
 
+  # OpenID Connect provider endpoints. The discovery, JWKS, token, and
+  # userinfo endpoints are unauthenticated; /oauth/authorize reuses the normal
+  # portal member session below.
+  scope "/", IeeeTamuPortalWeb do
+    pipe_through :oidc
+
+    get "/.well-known/openid-configuration", OIDCController, :discovery
+    get "/oauth/jwks", OIDCController, :jwks
+    post "/oauth/token", OIDCController, :token
+    get "/oauth/userinfo", OIDCController, :userinfo
+  end
+
   # routes available to unauthenticated users
   scope "/", IeeeTamuPortalWeb do
     pipe_through [:browser, :redirect_if_member_is_authenticated]
@@ -83,6 +100,8 @@ defmodule IeeeTamuPortalWeb.Router do
   # MemberAuth.ensure_info_submitted/1.
   scope "/", IeeeTamuPortalWeb do
     pipe_through [:browser, :require_authenticated_member]
+
+    get "/oauth/authorize", OIDCController, :authorize
 
     live_session :member_authenticated,
       on_mount: [

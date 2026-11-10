@@ -113,6 +113,35 @@ current privileged accounts with `mix members.roles`.
 - **Discord Roles API**: Programmatic role management for bulk operations
 - **Payment Webhooks**: Receive and process Flywire payment notifications
 
+### OpenID Connect Provider
+
+The portal can act as a minimal OpenID Connect provider for first-party IEEE TAMU
+apps. It supports the authorization code flow with PKCE (S256), RS256 ID tokens,
+and a `role` claim containing the member's portal role.
+
+Endpoints:
+
+- `GET /.well-known/openid-configuration`
+- `GET /oauth/jwks`
+- `GET /oauth/authorize`
+- `POST /oauth/token`
+- `GET /oauth/userinfo`
+
+Configuration is supplied through environment variables:
+
+```bash
+PORTAL_OIDC_ISSUER=https://portal.ieeetamu.org
+PORTAL_OIDC_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n..."
+LOUNGE_OIDC_CLIENT_ID=ieee-tamu-lounge
+LOUNGE_OIDC_CLIENT_SECRET=<secret>
+LOUNGE_OIDC_REDIRECT_URIS=https://lounge.ieeetamu.org/api/auth/callback,http://localhost:3000/api/auth/callback
+```
+
+The private key can be a PEM string with escaped `\n` characters or a path to a
+PEM file. In development and tests an ephemeral RSA key is generated when no key
+is configured. Add new first-party clients by extending the `:oidc` client list
+in `config/runtime.exs`.
+
 
 ## Getting Started
 

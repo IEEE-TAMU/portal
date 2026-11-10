@@ -74,6 +74,13 @@ config :mime, :types, %{
 
 config :flop, repo: IeeeTamuPortal.Repo
 
+# OpenID Connect provider for first-party IEEE TAMU apps. The runtime config
+# overrides these values with environment variables in production.
+config :ieee_tamu_portal, :oidc,
+  issuer: nil,
+  private_key: nil,
+  clients: []
+
 # Enable time zone database backed by tzdata for robust conversions
 config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
 

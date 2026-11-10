@@ -4,7 +4,7 @@ defmodule IeeeTamuPortal.MixProject do
   def project do
     [
       app: :ieee_tamu_portal,
-      version: "0.2.30",
+      version: "0.3.0",
       elixir: "1.20.4",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -65,6 +65,7 @@ defmodule IeeeTamuPortal.MixProject do
       {:open_api_spex, "== 3.22.3"},
       {:req, "== 0.6.3"},
       {:assent, "== 0.3.2"},
+      {:jose, "== 1.11.13"},
       {:zstream, "0.6.7"},
       {:flop_phoenix, "== 0.26.1"},
       {:lazy_html, "== 0.1.12", only: :test},
