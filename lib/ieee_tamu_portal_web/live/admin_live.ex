@@ -119,6 +119,14 @@ defmodule IeeeTamuPortalWeb.AdminLive do
           icon="hero-shield-check"
           href={~p"/admin/officers"}
         />
+
+        <.quick_action_card
+          :if={@current_member.role == :admin}
+          title="OIDC Clients"
+          description="Manage first-party app logins"
+          icon="hero-key"
+          href={~p"/admin/oidc-clients"}
+        />
       </div>
     </div>
     """

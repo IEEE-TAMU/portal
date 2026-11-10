@@ -127,20 +127,23 @@ Endpoints:
 - `POST /oauth/token`
 - `GET /oauth/userinfo`
 
-Configuration is supplied through environment variables:
+The provider needs only its issuer and signing key from the environment:
 
 ```bash
 PORTAL_OIDC_ISSUER=https://portal.ieeetamu.org
 PORTAL_OIDC_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n..."
-LOUNGE_OIDC_CLIENT_ID=ieee-tamu-lounge
-LOUNGE_OIDC_CLIENT_SECRET=<secret>
-LOUNGE_OIDC_REDIRECT_URIS=https://lounge.ieeetamu.org/api/auth/callback,http://localhost:3000/api/auth/callback
 ```
 
 The private key can be a PEM string with escaped `\n` characters or a path to a
 PEM file. In development and tests an ephemeral RSA key is generated when no key
-is configured. Add new first-party clients by extending the `:oidc` client list
-in `config/runtime.exs`.
+is configured.
+
+OIDC clients are stored in the database and managed by admins at
+`/admin/oidc-clients`. The admin UI supports creating, editing, disabling, and
+deleting clients, showing a generated secret once, rotating secrets, and viewing
+the last time each client was used. Redirect URIs must be HTTPS, except for
+localhost. Supported scopes are `openid`, `profile`, `email`, and `role`;
+`openid` is required.
 
 
 ## Getting Started

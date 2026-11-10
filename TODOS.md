@@ -43,11 +43,14 @@
 - [ ] tamu identity linking/login - oauth
 
 ### OIDC provider
-- [ ] move OIDC clients from environment variables into the database
-- [ ] add an admin web UI to create, edit, disable, and delete OIDC clients
-- [ ] show client metadata (name, redirect URIs, scopes, created by, created at)
-- [ ] track and display the last time each client was used (token exchange/userinfo)
-- [ ] add per-client secret rotation and revocation
+- [x] move OIDC clients from environment variables into the database
+- [x] add an admin web UI to create, edit, disable, and delete OIDC clients
+- [x] show client metadata (name, redirect URIs, scopes, created by, created at)
+- [x] track and display the last time each client was used (token exchange/userinfo)
+- [x] add per-client secret rotation and revocation
+- [ ] allow multiple active secrets per client for zero-downtime rotation
+- [ ] audit log of OIDC client changes
+- [ ] per-client consent screens for third-party apps
 
 ### sponsor login
 - [ ] lost login help - send email to admin

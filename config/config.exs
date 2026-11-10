@@ -78,8 +78,7 @@ config :flop, repo: IeeeTamuPortal.Repo
 # overrides these values with environment variables in production.
 config :ieee_tamu_portal, :oidc,
   issuer: nil,
-  private_key: nil,
-  clients: []
+  private_key: nil
 
 # Enable time zone database backed by tzdata for robust conversions
 config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase

@@ -161,6 +161,7 @@ defmodule IeeeTamuPortalWeb.Router do
       on_mount: [{IeeeTamuPortalWeb.Auth.AdminAuth, :ensure_super_admin}],
       layout: {IeeeTamuPortalWeb.Layouts, :admin} do
       live "/officers", AdminOfficersLive, :index
+      live "/oidc-clients", AdminOidcClientsLive, :index
     end
   end
 end

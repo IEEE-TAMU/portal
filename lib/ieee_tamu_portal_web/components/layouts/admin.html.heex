@@ -39,6 +39,12 @@
               navigate={~p"/admin/officers"}
               icon="hero-shield-check"
             />
+            <.navbar_button
+              :if={@current_member.role == :admin}
+              name="OIDC"
+              navigate={~p"/admin/oidc-clients"}
+              icon="hero-key"
+            />
           </nav>
         </div>
         <div class="hidden md:flex items-center space-x-4 text-sm text-gray-600">

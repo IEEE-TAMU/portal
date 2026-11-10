@@ -1,13 +1,34 @@
 defmodule IeeeTamuPortalWeb.OIDCControllerTest do
-  use IeeeTamuPortalWeb.ConnCase, async: true
+  use IeeeTamuPortalWeb.ConnCase, async: false
 
   import IeeeTamuPortal.AccountsFixtures
 
   alias IeeeTamuPortal.OIDC
+  alias IeeeTamuPortal.OIDC.Client
+  alias IeeeTamuPortal.OIDC.Clients
+  alias IeeeTamuPortal.Repo
 
   @redirect_uri "http://localhost:3000/api/auth/callback"
   @client_id "lounge-test"
   @client_secret "lounge-test-secret"
+
+  setup do
+    Repo.delete_all(Client)
+
+    {:ok, _client} =
+      Clients.create_client_with_secret(
+        %{
+          "name" => "Lounge Test",
+          "client_id" => @client_id,
+          "redirect_uris" => @redirect_uri,
+          "scopes" => "openid profile email role",
+          "enabled" => true
+        },
+        @client_secret
+      )
+
+    :ok
+  end
 
   describe "GET /.well-known/openid-configuration" do
     test "returns discovery metadata", %{conn: conn} do
@@ -108,6 +129,54 @@ defmodule IeeeTamuPortalWeb.OIDCControllerTest do
       assert claims[:code_challenge] == challenge
     end
 
+    test "rejects a disabled client", %{conn: conn} do
+      client = Clients.get_by_client_id(@client_id)
+      {:ok, _client} = Clients.update_client(client, %{"enabled" => false})
+
+      member = confirmed_member_fixture()
+      conn = log_in_member(conn, member)
+      {_verifier, challenge} = pkce()
+
+      body =
+        conn
+        |> get("/oauth/authorize?" <> URI.encode_query(authorize_params(challenge)))
+        |> json_response(400)
+
+      assert body["error"] == "invalid_request"
+    end
+
+    test "rejects scopes the client is not allowed to request", %{conn: conn} do
+      {:ok, _client} =
+        Clients.create_client_with_secret(
+          %{
+            "name" => "Limited Client",
+            "client_id" => "limited-client",
+            "redirect_uris" => @redirect_uri,
+            "scopes" => "openid",
+            "enabled" => true
+          },
+          "limited-secret"
+        )
+
+      member = confirmed_member_fixture()
+      conn = log_in_member(conn, member)
+      {_verifier, challenge} = pkce()
+
+      params =
+        authorize_params(challenge, %{
+          "client_id" => "limited-client",
+          "scope" => "openid profile email role"
+        })
+
+      redirect =
+        conn
+        |> get("/oauth/authorize?" <> URI.encode_query(params))
+        |> redirected_to()
+
+      query = redirect |> URI.parse() |> Map.fetch!(:query) |> URI.decode_query()
+      assert query["error"] == "invalid_scope"
+    end
+
     test "returns an error when PKCE is missing", %{conn: conn} do
       member = confirmed_member_fixture()
       conn = log_in_member(conn, member)
@@ -159,6 +228,21 @@ defmodule IeeeTamuPortalWeb.OIDCControllerTest do
       assert claims["nonce"] == "nonce-123"
       assert claims["email"] == member.email
       assert claims["email_verified"] == true
+    end
+
+    test "records last_used_at on a successful exchange", %{conn: conn} do
+      member = officer_member_fixture()
+      {verifier, challenge} = pkce()
+      code = code_for(member, challenge)
+
+      _body =
+        conn
+        |> put_basic_auth()
+        |> post("/oauth/token", token_params(code, verifier))
+        |> json_response(200)
+
+      client = Clients.get_by_client_id(@client_id)
+      assert client.last_used_at
     end
 
     test "accepts client_secret_post authentication", %{conn: conn} do

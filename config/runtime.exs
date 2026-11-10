@@ -65,27 +65,11 @@ oidc_private_key =
     pem -> String.replace(pem, "\\n", "\n")
   end
 
-oidc_env_clients =
-  [
-    %{
-      client_id: System.get_env("LOUNGE_OIDC_CLIENT_ID"),
-      client_secret: System.get_env("LOUNGE_OIDC_CLIENT_SECRET"),
-      redirect_uris:
-        System.get_env("LOUNGE_OIDC_REDIRECT_URIS", "")
-        |> String.split(",", trim: true)
-        |> Enum.map(&String.trim/1)
-        |> Enum.reject(&(&1 == "")),
-      name: "IEEE TAMU Lounge"
-    }
-  ]
-  |> Enum.reject(&(is_nil(&1.client_id) or &1.client_id == ""))
-
 oidc_config = Application.get_env(:ieee_tamu_portal, :oidc, [])
 
 config :ieee_tamu_portal, :oidc,
   issuer: System.get_env("PORTAL_OIDC_ISSUER") || oidc_config[:issuer],
-  private_key: oidc_private_key || oidc_config[:private_key],
-  clients: if(oidc_env_clients == [], do: oidc_config[:clients] || [], else: oidc_env_clients)
+  private_key: oidc_private_key || oidc_config[:private_key]
 
 config :ieee_tamu_portal,
        :discord_bot_url,
