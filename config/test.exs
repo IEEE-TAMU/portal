@@ -53,15 +53,7 @@ config :ieee_tamu_portal,
        :frontend_time_zone,
        "America/Chicago"
 
-# OIDC provider test client. No private key is configured, so the provider
-# generates an ephemeral key for the test run.
-config :ieee_tamu_portal, :oidc,
-  issuer: "http://localhost:4000",
-  clients: [
-    %{
-      client_id: "lounge-test",
-      client_secret: "lounge-test-secret",
-      redirect_uris: ["http://localhost:3000/api/auth/callback"],
-      name: "IEEE TAMU Lounge (test)"
-    }
-  ]
+# OIDC provider test issuer. No private key is configured, so the provider
+# generates an ephemeral key for the test run. Tests create clients through the
+# OIDC client context.
+config :ieee_tamu_portal, :oidc, issuer: "http://localhost:4000"

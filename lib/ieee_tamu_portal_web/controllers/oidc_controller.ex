@@ -10,6 +10,7 @@ defmodule IeeeTamuPortalWeb.OIDCController do
   use IeeeTamuPortalWeb, :controller
 
   alias IeeeTamuPortal.{Accounts, OIDC}
+  alias IeeeTamuPortal.OIDC.Clients
 
   @basic_realm ~s(Basic realm="portal")
 
@@ -60,7 +61,7 @@ defmodule IeeeTamuPortalWeb.OIDCController do
           "Only the authorization code flow is supported."
         )
 
-      not valid_scope?(params["scope"]) ->
+      not valid_scope?(params["scope"], client) ->
         redirect_error(
           conn,
           redirect_uri,
@@ -86,7 +87,7 @@ defmodule IeeeTamuPortalWeb.OIDCController do
         code =
           OIDC.sign_code(%{
             sub: member.id,
-            client_id: client[:client_id],
+            client_id: Clients.client_id(client),
             redirect_uri: redirect_uri,
             code_challenge: params["code_challenge"],
             scope: params["scope"],
@@ -115,15 +116,19 @@ defmodule IeeeTamuPortalWeb.OIDCController do
          :ok <- validate_code_redirect(claims, params["redirect_uri"]),
          :ok <- validate_pkce(claims, params["code_verifier"]),
          {:ok, member} <- fetch_member(claims[:sub]) do
+      client_id = Clients.client_id(client)
+      Clients.mark_used_by_client_id(client_id)
+
       access_token =
         OIDC.sign_access_token(%{
           sub: member.id,
-          client_id: client[:client_id],
+          client_id: client_id,
           scope: claims[:scope],
           auth_time: claims[:auth_time]
         })
 
-      id_token = OIDC.id_token(member, client[:client_id], claims[:nonce], claims[:auth_time])
+      id_token =
+        OIDC.id_token(member, client_id, claims[:nonce], claims[:auth_time], claims[:scope])
 
       json(conn, %{
         access_token: access_token,
@@ -153,7 +158,8 @@ defmodule IeeeTamuPortalWeb.OIDCController do
     with ["Bearer " <> token | _] <- get_req_header(conn, "authorization"),
          {:ok, claims} <- OIDC.verify_access_token(token),
          %Accounts.Member{} = member <- Accounts.get_member_with_info(claims[:sub]) do
-      json(conn, OIDC.userinfo(member))
+      Clients.mark_used_by_client_id(claims[:client_id])
+      json(conn, OIDC.userinfo(member, claims[:scope] || ""))
     else
       _ ->
         conn
@@ -208,7 +214,7 @@ defmodule IeeeTamuPortalWeb.OIDCController do
   end
 
   defp validate_code_client(claims, client) do
-    if claims[:client_id] == client[:client_id] do
+    if claims[:client_id] == Clients.client_id(client) do
       :ok
     else
       {:error, "invalid_grant", "The authorization code was issued to another client."}
@@ -245,12 +251,13 @@ defmodule IeeeTamuPortalWeb.OIDCController do
 
   defp fetch_member(_), do: {:error, "invalid_grant", "The authorization code is invalid."}
 
-  defp valid_scope?(scope) when is_binary(scope) do
+  defp valid_scope?(scope, client) when is_binary(scope) do
     requested = String.split(scope, " ", trim: true)
-    "openid" in requested and Enum.all?(requested, &(&1 in OIDC.scopes()))
+    allowed = Clients.scopes(client)
+    "openid" in requested and Enum.all?(requested, &(&1 in allowed))
   end
 
-  defp valid_scope?(_), do: false
+  defp valid_scope?(_, _), do: false
 
   defp valid_pkce?(params) do
     params["code_challenge_method"] == "S256" and

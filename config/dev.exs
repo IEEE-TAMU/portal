@@ -92,14 +92,5 @@ config :swoosh, :api_client, false
 
 config :open_api_spex, :cache_adapter, OpenApiSpex.Plug.NoneCache
 
-# Local OIDC client for the lounge app.
-config :ieee_tamu_portal, :oidc,
-  issuer: "http://localhost:4000",
-  clients: [
-    %{
-      client_id: "lounge-dev",
-      client_secret: "lounge-dev-secret",
-      redirect_uris: ["http://localhost:3000/api/auth/callback"],
-      name: "IEEE TAMU Lounge (dev)"
-    }
-  ]
+# Local OIDC issuer. Clients are created from the admin UI or test fixtures.
+config :ieee_tamu_portal, :oidc, issuer: "http://localhost:4000"

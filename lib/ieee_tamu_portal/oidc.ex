@@ -3,11 +3,13 @@ defmodule IeeeTamuPortal.OIDC do
   Minimal OpenID Connect provider for first-party IEEE TAMU applications.
 
   The provider implements the authorization code flow with PKCE (S256) and
-  RS256-signed ID tokens. It deliberately keeps state in signed tokens rather
-  than adding new database tables, so it can be deployed without a migration.
+  RS256-signed ID tokens. Clients are stored in the database and managed from
+  the admin UI. Authorization codes and access tokens are signed tokens, so the
+  provider does not need any additional tables beyond `oidc_clients`.
   """
 
   alias IeeeTamuPortal.Accounts.Member
+  alias IeeeTamuPortal.OIDC.Clients
 
   @code_salt "oidc authorization code v1"
   @access_token_salt "oidc access token v1"
@@ -32,11 +34,11 @@ defmodule IeeeTamuPortal.OIDC do
   def access_token_ttl, do: @access_token_ttl
 
   @doc "Registered OIDC clients."
-  def clients, do: config()[:clients] || []
+  def clients, do: Clients.list_clients()
 
-  @doc "Look up a registered client by client_id."
+  @doc "Look up an enabled client by client_id."
   def get_client(client_id) when is_binary(client_id) do
-    Enum.find(clients(), &(&1[:client_id] == client_id))
+    Clients.get_enabled_by_client_id(client_id)
   end
 
   def get_client(_), do: nil
@@ -44,15 +46,14 @@ defmodule IeeeTamuPortal.OIDC do
   @doc "Returns true when the redirect URI is registered for the client."
   def redirect_uri_allowed?(client, redirect_uri)
       when is_map(client) and is_binary(redirect_uri) do
-    redirect_uri in (client[:redirect_uris] || [])
+    redirect_uri in Clients.redirect_uris(client)
   end
 
   def redirect_uri_allowed?(_, _), do: false
 
   @doc "Constant-time comparison of a client secret."
   def client_secret_valid?(client, secret) when is_map(client) and is_binary(secret) do
-    expected = client[:client_secret] || ""
-    byte_size(expected) > 0 and Plug.Crypto.secure_compare(expected, secret)
+    Clients.authenticate(client, secret)
   end
 
   def client_secret_valid?(_, _), do: false
@@ -86,8 +87,9 @@ defmodule IeeeTamuPortal.OIDC do
   def verify_access_token(_), do: {:error, :invalid}
 
   @doc "Builds a signed RS256 ID token for a member."
-  def id_token(%Member{} = member, client_id, nonce, auth_time) do
+  def id_token(%Member{} = member, client_id, nonce, auth_time, scope) do
     now = System.system_time(:second)
+    scopes = parse_scope(scope)
 
     claims = %{
       "iss" => issuer(),
@@ -95,13 +97,12 @@ defmodule IeeeTamuPortal.OIDC do
       "aud" => client_id,
       "exp" => now + @access_token_ttl,
       "iat" => now,
-      "auth_time" => auth_time,
-      "name" => member_name(member),
-      "preferred_username" => member.email,
-      "email" => member.email,
-      "email_verified" => not is_nil(member.confirmed_at),
-      "role" => to_string(member.role)
+      "auth_time" => auth_time
     }
+
+    claims = maybe_add_profile(claims, member, scopes)
+    claims = maybe_add_email(claims, member, scopes)
+    claims = maybe_add_role(claims, member, scopes)
 
     claims =
       if is_binary(nonce) and nonce != "" do
@@ -119,16 +120,14 @@ defmodule IeeeTamuPortal.OIDC do
     token
   end
 
-  @doc "Returns the userinfo claims for a member."
-  def userinfo(%Member{} = member) do
-    %{
-      "sub" => Integer.to_string(member.id),
-      "name" => member_name(member),
-      "preferred_username" => member.email,
-      "email" => member.email,
-      "email_verified" => not is_nil(member.confirmed_at),
-      "role" => to_string(member.role)
-    }
+  @doc "Returns the userinfo claims for a member and granted scope."
+  def userinfo(%Member{} = member, scope) do
+    scopes = parse_scope(scope)
+
+    %{"sub" => Integer.to_string(member.id)}
+    |> maybe_add_profile(member, scopes)
+    |> maybe_add_email(member, scopes)
+    |> maybe_add_role(member, scopes)
   end
 
   @doc "Returns the public JSON Web Key Set."
@@ -160,6 +159,39 @@ defmodule IeeeTamuPortal.OIDC do
         member.email
     end
   end
+
+  defp maybe_add_profile(claims, member, scopes) do
+    if "profile" in scopes do
+      Map.merge(claims, %{
+        "name" => member_name(member),
+        "preferred_username" => member.email
+      })
+    else
+      claims
+    end
+  end
+
+  defp maybe_add_email(claims, member, scopes) do
+    if "email" in scopes do
+      Map.merge(claims, %{
+        "email" => member.email,
+        "email_verified" => not is_nil(member.confirmed_at)
+      })
+    else
+      claims
+    end
+  end
+
+  defp maybe_add_role(claims, member, scopes) do
+    if "role" in scopes do
+      Map.put(claims, "role", to_string(member.role))
+    else
+      claims
+    end
+  end
+
+  defp parse_scope(scope) when is_binary(scope), do: String.split(scope, " ", trim: true)
+  defp parse_scope(_), do: []
 
   defp blank?(nil), do: true
   defp blank?(""), do: true
