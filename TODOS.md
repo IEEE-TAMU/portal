@@ -42,6 +42,13 @@
 ### member login
 - [ ] tamu identity linking/login - oauth
 
+### OIDC provider
+- [ ] move OIDC clients from environment variables into the database
+- [ ] add an admin web UI to create, edit, disable, and delete OIDC clients
+- [ ] show client metadata (name, redirect URIs, scopes, created by, created at)
+- [ ] track and display the last time each client was used (token exchange/userinfo)
+- [ ] add per-client secret rotation and revocation
+
 ### sponsor login
 - [ ] lost login help - send email to admin
 - [ ] demographic charts/export
