@@ -3,15 +3,14 @@ defmodule IeeeTamuPortalWeb.Utils.PaymentUploader do
   Uploads payment data from a CSV file to the running portal API using only HTTP calls.
 
   Expected CSV headers (order can vary):
-  	id,name,amount,confirmation_code,tshirt_size,registration_id
+  	id,name,amount,confirmation_code,registration_id
 
   Alternate / external header mappings supported:
   	"Associated Order Number" -> id (will also strip an optional leading '#')
   	"Option: confirmation-code" -> confirmation_code
-  	"Option: t-shirt-size" -> tshirt_size
   	"Total with Shipping" -> amount
 
-  Required fields (per API schema): id, name, amount, tshirt_size
+  Required fields (per API schema): id, name, amount
 
   Any extra columns will be ignored. Missing optional columns are omitted.
 
@@ -25,8 +24,8 @@ defmodule IeeeTamuPortalWeb.Utils.PaymentUploader do
   require Logger
   alias NimbleCSV.RFC4180, as: CSV
 
-  @wanted_fields ~w(id name amount confirmation_code tshirt_size registration_id)a
-  @string_fields ~w(id name confirmation_code tshirt_size)a
+  @wanted_fields ~w(id name amount confirmation_code registration_id)a
+  @string_fields ~w(id name confirmation_code)a
   @int_fields ~w(registration_id)a
   @float_fields ~w(amount)a
 
@@ -137,7 +136,6 @@ defmodule IeeeTamuPortalWeb.Utils.PaymentUploader do
     case String.downcase(String.trim(header)) do
       "associated order number" -> "id"
       "option: confirmation-code" -> "confirmation_code"
-      "option: t-shirt-size" -> "tshirt_size"
       "total with shipping" -> "amount"
       other -> other
     end

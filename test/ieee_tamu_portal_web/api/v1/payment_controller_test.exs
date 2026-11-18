@@ -9,14 +9,12 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentControllerTest do
   @valid_payment_attrs %{
     :id => "202507311846543792838986",
     :name => "John Doe",
-    :amount => 25.00,
-    :tshirt_size => "M"
+    :amount => 25.00
   }
 
   @invalid_payment_attrs %{
     :name => "",
-    :amount => nil,
-    :tshirt_size => nil
+    :amount => nil
   }
 
   describe "GET /api/v1/payments" do
@@ -36,7 +34,6 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentControllerTest do
                  "name" => payment.name,
                  "amount" => Decimal.to_float(payment.amount),
                  "confirmation_code" => payment.confirmation_code,
-                 "tshirt_size" => to_string(payment.tshirt_size),
                  "registration_id" => payment.registration_id
                }
              ] == json_response(conn, 200)
@@ -131,7 +128,6 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentControllerTest do
                "name" => payment.name,
                "amount" => Decimal.to_float(payment.amount),
                "confirmation_code" => payment.confirmation_code,
-               "tshirt_size" => to_string(payment.tshirt_size),
                "registration_id" => payment.registration_id
              } == json_response(conn, 200)
     end
@@ -170,7 +166,6 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentControllerTest do
                "name" => payment.name,
                "amount" => Decimal.to_float(payment.amount),
                "confirmation_code" => payment.confirmation_code,
-               "tshirt_size" => to_string(payment.tshirt_size),
                "registration_id" => payment.registration_id
              } == json_response(conn, 200)
     end
@@ -216,7 +211,6 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentControllerTest do
                  "id" => @valid_payment_attrs[:id],
                  "name" => @valid_payment_attrs[:name],
                  "amount" => @valid_payment_attrs[:amount],
-                 "tshirt_size" => @valid_payment_attrs[:tshirt_size],
                  "confirmation_code" => nil,
                  "registration_id" => nil
                } == json_response(conn, 201)
@@ -251,19 +245,6 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentControllerTest do
     test "returns 422 with missing amount field", %{conn: conn} do
       {token, _api_key} = admin_api_key_fixture()
       attrs = Map.delete(@valid_payment_attrs, :amount)
-
-      conn =
-        conn
-        |> put_token_header(token)
-        |> put_req_header("content-type", "application/json")
-        |> post(~p"/api/v1/payments", attrs)
-
-      assert conn.status == 422
-    end
-
-    test "returns 422 with missing tshirt_size field", %{conn: conn} do
-      {token, _api_key} = admin_api_key_fixture()
-      attrs = Map.delete(@valid_payment_attrs, :tshirt_size)
 
       conn =
         conn
@@ -336,24 +317,10 @@ defmodule IeeeTamuPortalWeb.Api.V1.PaymentControllerTest do
                  "id" => attrs[:id],
                  "name" => attrs[:name],
                  "amount" => 0.0,
-                 "tshirt_size" => attrs[:tshirt_size],
                  "confirmation_code" => nil,
                  "registration_id" => nil
                } == json_response(conn, 201)
       end)
-    end
-
-    test "returns 422 with invalid tshirt_size", %{conn: conn} do
-      {token, _api_key} = admin_api_key_fixture()
-      attrs = Map.put(@valid_payment_attrs, :tshirt_size, "INVALID")
-
-      conn =
-        conn
-        |> put_token_header(token)
-        |> put_req_header("content-type", "application/json")
-        |> post(~p"/api/v1/payments", attrs)
-
-      assert conn.status == 422
     end
 
     test "returns 422 with empty string id", %{conn: conn} do

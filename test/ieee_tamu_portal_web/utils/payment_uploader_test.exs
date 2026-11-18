@@ -38,10 +38,10 @@ defmodule IeeeTamuPortalWeb.Utils.PaymentUploaderTest do
   test "upload/4 with dry_run parses, dedupes against existing payments, and creates nothing" do
     path =
       write_csv("""
-      id,name,amount,confirmation_code,tshirt_size,registration_id
-      1,Alice,20.00,CONF1,M,
-      2,Bob,20.00,CONF2,L,
-      ,NoId,20.00,CONF3,S,
+      id,name,amount,confirmation_code,registration_id
+      1,Alice,20.00,CONF1,
+      2,Bob,20.00,CONF2,
+      ,NoId,20.00,CONF3,
       """)
 
     stub_existing_ids([%{"id" => "1"}])
@@ -59,8 +59,8 @@ defmodule IeeeTamuPortalWeb.Utils.PaymentUploaderTest do
   test "upload/4 creates new payments via the API" do
     path =
       write_csv("""
-      id,name,amount,confirmation_code,tshirt_size,registration_id
-      1,Alice,"1,020.50",CONF1,M,
+      id,name,amount,confirmation_code,registration_id
+      1,Alice,"1,020.50",CONF1,
       """)
 
     stub_existing_ids([])
@@ -69,7 +69,6 @@ defmodule IeeeTamuPortalWeb.Utils.PaymentUploaderTest do
       assert conn.body_params["id"] == "1"
       assert conn.body_params["name"] == "Alice"
       assert conn.body_params["amount"] == 1020.5
-      assert conn.body_params["tshirt_size"] == "M"
 
       Req.Test.json(conn, %{"id" => "77"})
     end)
@@ -84,8 +83,8 @@ defmodule IeeeTamuPortalWeb.Utils.PaymentUploaderTest do
   test "upload/4 supports alternate external headers" do
     path =
       write_csv("""
-      Associated Order Number,name,Total with Shipping,Option: confirmation-code,Option: t-shirt-size
-      #12,Bob,25.00,CONF9,XL
+      Associated Order Number,name,Total with Shipping,Option: confirmation-code
+      #12,Bob,25.00,CONF9
       """)
 
     stub_existing_ids([])
@@ -93,7 +92,6 @@ defmodule IeeeTamuPortalWeb.Utils.PaymentUploaderTest do
     Req.Test.expect(PaymentUploader, fn conn ->
       assert conn.body_params["id"] == "12"
       assert conn.body_params["amount"] == 25.0
-      assert conn.body_params["tshirt_size"] == "XL"
       assert conn.body_params["confirmation_code"] == "CONF9"
 
       Req.Test.json(conn, %{"id" => "78"})
@@ -106,8 +104,8 @@ defmodule IeeeTamuPortalWeb.Utils.PaymentUploaderTest do
   test "upload/4 records per-row failures" do
     path =
       write_csv("""
-      id,name,amount,confirmation_code,tshirt_size,registration_id
-      1,Alice,20.00,CONF1,M,
+      id,name,amount,confirmation_code,registration_id
+      1,Alice,20.00,CONF1,
       """)
 
     stub_existing_ids([])
@@ -128,8 +126,8 @@ defmodule IeeeTamuPortalWeb.Utils.PaymentUploaderTest do
   test "upload/4 returns an error when the existing-payments fetch fails" do
     path =
       write_csv("""
-      id,name,amount,confirmation_code,tshirt_size,registration_id
-      1,Alice,20.00,CONF1,M,
+      id,name,amount,confirmation_code,registration_id
+      1,Alice,20.00,CONF1,
       """)
 
     Req.Test.expect(PaymentUploader, fn conn ->

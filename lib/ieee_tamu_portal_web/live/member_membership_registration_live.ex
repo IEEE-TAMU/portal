@@ -481,65 +481,17 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLive do
               </p>
             </div>
 
-            <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
-              <h2 class="text-lg font-semibold text-gray-900 mb-4">Payment Details</h2>
-
-              <%= if @registration.payment do %>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700">Amount Paid</label>
-                    <input
-                      type="text"
-                      value={"$#{Decimal.to_string(@registration.payment.amount)}"}
-                      readonly
-                      class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700">
-                      Flywire Order ID
-                    </label>
-                    <input
-                      type="text"
-                      value={@registration.payment.id}
-                      readonly
-                      class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700">T-Shirt Size</label>
-                    <input
-                      type="text"
-                      value={@registration.payment.tshirt_size}
-                      readonly
-                      class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700">Member Name</label>
-                    <input
-                      type="text"
-                      value={@registration.payment.name}
-                      readonly
-                      class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"
-                    />
-                  </div>
+            <%= if is_nil(@registration.payment) do %>
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-center">
+                  <.icon name="hero-information-circle" class="w-5 h-5 text-blue-600 mr-2" />
+                  <h2 class="text-blue-800 font-medium">Payment Override Applied</h2>
                 </div>
-              <% else %>
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div class="flex items-center">
-                    <.icon name="hero-information-circle" class="w-5 h-5 text-blue-600 mr-2" />
-                    <h2 class="text-blue-800 font-medium">Payment Override Applied</h2>
-                  </div>
-                  <p class="text-blue-700 mt-2">
-                    Your registration has been marked as paid by an officer.
-                  </p>
-                </div>
-              <% end %>
-            </div>
+                <p class="text-blue-700 mt-2">
+                  Your registration has been marked as paid by an officer.
+                </p>
+              </div>
+            <% end %>
         <% end %>
       </div>
     </div>

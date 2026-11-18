@@ -95,11 +95,6 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
           description: "Confirmation code for the payment",
           example: "USER123"
         },
-        tshirt_size: %Schema{
-          type: :string,
-          enum: ~w(S M L XL XXL)a,
-          description: "T-shirt size for the member"
-        },
         registration_id: %Schema{
           type: :integer,
           description: "ID of the associated membership"
@@ -109,13 +104,12 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
           description: "Flywire order ID that serves as the unique identifier for the payment"
         }
       },
-      required: [:name, :amount, :tshirt_size, :id],
+      required: [:name, :amount, :id],
       example: %{
         id: "202507311846543792838986",
         name: "John Doe",
         amount: 0.00,
         confirmation_code: "JDOE153402",
-        tshirt_size: "M",
         registration_id: 12345
       }
     })
@@ -126,7 +120,6 @@ defmodule IeeeTamuPortalWeb.Api.V1.Schemas do
         name: struct.name,
         amount: Decimal.to_float(struct.amount),
         confirmation_code: struct.confirmation_code,
-        tshirt_size: to_string(struct.tshirt_size),
         registration_id: struct.registration_id
       }
     end

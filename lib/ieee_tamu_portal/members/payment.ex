@@ -9,7 +9,6 @@ defmodule IeeeTamuPortal.Members.Payment do
     field :name, :string
     field :amount, :decimal
     field :confirmation_code, :string
-    field :tshirt_size, Ecto.Enum, values: ~w(S M L XL XXL)a
 
     belongs_to :registration, IeeeTamuPortal.Members.Registration
 
@@ -21,8 +20,8 @@ defmodule IeeeTamuPortal.Members.Payment do
     attrs = trim_name_field(attrs)
 
     payment
-    |> cast(attrs, [:id, :amount, :confirmation_code, :tshirt_size, :name])
-    |> validate_required([:id, :amount, :tshirt_size, :name])
+    |> cast(attrs, [:id, :amount, :confirmation_code, :name])
+    |> validate_required([:id, :amount, :name])
     |> validate_number(:amount, greater_than_or_equal_to: 0)
     # unique constraint named PRIMARY due to priv/repo/migrations/20250731185436_update_payments_table.exs:30
     |> unique_constraint(:id, name: "PRIMARY")

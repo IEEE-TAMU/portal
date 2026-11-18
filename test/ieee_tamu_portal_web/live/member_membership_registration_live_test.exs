@@ -42,15 +42,16 @@ defmodule IeeeTamuPortalWeb.MemberMembershipRegistrationLiveTest do
       assert html =~ registration.confirmation_code
     end
 
-    test "shows paid details when payment exists", %{conn: conn, member: member} do
+    test "does not show payment details when payment exists", %{conn: conn, member: member} do
       payment = payment_fixture(member)
 
       {:ok, _lv, html} = live(conn, ~p"/members/registration")
 
       assert html =~ "Registration Complete!"
-      assert html =~ "Amount Paid"
-      assert html =~ "Flywire Order ID"
-      assert html =~ payment.id
+      refute html =~ "Payment Details"
+      refute html =~ "Amount Paid"
+      refute html =~ "Flywire Order ID"
+      refute html =~ payment.id
     end
 
     test "shows override notice when payment is overridden", %{conn: conn, member: member} do

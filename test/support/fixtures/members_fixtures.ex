@@ -20,8 +20,7 @@ defmodule IeeeTamuPortal.MembersFixtures do
     Enum.into(attrs, %{
       :id => "payment#{System.unique_integer()}",
       :name => "Test Member",
-      :amount => 25.00,
-      :tshirt_size => "M"
+      :amount => 25.00
     })
   end
 

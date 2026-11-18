@@ -11,7 +11,7 @@ defmodule Mix.Tasks.Payments.Upload do
       mix payments.upload https://portal.local $API_KEY data/payments.csv --concurrency 5
 
   The CSV must have headers including the required columns:
-    id,name,amount,tshirt_size
+    id,name,amount
   Optional columns:
     confirmation_code,registration_id
   """
